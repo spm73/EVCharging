@@ -1,0 +1,12 @@
+services:
+  central:
+    container_name: central
+    image: 
+    
+  kafka:
+    container_name: kafka-broker
+    image: apache/kafka:4.1.0
+
+  db:
+    container_name: sqlito-db
+    image: 

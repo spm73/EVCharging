@@ -1,0 +1,10 @@
+FROM python:3.12-alpine
+
+# set directory where src is stored
+WORKDIR /usr/src/EV_Driver
+
+# copy files into image
+COPY . .
+
+# Do not forget the comma
+ENTRYPOINT [ "python", "main.py" ]

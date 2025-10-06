@@ -1,0 +1,7 @@
+FROM python:3.12-alpine
+
+WORKDIR /usr/src/EV_Central
+
+COPY . .
+
+ENTRYPOINT [ "python", ]
