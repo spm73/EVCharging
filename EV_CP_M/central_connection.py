@@ -1,6 +1,6 @@
 import socket
 
-from central_not_responding_excetion import CentralNotRespondingException
+from central_not_responding_exception import CentralNotRespondingException
 
 class CentralConnection:
     WAITING_SUPPLY_MSG = 'wait-supply'.encode()
