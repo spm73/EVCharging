@@ -3,6 +3,8 @@ import threading
 
 class MonitorServer:
     MAX_CONNECTIONS = 5
+    OK_MSG = 'ok'.encode()
+    
     def __init__(self, ip_addr, port_number):
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server.bind((ip_addr, port_number))
@@ -27,6 +29,7 @@ class MonitorServer:
                 active_threads.join()
             self.server.close()
     
+    @staticmethod
     def _client_handler(client_socket, address):
         engine_id = client_socket.recv(1024)
         is_authorized = MonitorServer._authorize(engine_id)
@@ -37,9 +40,13 @@ class MonitorServer:
         status_msg = client_socket.recv(1024).decode()
         client_socket.sendall("ACK".encode())
         # update data of cp
-        
-        
-        
+    
+    @staticmethod
+    def _confirm_report(client_socket):
+        status_report = client_socket.recv(1024)
+        if not status_report:
+            pass
+        client_socket.sendall(MonitorServer.OK_MSG)
     
     @staticmethod
     def _authorize(engine_id):
