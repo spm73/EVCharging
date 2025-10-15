@@ -30,18 +30,18 @@ class MonitorServer:
     def _client_handler(client_socket, address):
         engine_id = client_socket.recv(1024)
         is_authorized = MonitorServer._authorize(engine_id)
-        client_socket.sendall(is_authorized)
+        client_socket.sendall(is_authorized.encode())
         if is_authorized == "BAD":
             return
         
         status_msg = client_socket.recv(1024).decode()
-        client_socket.sendall("ACK")
+        client_socket.sendall("ACK".encode())
         # update data of cp
         
         
         
     
     @staticmethod
-    def _authorize(engine_id) :
+    def _authorize(engine_id):
         return "OK" # or "BAD"
     

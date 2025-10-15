@@ -1,5 +1,4 @@
 import socket
-import threading
 
 class CentralConnection:
     def __init__(self, ip_addr, port_number, status_msg):
