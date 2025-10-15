@@ -1,6 +1,8 @@
 import socket
 import threading
 
+from monitor_not_responding_exception import MonitorNotRespondingException
+
 class MonitorServer:
     MAX_CONNECTIONS = 5
     OK_MSG = 'ok'.encode()
@@ -45,7 +47,7 @@ class MonitorServer:
     def _confirm_report(client_socket):
         status_report = client_socket.recv(1024)
         if not status_report:
-            pass
+            raise MonitorNotRespondingException()
         client_socket.sendall(MonitorServer.OK_MSG)
     
     @staticmethod

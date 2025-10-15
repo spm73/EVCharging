@@ -1,5 +1,7 @@
 import socket
 
+from monitor_not_responding_exception import MonitorNotRespondingException
+
 class MonitorConnection:
     MAX_CONNECTIONS = 5
     HI_MSG = 'hi'.encode()
@@ -25,8 +27,7 @@ class MonitorConnection:
     def hi_monitor(self, monitor):
         msg = monitor.recv(2)
         if not msg:
-            # close connection?
-            pass
+            raise MonitorNotRespondingException()
         monitor.sendall(MonitorConnection.HI_MSG)
         
     def send_ok(self, monitor):
@@ -40,8 +41,7 @@ class MonitorConnection:
         # Think how to check is supplying
         msg = monitor.recv(1024)
         if not msg:
-            # close connection?
-            pass
+            raise MonitorNotRespondingException()
         supplying = True
         answer = 'A' if supplying else 'N'
         monitor.sendall(answer.encode())  

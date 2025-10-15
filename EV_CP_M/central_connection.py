@@ -1,5 +1,7 @@
 import socket
 
+from central_not_responding_excetion import CentralNotRespondingException
+
 class CentralConnection:
     WAITING_SUPPLY_MSG = 'wait-supply'.encode()
     
@@ -12,7 +14,7 @@ class CentralConnection:
         self.connection.sendall(engine_id.encode())
         answer = self.connection.recv(3).decode()
         if not answer:
-            pass
+            raise CentralNotRespondingException()
         return answer != "BAD"
         
     def send_status_message(self):
@@ -20,13 +22,13 @@ class CentralConnection:
         self.connection.sendall(current_status)
         answer = self.connection.recv(3).decode()
         if not answer:    
-            raise ConnectionError('Server does not answer')
+            raise CentralNotRespondingException()
       
     def waiting_supply(self): 
         self.connection.sendall(CentralConnection.WAITING_SUPPLY_MSG)
         answer = self.connection.recv(2).decode()
         if not answer:
-            pass
+            raise CentralNotRespondingException()
         
         
     # def run(self, engine_id):

@@ -1,5 +1,7 @@
 import socket
 
+from engine_not_responding_exception import EngineNotRespondingException
+
 class EngineConnection:
     HEALTH_MSG = "req-health-status".encode()
     IS_SUPPLYING_MSG = "is-supplying".encode()
@@ -21,7 +23,7 @@ class EngineConnection:
         self.connection.sendall(EngineConnection.WAIT_CENTRAL_MSG)
         answer = self.connection.recv(2).decode()
         if not answer:
-            pass
+            raise EngineNotRespondingException()
         
     def central_unreachable(self):
         self.connection.sendall(EngineConnection.CENTRAL_UNREACHABLE_MSG)
@@ -33,12 +35,13 @@ class EngineConnection:
         self.connection.sendall(EngineConnection.IS_SUPPLYING_MSG)
         answer = self.connection.recv(1).decode()
         if not answer:
-            pass
+            raise EngineNotRespondingException()
         return answer == "A" # A for affirm, N for negative
     
     def request_status(self):
         self.connection.sendall(EngineConnection.HEALTH_MSG)
         answer = self.connection.recv(1024).decode()
         if not answer:
-            self.msg.send_ko()
+            raise EngineNotRespondingException()
+            # self.msg.send_ko() ## very important
         self.msg.update(answer)
