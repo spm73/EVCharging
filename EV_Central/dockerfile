@@ -1,5 +1,7 @@
 FROM python:3.12-alpine
 
+RUN pip install confluent-kafka
+
 WORKDIR /usr/src/EV_Central
 
 COPY . .

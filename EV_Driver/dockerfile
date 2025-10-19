@@ -1,5 +1,8 @@
 FROM python:3.12-alpine
 
+# Install kafka dependency
+RUN pip install confluent-kafka
+
 # set directory where src is stored
 WORKDIR /usr/src/EV_Driver
 
