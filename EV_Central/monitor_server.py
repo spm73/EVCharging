@@ -30,6 +30,14 @@ class MonitorServer:
             for active_threads in threading.enumerate():
                 active_threads.join()
             self.server.close()
+            
+    def listen(self):
+        self.server.listen(MonitorServer.MAX_CONNECTIONS)
+        print("Server waiting for connections")
+        
+    def accept(self) -> socket.socket:
+        monitor, _ = self.server.accept()
+        return monitor
     
     @staticmethod
     def _client_handler(client_socket, address):

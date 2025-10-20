@@ -5,4 +5,3 @@ class CPStatus(Enum):
     SUPPLYING = 2
     STOPPED = 3
     BROKEN_DOWN = 4
-    DISCONNECTED = 5
