@@ -12,7 +12,8 @@ class SupplyReqProducer:
         
     def send_request(self, cp_id: str):
         msg = {
-            'cp_id': cp_id
+            'cp_id': cp_id,
+            'applicant_id': cp_id
         }
         json_msg = dumps(msg)
         self.producer.produce(SupplyReqProducer.TOPIC_NAME, value=json_msg)
