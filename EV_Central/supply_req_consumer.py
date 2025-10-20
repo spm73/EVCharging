@@ -5,7 +5,7 @@ from confluent_kafka import Consumer
 
 class SupplyReqConsumer:
     SUBSCRIBED_TOPIC = ['supply-req']
-    def __init__(self, kafka_ip, kafka_port):
+    def __init__(self, kafka_ip: str, kafka_port: int):
         conf = {
             'bootstrap.servers': f'{kafka_ip}:{kafka_port}',
             'group.id': 'central',

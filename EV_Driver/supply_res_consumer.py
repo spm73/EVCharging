@@ -5,7 +5,7 @@ from confluent_kafka import Consumer
 
 class SupplyResConsumer:
     SUBSCRIBED_TOPIC = ['supply-res']
-    def __init__(self, kafka_ip, kafka_port, driver_id):
+    def __init__(self, kafka_ip: str, kafka_port: int, driver_id: str):
         conf = {
             'bootstrap.servers': f'{kafka_ip}:{kafka_port}',
             'group.id': driver_id,
@@ -30,7 +30,7 @@ class SupplyResConsumer:
                 pass
             
             msg = loads(raw_msg.value().decode('utf-8'))
-            if msg['driver_id'] != self.driver_id:
+            if msg['applicant_id'] != self.driver_id:
                 return None
             return msg
         except RuntimeError:
