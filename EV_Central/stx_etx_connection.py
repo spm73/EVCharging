@@ -25,9 +25,15 @@ class STXETXConnection:
         
     def enq_message(self):
         self.client.sendall(STXETXConnection.ENQ_MESSAGE)
-        answer = self.client.recv(4).decode()
+        answer = self.client.recv(6).decode()
         if not answer:
             raise ConnectionClosedException('No response from server')
+        
+    def enq_answer(self):
+        answer = self.client.recv(6).decode()
+        if not answer:
+            raise ConnectionClosedException('No response from server')
+        self.send_ack()
         
     def close(self):
         self.client.close()
@@ -48,7 +54,7 @@ class STXETXConnection:
         confirmation = None
         while confirmation is None or confirmation == STXETXConnection.NACK_HEADER:
             self.client.sendall(msg)
-            confirmation = self.client.recv(4).decode()
+            confirmation = self.client.recv(6).decode()
             if not confirmation:
                 raise ConnectionClosedException()
         

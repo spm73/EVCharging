@@ -5,6 +5,7 @@ from cp_status import CPStatus
 
 class EngineConnection(STXETXConnection):
     HEALTH_MSG = "req-health-status"
+    CP_ID_MSG = "cp-id"
 
     def __init__(self, ip_addr: str, port_number: int):
         super().__init__(ip_addr, port_number)
@@ -20,6 +21,10 @@ class EngineConnection(STXETXConnection):
         status_number = int(self.recv_message())
         return CPStatus(status_number)
         
+    def req_cp_id(self) -> str:
+        self.send_message(EngineConnection.CP_ID_MSG)
+        cp_id = self.recv_message()
+        return cp_id
 
 # class EngineConnection:
 #     HEALTH_MSG = "req-health-status".encode()
