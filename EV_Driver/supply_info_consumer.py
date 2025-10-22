@@ -27,7 +27,7 @@ class SupplyInfoConsumer:
             if raw_msg.error():
                 pass
             
-            msg = dict(loads(raw_msg.value().decode('utf-8')))
+            msg = loads(raw_msg.value().decode('utf-8'))
             if msg['supply_id'] != supply_id:
                 return None
             return msg

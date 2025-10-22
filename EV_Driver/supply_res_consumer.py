@@ -29,7 +29,7 @@ class SupplyResConsumer:
             if raw_msg.error():
                 pass
             
-            msg = dict(loads(raw_msg.value().decode('utf-8')))
+            msg = loads(raw_msg.value().decode('utf-8'))
             if msg['applicant_id'] != self.driver_id:
                 return None
             return msg

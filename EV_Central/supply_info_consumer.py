@@ -28,7 +28,7 @@ class SupplyInfoConsumer:
             if raw_msg.error():
                 pass
             
-            msg = dict(loads(raw_msg.value().decode('utf-8')))
+            msg = loads(raw_msg.value().decode('utf-8'))
             self.consumer.commit(raw_msg)
             return msg
         except RuntimeError:
