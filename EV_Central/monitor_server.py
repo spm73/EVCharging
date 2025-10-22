@@ -1,5 +1,6 @@
 import socket
 import threading
+from collections.abc import Callable
 
 from monitor_not_responding_exception import MonitorNotRespondingException
 
@@ -35,9 +36,13 @@ class MonitorServer:
         self.server.listen(MonitorServer.MAX_CONNECTIONS)
         print("Server waiting for connections")
         
-    def accept(self) -> socket.socket:
+    def accept(self, function: Callable[[socket.socket], None]):
         monitor, _ = self.server.accept()
-        return monitor
+        thread = threading.Thread(
+            target=function,
+            args=monitor
+        )
+        thread.start()
     
     @staticmethod
     def _client_handler(client_socket, address):

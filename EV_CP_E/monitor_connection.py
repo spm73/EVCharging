@@ -1,10 +1,12 @@
 import socket
+from threading import Thread
+from collections.abc import Callable
 
 from monitor_not_responding_exception import MonitorNotRespondingException
 from cp_status import CPStatus
 
 class MonitorConnection:
-    MAX_CONNECTIONS = 5
+    MAX_CONNECTIONS = 1
     # HI_MSG = 'hi'.encode()
     # OK_MSG = 'ok'.encode()
     
@@ -28,9 +30,13 @@ class MonitorConnection:
         self.server.listen(MonitorConnection.MAX_CONNECTIONS)
         print("Engine waiting for monitor connection")
         
-    def accept(self) -> socket.socket:
+    def accept(self, function: Callable[[socket.socket, None]]):
         monitor, _ = self.server.accept()
-        return monitor
+        thread = Thread(
+            target=function,
+            args=monitor
+        )
+        thread.start()
     
     def close(self):
         self.server.close()
