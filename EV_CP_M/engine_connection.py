@@ -1,26 +1,44 @@
-import socket
+# import socket
 
-from engine_not_responding_exception import EngineNotRespondingException
+from stx_etx_connection import STXETXConnection
 from cp_status import CPStatus
 
-class EngineConnection:
-    HEALTH_MSG = "req-health-status".encode()
+class EngineConnection(STXETXConnection):
+    HEALTH_MSG = "req-health-status"
+
+    def __init__(self, ip_addr: str, port_number: int):
+        super().__init__(ip_addr, port_number)
+        
+    def start_connection(self):
+        self.enq_message()
+        
+    def close_connection(self):
+        self.eot_message()
+        
+    def req_health_status(self) -> CPStatus:
+        self.send_message(EngineConnection.HEALTH_MSG)
+        status_number = int(self.recv_message())
+        return CPStatus(status_number)
+        
+
+# class EngineConnection:
+#     HEALTH_MSG = "req-health-status".encode()
     # IS_SUPPLYING_MSG = "is-supplying".encode()
     # HI_MSG = "hi".encode()
     # WAIT_CENTRAL_MSG = "wait-central".encode()
     # CENTRAL_UNREACHABLE_MSG = "central-unreachable".encode()
     
-    def __init__(self, ip_addr, port_number):
-        self.connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.connection.connect((ip_addr, port_number))
+    # def __init__(self, ip_addr, port_number):
+    #     self.connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    #     self.connection.connect((ip_addr, port_number))
         
-    def req_health_status(self) -> CPStatus:
-        self.connection.sendall(EngineConnection.HEALTH_MSG)
-        health_status = int(self.connection.recv(1).decode())
-        if not health_status:
-            raise EngineNotRespondingException()
+    # def req_health_status(self) -> CPStatus:
+    #     self.connection.sendall(EngineConnection.HEALTH_MSG)
+    #     health_status = int(self.connection.recv(1).decode())
+    #     if not health_status:
+    #         raise EngineNotRespondingException()
         
-        return CPStatus(health_status)
+    #     return CPStatus(health_status)
         
     # def hi_engine(self):
     #     self.connection.sendall(EngineConnection.HI_MSG)
