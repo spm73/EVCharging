@@ -1,6 +1,7 @@
 import socket
 
 from closing_connection_exception import ClosingConnectionException
+from connection_closed_exception import ConnectionClosedException
 
 class STXETXConnection:
     ENQ_MESSAGE = chr(5).encode()
