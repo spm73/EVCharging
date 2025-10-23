@@ -21,17 +21,18 @@ class CentralConnection(STXETXConnection):
         }
         str_msg = dumps(msg)
         self.send_message(str_msg)
-        answer = dict(loads(self.recv_message()))
+        answer = loads(self.recv_message())
         return answer['status'] == 'authorized'
     
-    def register(self, cp_id: str) -> bool:
+    def register(self, cp_id: str, location: str) -> bool:
         msg = {
             'type': 'register',
-            'cp_id': cp_id
+            'cp_id': cp_id,
+            'location': location
         }
         str_msg = dumps(msg)
         self.send_message(str_msg)
-        answer = dict(loads(self.recv_message()))
+        answer = loads(self.recv_message())
         return answer['status'] == 'registered'
     
     def send_status_message(self, current_status: CPStatus):
