@@ -1,7 +1,7 @@
 from json import loads
 from typing import Any
 
-from confluent_kafka import Consumer
+from confluent_kafka import Consumer, KafkaError
 
 class DirectivesConsumer:
     SUBSCRIBED_TOPIC = ['central-directives']
@@ -26,7 +26,9 @@ class DirectivesConsumer:
                 return None
             
             if raw_msg.error():
-                pass
+                error_code = raw_msg.error().code()
+                if error_code != KafkaError._PARTITION_EOF:
+                    raise KafkaError(raw_msg.error())
             
             msg = loads(raw_msg.value().decode('utf-8'))
             target = msg['target']

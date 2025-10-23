@@ -1,7 +1,7 @@
 from json import loads
 from typing import Any
 
-from confluent_kafka import Consumer
+from confluent_kafka import Consumer, KafkaError
 
 class SupplyResConsumer:
     SUBSCRIBED_TOPIC = ['supply-res']
@@ -27,7 +27,9 @@ class SupplyResConsumer:
                 return None
             
             if raw_msg.error():
-                pass
+                error_code = raw_msg.error().code()
+                if error_code != KafkaError._PARTITION_EOF:
+                    raise KafkaError(raw_msg.error())
             
             msg = loads(raw_msg.value().decode('utf-8'))
             if msg['applicant_id'] != self.driver_id:
