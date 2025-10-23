@@ -9,8 +9,11 @@ CP_ID_MSG = "cp-id"
 def monitor_handler(monitor_connection: STXETXConnection, status: CPStatus, cp_id: str):
     try:
         monitor_connection.enq_answer()
+        if status == CPStatus.STOPPED:
+            status = CPStatus.ACTIVE
     except ConnectionClosedException:
-        pass
+        status = CPStatus.STOPPED
+        return
     
     running = True
     while running:
@@ -24,4 +27,5 @@ def monitor_handler(monitor_connection: STXETXConnection, status: CPStatus, cp_i
             running = False
             monitor_connection.close()
         except ConnectionClosedException:
-            pass
+            status = CPStatus.STOPPED
+            return
