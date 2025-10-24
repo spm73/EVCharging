@@ -31,6 +31,8 @@ class EngineConnection(STXETXConnection):
                 status.set_supplying()
             case 3:
                 status.set_stopped()
+            case 4:
+                status.set_waiting_for_supplying()
             case _:
                 status.set_broken_down()
         

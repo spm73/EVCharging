@@ -4,7 +4,8 @@ class CPStatusOptions(Enum):
     ACTIVE = 1
     SUPPLYING = 2
     STOPPED = 3
-    BROKEN_DOWN = 4
+    WAITING_FOR_SUPPLY = 4
+    BROKEN_DOWN = 5
     
 class CPStatus:
     def __init__(self):
@@ -25,6 +26,9 @@ class CPStatus:
     def set_stopped(self):
         self.status = CPStatusOptions.STOPPED
         
+    def set_waiting_for_supplying(self):
+        self.status = CPStatusOptions.WAITING_FOR_SUPPLY
+        
     def set_broken_down(self):
         self.status = CPStatusOptions.BROKEN_DOWN
         
@@ -36,6 +40,9 @@ class CPStatus:
         
     def is_stopped(self) -> bool:
         return self.status == CPStatusOptions.STOPPED
+
+    def is_waiting_for_supply(self):
+        return self.status == CPStatusOptions.WAITING_FOR_SUPPLY
         
     def is_broken_down(self) -> bool:
         return self.status == CPStatusOptions.BROKEN_DOWN

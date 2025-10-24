@@ -31,11 +31,23 @@ def monitor_handler(monitor_connection: STXETXConnection, status: CPStatus):
                 }
                 monitor_connection.send_message(dumps(answer))
             elif msg_type == 'status':
-               status = petition['status']
-               answer = {
-                   'status': status.get_status()
-               }
-               monitor_connection.send_message(dumps(answer))
+                match petition['status']:
+                    case 1:
+                        status.set_active()
+                    case 2:
+                        status.set_supplying()
+                    case 3:
+                        status.set_stopped()
+                    case 4:
+                        status.set_waiting_for_supplying()
+                    case 5:
+                        status.set_broken_down()
+                    case _:
+                        status.set_disconnected()
+                answer = {
+                    'status': status.get_status()
+                }
+                monitor_connection.send_message(dumps(answer))
         except ClosingConnectionException:
             status.set_disconnected()
             running = False
