@@ -1,6 +1,7 @@
 import sys
 import select
 import time
+
 def try_connexion():
     print("Connecting with the CENTRAL...")
     try:

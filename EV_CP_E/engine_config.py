@@ -6,12 +6,16 @@ class EngineConfig:
         
         self.kafka_ip = args['kafka-ip']
         self.kafka_port = args['kafka-port']
+        self.server_ip = args['server-ip']
+        self.server_port = args['server-port']
 
     @staticmethod
     def _get_engine_config():
         parser = argparse.ArgumentParser()
         parser.add_argument('--kafka-ip', type=str, required=True, help='Kafka server IP')
         parser.add_argument('--kafka-port', type=int, required=True, help='Kafka server port')
+        parser.add_argument('--server-ip', type=str, required=True, help='Kafka server port')
+        parser.add_argument('--server-port', type=int, required=True, help='Kafka server port')
         
         args = vars(parser.parse_args())
         return args
