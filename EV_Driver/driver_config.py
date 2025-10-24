@@ -11,7 +11,7 @@ class DriverConfig:
     @staticmethod
     def _get_driver_config():
         parser = argparse.ArgumentParser()
-        parser.add_argument('--id', type=int, required=True, help='ID of client')
+        parser.add_argument('--id', type=str, required=True, help='ID of client')
         parser.add_argument('--kafka-ip', type=str, required=True, help='Kafka server IP')
         parser.add_argument('--kafka-port', type=int, required=True, help='Kafka server port')
         
