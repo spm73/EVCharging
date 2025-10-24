@@ -38,7 +38,7 @@ class CentralConnection(STXETXConnection):
     def send_status_message(self, current_status: CPStatus):
         msg = {
             'type': 'status',
-            'status': current_status
+            'status': current_status.get_status()
         }
         str_msg = dumps(msg)
         self.send_message(str_msg)

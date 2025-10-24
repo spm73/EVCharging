@@ -10,7 +10,7 @@ def monitor_handler(monitor_connection: STXETXConnection, status: CPStatus):
     try:
         monitor_connection.enq_answer()
     except ConnectionClosedException:
-        status = CPStatus.DISCONNECTED
+        status.set_disconnected()
         return
     
     running = True
@@ -33,17 +33,16 @@ def monitor_handler(monitor_connection: STXETXConnection, status: CPStatus):
             elif msg_type == 'status':
                status = petition['status']
                answer = {
-                   'status': status
+                   'status': status.get_status()
                }
                monitor_connection.send_message(dumps(answer))
         except ClosingConnectionException:
-            status = CPStatus.DISCONNECTED
+            status.set_disconnected()
             running = False
             monitor_connection.close()
         except ConnectionClosedException:
-            status = CPStatus.DISCONNECTED
+            status.set_disconnected()
             return
-
 
         
 def register(cp_id: str, location: str) -> Literal['registered', 'error']:

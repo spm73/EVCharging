@@ -16,10 +16,23 @@ class EngineConnection(STXETXConnection):
     def close_connection(self):
         self.eot_message()
         
-    def req_health_status(self) -> CPStatus:
+    # def req_health_status(self) -> CPStatus:
+    #     self.send_message(EngineConnection.HEALTH_MSG)
+    #     status_number = int(self.recv_message())
+    #     return CPStatus(status_number)
+    
+    def req_health_status(self, status: CPStatus):
         self.send_message(EngineConnection.HEALTH_MSG)
         status_number = int(self.recv_message())
-        return CPStatus(status_number)
+        match status_number:
+            case 1:
+                status.set_active()
+            case 2:
+                status.set_supplying()
+            case 3:
+                status.set_stopped()
+            case _:
+                status.set_broken_down()
         
     def req_cp_id(self) -> str:
         self.send_message(EngineConnection.CP_ID_MSG)
