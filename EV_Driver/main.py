@@ -1,4 +1,5 @@
 from time import sleep
+from confluent_kafka import KafkaException
 
 from driver_config import DriverConfig
 from supply_req_producer import SupplyReqProducer
@@ -20,7 +21,12 @@ def ask_supply(cp_id: str, config: DriverConfig) -> int | None:
     req_producer.send_request(cp_id, config.client_id)
     response = None
     while not response:
-        response = res_consumer.get_response()
+        try:
+            response = res_consumer.get_response()
+        except KafkaException as e:
+            error = str(e.args[0])
+            print(f"Error receiving response: {error}")
+            continue
 
     if response['status'] == 'denied':
         print('Supplied denied')

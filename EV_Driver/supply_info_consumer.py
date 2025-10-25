@@ -1,7 +1,7 @@
 from json import loads
 from typing import Any
 
-from confluent_kafka import Consumer, KafkaError
+from confluent_kafka import Consumer, KafkaError, KafkaException
 
 class SupplyInfoConsumer:
     SUBSCRIBED_TOPIC = ['supply-data']
@@ -28,7 +28,7 @@ class SupplyInfoConsumer:
             if raw_msg.error():
                 error_code = raw_msg.error().code()
                 if error_code != KafkaError._PARTITION_EOF:
-                    raise KafkaError(raw_msg.error())
+                    raise KafkaException(raw_msg.error())
             
             msg = loads(raw_msg.value().decode('utf-8'))
             if msg['supply_id'] != self.supply_id:
