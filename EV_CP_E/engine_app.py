@@ -1,19 +1,18 @@
 import sys
 import select
 import time
-
 def try_connexion():
     print("Connecting with the CENTRAL...")
     try:
         #cosas
         pass
     except:
-        raise Exception("No se ha logrado la conexion")
-    print("Conexion con exito")
+        raise Exception("The connection wasn't possible")
+    print("Successful connection")
 
 
-def engine_app(driver_ip):
-    print(f"____________________Driver {driver_ip} connected___________________")
+def engine_app(driver_ip, price):
+    print(f"____________________Driver connected___________________")
     print(" - Do you want to plug the car?(n/y | default y)")
     response = input("---> ")
     if response=="n":
@@ -22,24 +21,27 @@ def engine_app(driver_ip):
     status="Supplying"
     #enviar a central
     time_ini = time.time()
-    print("Presione \'Enter\' para desconectar:")
+    print("Press \'Enter\' to unplug:")
     while status=="Supplying":
-        time_fin = time.time()
-
+        time_plug = time.time() - time_ini
+        #Suponemos que son puntos semirápidos(AC) de 22kw
+        amount = time_plug*(22/3600)
+        cost = amount*price
         #enviar los datos donde sea
-        print(f"\r{' ' * 50}\rTiempo = {time_fin - time_ini:.2f}s", end="")
+        print(f"\r{' ' * 60}\rTime = {time_plug:.2f}s    Amount = {amount:.4f}kwh   Cost = {cost:.4f}€", end="")
         sys.stdout.flush()
 
         if select.select([sys.stdin], [], [], 0)[0]:
             input()  # limpia el buffer
+            print("\n")
             status="Active"
 
     #enviar ticket
-    print("\"\"\"Muchas gracias por usar uno de nuestros puntos :)\"\"\"")
+    print("\"\"\" Thank you for using our service. :)\"\"\"")
 
     
 if __name__=="__main__":
     try_connexion()
     #toca hacer algo que espere alguna conexion de driver
     driver_ip = 0
-    engine_app(driver_ip)
+    engine_app(driver_ip, 0.54)
