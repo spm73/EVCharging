@@ -38,7 +38,7 @@ class CentralApp:
         self.panel.pack(fill="both", expand=True, padx=10, pady=10)
 
         # Lista de puntos simulados
-        self.puntos = CPs_db
+        self.points = CPs_db
 
         # Cuadros visuales
         self.cards = []
@@ -74,9 +74,9 @@ class CentralApp:
 
     def create_panel(self):
         """Crea los cuadros para cada punto"""
-        for i, cp in enumerate(self.puntos):
+        for i, cp in enumerate(self.points):
             frame = tk.Frame(self.panel, bg=STATES["Disconnected"], relief="raised", bd=2)
-            frame.grid(row=i // 3, column=i % 3, padx=10, pady=10, ipadx=10, ipady=10, sticky="nsew")
+            frame.grid(row=i // 4, column=i % 4, padx=10, pady=10, ipadx=10, ipady=10, sticky="nsew")
 
             lbl_id = tk.Label(frame, text= f"Cp={cp.id}" , font=("Arial", 16, "bold"), bg=STATES["Disconnected"], fg="white")
             lbl_id.pack(anchor="w")
@@ -89,7 +89,7 @@ class CentralApp:
 
             lbl_info = tk.Label(frame, font=("Arial", 10, "bold"),text="", bg=STATES["Disconnected"], fg="white")
             lbl_info.pack()
-            button = ttk.Button(frame, text="Power_ON", command=lambda cp=cp: self.status_swap(cp.id))
+            button = ttk.Button(frame, text="Power_OFF", command=lambda cp=cp: self.status_swap(cp.id))
             button.pack(pady=(0, 10))
 
             self.cards.append({
@@ -102,7 +102,7 @@ class CentralApp:
                 "button": button
             })
 
-        for i in range(3):
+        for i in range(4):
             self.panel.grid_columnconfigure(i, weight=1)
 
     def update_panel(self):
@@ -158,6 +158,7 @@ class CentralApp:
         self.update_panel()
 
 
+
     def add_request_message(self, msg):
         """Añade un mensaje de driver request, los más recientes arriba"""
         label = tk.Label(self.requests_frame, text=msg, bg="#383F8F", fg="white", anchor="w")
@@ -188,6 +189,47 @@ class CentralApp:
         if len(self.app_msgs) > self.MAX_MESSAGES:
             old_label = self.app_msgs.pop()  # eliminar el más antiguo
             old_label.destroy()
+
+    def register_cp(self, cp):
+        #Comprueba que anteriormente se haya introducido el Cp
+        with sqlite3.connect("Charging_point.db") as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT 1 FROM Charging_Point WHERE id = ?", (cp.id,))
+            result = cursor.fetchone()
+            if result is None:
+                raise Exception("This CP doesn't exist in the database")
+        
+
+        self.points.append(cp)
+        frame = tk.Frame(self.panel, bg=STATES["Disconnected"], relief="raised", bd=2)
+        frame.grid(row=len(self.cards) // 4, column=len(self.cards) % 4, padx=10, pady=10, ipadx=10, ipady=10, sticky="nsew")
+
+        lbl_id = tk.Label(frame, text= f"Cp={cp.id}" , font=("Arial", 16, "bold"), bg=STATES["Disconnected"], fg="white")
+        lbl_id.pack(anchor="w")
+
+        lbl_location = tk.Label(frame, font=("Arial", 10, "bold"),text=f"Location: {cp.location}", bg=STATES["Disconnected"], fg="white")
+        lbl_location.pack(anchor="w")
+
+        lbl_price = tk.Label(frame, font=("Arial", 10, "bold"),text=f"Price: {cp.price} €/kWh", bg=STATES["Disconnected"], fg="white")
+        lbl_price.pack(anchor="w")
+
+        lbl_info = tk.Label(frame, font=("Arial", 10, "bold"),text="", bg=STATES["Disconnected"], fg="white")
+        lbl_info.pack()
+        button = ttk.Button(frame, text="Power_OFF", command=lambda cp=cp: self.status_swap(cp.id))
+        button.pack(pady=(0, 10))
+
+        self.cards.append({
+            "frame": frame,
+            "lbl_info": lbl_info,
+            "lbl_id": lbl_id,
+            "lbl_location":lbl_location,
+            "lbl_price": lbl_price,
+            "cp": cp,
+            "button": button
+        })
+
+
+        self.update_panel()
 
 if __name__ == "__main__":
     root = tk.Tk()
