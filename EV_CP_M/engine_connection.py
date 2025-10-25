@@ -5,13 +5,13 @@ from cp_status import CPStatus
 
 class EngineConnection(STXETXConnection):
     HEALTH_MSG = "req-health-status"
-    CP_ID_MSG = "cp-id"
 
     def __init__(self, ip_addr: str, port_number: int):
         super().__init__(ip_addr, port_number)
         
-    def start_connection(self):
+    def start_connection(self, cp_id: str):
         self.enq_message()
+        self.send_message(cp_id)
         
     def close_connection(self):
         self.eot_message()
@@ -35,11 +35,6 @@ class EngineConnection(STXETXConnection):
                 status.set_waiting_for_supplying()
             case _:
                 status.set_broken_down()
-        
-    def req_cp_id(self) -> str:
-        self.send_message(EngineConnection.CP_ID_MSG)
-        cp_id = self.recv_message()
-        return cp_id
 
 # class EngineConnection:
 #     HEALTH_MSG = "req-health-status".encode()

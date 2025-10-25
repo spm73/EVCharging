@@ -4,6 +4,7 @@ from collections.abc import Callable
 
 from stx_etx_connection import STXETXConnection
 from cp_status import CPStatus
+from cp_id import CPId
 
 class MonitorServer:
     MAX_CONNECTIONS = 1
@@ -15,7 +16,7 @@ class MonitorServer:
         self.server.listen(MonitorServer.MAX_CONNECTIONS)
         print("Engine waiting for monitor connection")
         
-    def accept(self, client_handler: Callable[[STXETXConnection, CPStatus, str], None], status: CPStatus, cp_id: str):
+    def accept(self, client_handler: Callable[[STXETXConnection, CPStatus, CPId], None], status: CPStatus, cp_id: CPId):
         monitor_socket, _ = self.server.accept()
         connection = STXETXConnection(monitor_socket)
         thread = Thread(
