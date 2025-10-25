@@ -16,12 +16,12 @@ class MonitorServer:
         self.server.listen(MonitorServer.MAX_CONNECTIONS)
         print("Engine waiting for monitor connection")
         
-    def accept(self, client_handler: Callable[[STXETXConnection, CPStatus, CPId], None], status: CPStatus, cp_id: CPId):
+    def accept(self, client_handler: Callable[[STXETXConnection, CPStatus, CPId], None], status: CPStatus, cp_id: CPId, location: str):
         monitor_socket, _ = self.server.accept()
         connection = STXETXConnection(monitor_socket)
         thread = Thread(
             target=client_handler,
-            args=[connection, status, cp_id]
+            args=[connection, status, cp_id, location]
         )
         thread.start()
     

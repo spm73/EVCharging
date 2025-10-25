@@ -5,6 +5,7 @@ from cp_status import CPStatus
 
 class EngineConnection(STXETXConnection):
     HEALTH_MSG = "req-health-status"
+    LOCATION_MSG = "req-location"
 
     def __init__(self, ip_addr: str, port_number: int):
         super().__init__(ip_addr, port_number)
@@ -35,6 +36,11 @@ class EngineConnection(STXETXConnection):
                 status.set_waiting_for_supplying()
             case _:
                 status.set_broken_down()
+                
+    def req_location(self) -> str:
+        self.send_message(EngineConnection.LOCATION_MSG)
+        location = self.recv_message()
+        return location
 
 # class EngineConnection:
 #     HEALTH_MSG = "req-health-status".encode()

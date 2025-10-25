@@ -11,11 +11,15 @@ def main():
     cp_status = CPStatus()
 
     central_connection.start_connection()
+    central_working = True
     engine_connection.start_connection()
 
     if not central_connection.authorize(monitor_config.cp_ip):
-        print("Could not connect to Central because authorization went wrong")
-        return
+        print("Authorization went wrong, trying to register CP")
+        location = engine_connection.req_location()
+        if not central_connection.register(monitor_config.cp_ip, location):
+            print("Registration went wrong, closing CP")
+            return
     
     running = True
     while running:
@@ -24,18 +28,16 @@ def main():
         except ConnectionClosedException:
             cp_status.set_broken_down()
             engine_connection.close_connection()
+            # probar a reconectar con monitor antes de cerrar?
             central_connection.close_connection()
             return
 
-        try:
-            central_connection.send_status_message(cp_status)
-        except ConnectionClosedException:
-            engine_connection.close_connection()
-            central_connection.close_connection()
-            running = False
-            # que pasa sí central se cae
-            # Sergio: parar monitor
-            # Nico: cerrar la conexión
+        if central_working:
+            try:
+                central_connection.send_status_message(cp_status)
+            except ConnectionClosedException:
+                central_connection.close_connection()
+                central_working = False # hay que seguir con el suministro
 
 
 if __name__ == '__main__':
