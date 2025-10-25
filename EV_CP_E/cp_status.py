@@ -8,7 +8,7 @@ class CPStatusOptions(Enum):
     
 class CPStatus:
     def __init__(self):
-        self.status = CPStatusOptions.ACTIVE
+        self.status = CPStatusOptions.STOPPED
         
     def get_status(self) -> int:
         return self.status.value
