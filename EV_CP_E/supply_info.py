@@ -19,3 +19,15 @@ class SupplyInfo:
             self.data.accumulated_consumption,
             self.data.accumulated_price
         )
+        
+    def get_current_consumption(self) -> float:
+        return self.data.get_current_consumption()
+    
+    def get_current_price(self) -> float:
+        return self.data.get_current_price()
+    
+    def get_accumulated_consumption(self) -> float:
+        return self.data.get_accumulated_consumption()
+    
+    def get_accumulated_price(self) -> float:
+        return self.data.get_accumulated_price()

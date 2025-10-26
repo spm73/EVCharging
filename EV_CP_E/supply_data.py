@@ -35,5 +35,5 @@ class SupplyData:
         self.current_consumption = choice(SupplyData.CONSUMPTIONS)
     
     def update_price(self):
-        self.accumulated_price += self.current_price
+        self.accumulated_price += self.current_price * self.current_consumption
         self.current_price = choice(SupplyData.PRICES)
