@@ -14,7 +14,16 @@ from engine_data import EngineData
 from engine_app import *
 
 def handle_directives(directives_consumer: DirectivesConsumer, cp_status: CPStatus, supply_info: SupplyInfo | None) -> int | None:
-    directive = directives_consumer.get_directive()
+    try:
+        directive = directives_consumer.get_directive()
+    except KafkaException as e:
+        error = str(e.args[0])
+        print(f"Error receiving response {error}")
+        return
+    
+    if not directive:
+        return None
+    
     match directive['action']:
         case 'start-supply' if cp_status.is_active():
             cp_status.set_waiting_for_supplying()
@@ -44,7 +53,7 @@ def main():
     print("The engine is waiting for a supply...")
     print("- To turn off press letter \"q\"")
     print("- If you want start a supply without driver press \"ENTER\"")
-    while running:
+    while running: # is_active
 
         #!!!!!!!!primero que compruebe si ha habido un error, si lo hay para el cp¡¡¡¡¡¡¡¡
 
@@ -69,18 +78,22 @@ def main():
                 if response['status'] == 'denied':
                     print("Supply was denied")
                     print(f"Reason: {response['reason']}")
+                    # limpiar la pantalla
                     print("The engine is waiting for a supply...")
                     print("- To turn off press letter \"q\"")
                     print("- If you want start a supply without driver press \"ENTER\"")
                     continue
                 
-                possible_supply_id = handle_directives(directives_consumer, cp_data.status, supply_info)
+                possible_supply_id = None
+                while not possible_supply_id: # refinar bucle para que pasa si le llega otro tipo de directivas
+                    possible_supply_id = handle_directives(directives_consumer, cp_data.status, supply_info)
                 supply_id = possible_supply_id if possible_supply_id else supply_id
                 if supply_id:
                     print(f"____________________Driver connected___________________")
                     print(" - Do you want to plug the car?(n/y | default y)")
                     response = input("---> ")
                     if response == "n":
+                        # limpiar la pantalla
                         print("The engine is waiting for a supply...")
                         print("- To turn off press letter \"q\"")
                         print("- If you want start a supply without driver press \"ENTER\"")
