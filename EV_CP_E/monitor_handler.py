@@ -6,6 +6,8 @@ from cp_id import CPId
 
 HEALTH_MSG = "req-health-status"
 LOCATION_MSG = "req-location"
+CENTRAL_FALLEN_MSG = "central-fallen"
+CENTRAL_RESTORED_MSG = "central-restored"
 
 def monitor_handler(monitor_connection: STXETXConnection, status: CPStatus, cp_id: CPId, location: str):
     try:
@@ -26,6 +28,12 @@ def monitor_handler(monitor_connection: STXETXConnection, status: CPStatus, cp_i
                 monitor_connection.send_message(str(status.value))
             elif petition == LOCATION_MSG:
                 monitor_connection.send_message(location)
+            elif petition == CENTRAL_FALLEN_MSG:
+                # monitor_connection.send_message("ok")
+                status.set_stopped()
+            elif petition == CENTRAL_RESTORED_MSG:
+                # monitor_connection.send_message("ok")
+                status.set_active()
         except ClosingConnectionException:
             running = False
             monitor_connection.close()

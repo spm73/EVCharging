@@ -14,12 +14,24 @@ def main():
     central_working = True
     engine_connection.start_connection()
 
-    if not central_connection.authorize(monitor_config.cp_ip):
-        print("Authorization went wrong, trying to register CP")
-        location = engine_connection.req_location()
-        if not central_connection.register(monitor_config.cp_ip, location):
-            print("Registration went wrong, closing CP")
-            return
+    try:
+        if not central_connection.authorize(monitor_config.cp_ip):
+            print("Authorization went wrong, trying to register CP")
+            location = engine_connection.req_location()
+            if not central_connection.register(monitor_config.cp_ip, location):
+                print("Registration went wrong, closing CP")
+                engine_connection.close_connection()
+                central_connection.close_connection()
+                return
+    except ConnectionClosedException:
+        print("Central has fallen and authentication process could not be carried out")
+        central_working = False
+        engine_connection.send_central_fallen()
+        # reconectar?
+        engine_connection.close_connection()
+        central_connection.close_connection()
+        return
+        
     
     running = True
     while running:
@@ -28,7 +40,13 @@ def main():
         except ConnectionClosedException:
             cp_status.set_broken_down()
             engine_connection.close_connection()
-            # probar a reconectar con monitor antes de cerrar?
+            try:
+                central_connection.send_status_message(cp_status)
+            except ConnectionClosedException:
+                central_connection.close_connection()
+                central_working = False
+                return
+            # probar a reconectar con engine antes de cerrar?
             central_connection.close_connection()
             return
 

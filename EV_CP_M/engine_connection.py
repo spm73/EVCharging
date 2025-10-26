@@ -6,6 +6,8 @@ from cp_status import CPStatus
 class EngineConnection(STXETXConnection):
     HEALTH_MSG = "req-health-status"
     LOCATION_MSG = "req-location"
+    CENTRAL_FALLEN_MSG = "central-fallen"
+    CENTRAL_RESTORED_MSG = "central-restored"
 
     def __init__(self, ip_addr: str, port_number: int):
         super().__init__(ip_addr, port_number)
@@ -41,6 +43,14 @@ class EngineConnection(STXETXConnection):
         self.send_message(EngineConnection.LOCATION_MSG)
         location = self.recv_message()
         return location
+    
+    def send_central_fallen(self):
+        self.send_message(EngineConnection.CENTRAL_FALLEN_MSG)
+        # _ = self.recv_message()
+        
+    def send_central_restored(self):
+        self.send_message(EngineConnection.CENTRAL_RESTORED_MSG)
+        # _ = self.recv_message()
 
 # class EngineConnection:
 #     HEALTH_MSG = "req-health-status".encode()

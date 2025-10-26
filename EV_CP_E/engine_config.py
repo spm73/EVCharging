@@ -9,6 +9,7 @@ class EngineConfig:
         self.server_ip = args['server-ip']
         self.server_port = args['server-port']
         self.location = args['location']
+        self.price = args['price']
 
     @staticmethod
     def _get_engine_config():
@@ -17,8 +18,8 @@ class EngineConfig:
         parser.add_argument('--kafka-port', type=int, required=True, help='Kafka server port')
         parser.add_argument('--server-ip', type=str, required=True, help='IP where monitor server is deployed')
         parser.add_argument('--server-port', type=int, required=True, help='Port where monitor server is deployed')
-        parser.add_argument('--location', type=str, required=True, help='CP location')
-        
+        parser.add_argument('--location', type=str, required=False, help='CP location')
+        parser.add_argument('--price', type=float, required=False, help='CP price of supply')
         
         args = vars(parser.parse_args())
         return args
