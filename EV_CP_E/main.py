@@ -75,6 +75,7 @@ def main():
                         print(f"Error receiving response {error}")
                         continue
                     
+                supply_response.close()
                 if response['status'] == 'denied':
                     print("Supply was denied")
                     print(f"Reason: {response['reason']}")
