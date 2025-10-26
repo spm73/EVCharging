@@ -1,17 +1,19 @@
 import sqlite3
 
+from cp_status import CPStatus
+
 class CChargingPoint:
     def __init__(self, id_cp, location, price):
         self.id = id_cp
         self.location = location
         self.price = price 
-        self.status = "Disconnected"
+        self.status = CPStatus()
         self.consumption_kw = 0.0
         self.cost = 0.0
         self.id_driver = None
 
     def caluclate_amount(self, kw):
-        self.status = "Supplying"
+        self.status.set_supplying()
         self.consuption_kw = kw
         self.cost = self.consumption_kw * self.price
 
@@ -29,7 +31,7 @@ class CChargingPoint:
             raise Exception("Problema con actualizar db", e)
     
     def turn_OFF(self):
-        self.status = "Stopped"
+        self.status.set_stopped()
         self.cost = 0
         self.consumption_kw = 0
         self.id_driver = None
@@ -43,7 +45,7 @@ class CChargingPoint:
     def update_fromDB(self):
         conexion = sqlite3.connect("Charging_point.db")
         cursor = conexion.cursor()
-        cursor.execute(f"SELECT * FROM Charging_Point WHERE id=={self.id}")
+        cursor.execute(f"SELECT * FROM Charging_Point WHERE id={self.id}")
         cp = cursor.fetchall()[0]
         conexion.commit()
         conexion.close()

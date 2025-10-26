@@ -1,5 +1,7 @@
 from json import loads, dumps
 from typing import Literal
+import sqlite3
+from random import random
 
 from stx_etx_connection import STXETXConnection
 from connection_closed_exception import ConnectionClosedException
@@ -62,8 +64,26 @@ def monitor_handler(monitor_connection: STXETXConnection, status: CPStatus):
 
         
 def register(cp_id: str, location: str) -> tuple[Literal['registered', 'error'], float | None]:
-    pass
+    conexion = sqlite3.connect("Charging_point.db")
+    cursor = conexion.cursor()
+    price = random()
+    status = CPStatus()
+    values = (cp_id, location, price, status)
+    cursor.execute(f"INSERT INTO CP (id, location, price, status) VALUES (?, ?, ?, ?)", values)
+    conexion.commit()
+    conexion.close()
 
 
 def authorize(cp_id: str) -> tuple[Literal['authorized', 'denied'], float | None]:
-    pass
+    conexion = sqlite3.connect("Charging_point.db")
+    cursor = conexion.cursor()
+    cursor.execute(f"SELECT * FROM CP WHERE id = {cp_id}")
+    cp_registers = cursor.fetchall()
+    conexion.commit()
+    conexion.close()
+    if len(cp_registers) == 1:
+        return ('authorized', cp_registers[0][2])
+    else:
+        return ('denied', None)
+    
+    # falta juntar esto con la interfaz gráfica

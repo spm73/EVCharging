@@ -3,6 +3,7 @@ import threading
 from collections.abc import Callable
 
 from stx_etx_connection import STXETXConnection
+from cp_status import CPStatus
 
 class MonitorServer:
     MAX_CONNECTIONS = 20
@@ -14,12 +15,13 @@ class MonitorServer:
         self.server.listen(MonitorServer.MAX_CONNECTIONS)
         print("Server waiting for connections")
         
-    def accept(self, client_handler: Callable[[STXETXConnection], None]):
+    # CPStatus es el que esta almacenado en CChargingPoint, habrá que cambiarlo. data es una instancia de ese tipo
+    def accept(self, client_handler: Callable[[STXETXConnection, CPStatus], None], data):
         monitor_socket, _ = self.server.accept()
         connection = STXETXConnection(monitor_socket)
         thread = threading.Thread(
             target=client_handler,
-            args=connection
+            args=[connection, data]
         )
         thread.start()
 
