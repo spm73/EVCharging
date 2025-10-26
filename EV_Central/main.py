@@ -10,11 +10,17 @@ def monitor_server_run(config: CentralConfig, cp_list: list[CChargingPoint]):
     monitor_server.listen()
     
     while True:
-        monitor_server.accept(monitor_handler) # faltaria pasar la data
+        monitor_server.accept(monitor_handler) # faltaria pasar la data, que es una instancia de
+        # un CChargingPoint para que pueda actualizar el estado del cp
 
 def main():
     config = CentralConfig()
-    pass
+    monitor_server_thread = Thread(
+        target=monitor_server_run,
+        args=(config, lista_cps) # lista con lo de CChargingPoint
+    )
+    
+    monitor_server_thread.start()
 
 
 if __name__ == '__main__':
