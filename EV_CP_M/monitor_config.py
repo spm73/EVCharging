@@ -5,10 +5,10 @@ class MonitorConfig:
         args = MonitorConfig._get_monitor_config()
         
         self.cp_ip = args['id']
-        self.central_ip = args['central-ip']
-        self.central_port = args['central-port']
-        self.engine_ip = args['engine-ip']
-        self.engine_port = args['engine-port']
+        self.central_ip = args['central_ip']
+        self.central_port = args['central_port']
+        self.engine_ip = args['engine_ip']
+        self.engine_port = args['engine_port']
 
     @staticmethod
     def _get_monitor_config():

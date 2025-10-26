@@ -5,8 +5,8 @@ class DriverConfig:
         args = DriverConfig._get_driver_config()
         
         self.client_id = args['id']
-        self.kafka_ip = args['kafka-ip']
-        self.kafka_port = args['kafka-port']
+        self.kafka_ip = args['kafka_ip']
+        self.kafka_port = args['kafka_port']
 
     @staticmethod
     def _get_driver_config():

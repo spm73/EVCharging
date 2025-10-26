@@ -4,10 +4,10 @@ class EngineConfig:
     def __init__(self):
         args = EngineConfig._get_engine_config()
         
-        self.kafka_ip = args['kafka-ip']
-        self.kafka_port = args['kafka-port']
-        self.server_ip = args['server-ip']
-        self.server_port = args['server-port']
+        self.kafka_ip = args['kafka_ip']
+        self.kafka_port = args['kafka_port']
+        self.server_ip = args['server_ip']
+        self.server_port = args['server_port']
         self.location = args['location']
         self.price = args['price']
 
