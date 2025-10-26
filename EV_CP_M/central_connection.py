@@ -1,5 +1,6 @@
 # import socket
 from json import dumps, loads
+from typing import Any
 
 from stx_etx_connection import STXETXConnection
 from cp_status import CPStatus
@@ -14,7 +15,7 @@ class CentralConnection(STXETXConnection):
     def close_connection(self):
         self.eot_message()
 
-    def authorize(self, cp_id: str) -> bool:
+    def authorize(self, cp_id: str) -> dict[str, Any]:
         msg = {
             'type': 'auth',
             'cp_id': cp_id
@@ -22,9 +23,9 @@ class CentralConnection(STXETXConnection):
         str_msg = dumps(msg)
         self.send_message(str_msg)
         answer = loads(self.recv_message())
-        return answer['status'] == 'authorized'
+        return answer
     
-    def register(self, cp_id: str, location: str) -> bool:
+    def register(self, cp_id: str, location: str) -> dict[str, Any]:
         msg = {
             'type': 'register',
             'cp_id': cp_id,
@@ -33,7 +34,28 @@ class CentralConnection(STXETXConnection):
         str_msg = dumps(msg)
         self.send_message(str_msg)
         answer = loads(self.recv_message())
-        return answer['status'] == 'registered'
+        return answer
+    
+    # def authorize(self, cp_id: str) -> bool:
+    #     msg = {
+    #         'type': 'auth',
+    #         'cp_id': cp_id
+    #     }
+    #     str_msg = dumps(msg)
+    #     self.send_message(str_msg)
+    #     answer = loads(self.recv_message())
+    #     return answer['status'] == 'authorized'
+    
+    # def register(self, cp_id: str, location: str) -> bool:
+    #     msg = {
+    #         'type': 'register',
+    #         'cp_id': cp_id,
+    #         'location': location
+    #     }
+    #     str_msg = dumps(msg)
+    #     self.send_message(str_msg)
+    #     answer = loads(self.recv_message())
+    #     return answer['status'] == 'registered'
     
     def send_status_message(self, current_status: CPStatus):
         msg = {

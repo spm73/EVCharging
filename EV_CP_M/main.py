@@ -13,16 +13,23 @@ def main():
     central_connection.start_connection()
     central_working = True
     engine_connection.start_connection()
+    price = None
 
     try:
-        if not central_connection.authorize(monitor_config.cp_ip):
+        auth_answer = central_connection.authorize(monitor_config.cp_ip)
+        if auth_answer['status'] != 'authorized':
             print("Authorization went wrong, trying to register CP")
             location = engine_connection.req_location()
-            if not central_connection.register(monitor_config.cp_ip, location):
+            reg_answer = central_connection.register(monitor_config.cp_ip, location)
+            if reg_answer['status'] != 'registered':
                 print("Registration went wrong, closing CP")
                 engine_connection.close_connection()
                 central_connection.close_connection()
                 return
+            else:
+                price = reg_answer['price']
+        else:
+            price = auth_answer['price']
     except ConnectionClosedException:
         print("Central has fallen and authentication process could not be carried out")
         central_working = False
@@ -32,6 +39,12 @@ def main():
         central_connection.close_connection()
         return
         
+    try:
+        engine_connection.send_price(price)
+    except ConnectionClosedException:
+        engine_connection.close_connection()    
+        central_connection.close_connection()
+        return
     
     running = True
     while running:

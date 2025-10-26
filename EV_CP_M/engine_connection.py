@@ -8,6 +8,7 @@ class EngineConnection(STXETXConnection):
     LOCATION_MSG = "req-location"
     CENTRAL_FALLEN_MSG = "central-fallen"
     CENTRAL_RESTORED_MSG = "central-restored"
+    PRICE_MSG = "price="
 
     def __init__(self, ip_addr: str, port_number: int):
         super().__init__(ip_addr, port_number)
@@ -51,6 +52,11 @@ class EngineConnection(STXETXConnection):
     def send_central_restored(self):
         self.send_message(EngineConnection.CENTRAL_RESTORED_MSG)
         # _ = self.recv_message()
+        
+    def send_price(self, price: float):
+        price_msg = EngineConnection.PRICE_MSG + str(price)
+        self.send_message(price_msg)
+        _ = self.recv_message()
 
 # class EngineConnection:
 #     HEALTH_MSG = "req-health-status".encode()

@@ -19,16 +19,20 @@ def monitor_handler(monitor_connection: STXETXConnection, status: CPStatus):
             petition = loads(monitor_connection.recv_message())
             msg_type = petition['type']
             if msg_type == 'auth':
-                auth_result = authorize(petition['cp_id'])
+                auth_result, price = authorize(petition['cp_id'])
                 answer = {
                     'status': auth_result
                 }
+                if price:
+                    answer['price'] = price
                 monitor_connection.send_message(dumps(answer))
             elif msg_type == 'register':
-                register_result = register(petition['cp_id'], petition['location'])
+                register_result, price = register(petition['cp_id'], petition['location'])
                 answer = {
                     'status': register_result
                 }
+                if price:
+                    answer['price'] = price
                 monitor_connection.send_message(dumps(answer))
             elif msg_type == 'status':
                 match petition['status']:
@@ -57,9 +61,9 @@ def monitor_handler(monitor_connection: STXETXConnection, status: CPStatus):
             return
 
         
-def register(cp_id: str, location: str) -> Literal['registered', 'error']:
+def register(cp_id: str, location: str) -> tuple[Literal['registered', 'error'], float | None]:
     pass
 
 
-def authorize(cp_id: str) -> Literal['authorized', 'denied']:
+def authorize(cp_id: str) -> tuple[Literal['authorized', 'denied'], float | None]:
     pass

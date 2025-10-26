@@ -8,6 +8,7 @@ HEALTH_MSG = "req-health-status"
 LOCATION_MSG = "req-location"
 CENTRAL_FALLEN_MSG = "central-fallen"
 CENTRAL_RESTORED_MSG = "central-restored"
+PRICE_MSG = "price="
 
 def monitor_handler(monitor_connection: STXETXConnection, status: CPStatus, cp_id: CPId, location: str):
     try:
@@ -34,6 +35,8 @@ def monitor_handler(monitor_connection: STXETXConnection, status: CPStatus, cp_i
             elif petition == CENTRAL_RESTORED_MSG:
                 # monitor_connection.send_message("ok")
                 status.set_active()
+            elif petition.startswith(PRICE_MSG):
+                price = float(petition.removeprefix(PRICE_MSG))
         except ClosingConnectionException:
             running = False
             monitor_connection.close()

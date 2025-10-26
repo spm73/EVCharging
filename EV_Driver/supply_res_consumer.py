@@ -20,7 +20,7 @@ class SupplyResConsumer:
     def close(self):
         self.consumer.close()
         
-    def get_response(self) -> dict[str: Any] | None:
+    def get_response(self) -> dict[str, Any] | None:
         try:
             raw_msg = self.consumer.poll(timeout=1.0)
             if not raw_msg:
