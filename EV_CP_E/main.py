@@ -7,7 +7,9 @@ from monitor_handler import monitor_handler
 from monitor_server import MonitorServer
 from cp_status import CPStatus
 from engine_data import EngineData
-from engine_app import engine_app
+from engine_app import *
+import sys
+import select
 
 def handle_directives(directives_consumer: DirectivesConsumer, cp_status: CPStatus, supply_info: SupplyInfo | None) -> int | None:
     directive = directives_consumer.get_directive()
@@ -37,21 +39,41 @@ def main():
     supply_id = None
     
     running = True
+    print("The engine is waiting for a supply...")
+    print("- To turn off press letter \"q\"")
+    print("- If you want start a supply without driver press \"ENTER\"")
     while running:
-        possible_supply_id = handle_directives(directives_consumer, cp_data.status, supply_info)
-        supply_id = possible_supply_id if possible_supply_id else supply_id
-        if supply_id:
-            supply_info = SupplyInfo(config.kafka_ip, config.kafka_port, supply_id)
-            print(f"____________________Driver connected___________________")
-            print(" - Do you want to plug the car?(n/y | default y)")
-            response = input("---> ")
-            if response == "n":
-                continue
+
+        #!!!!!!!!primero que compruebe si ha habido un error, si lo hay para el cp¡¡¡¡¡¡¡¡
+
+        #si se pulsa una tecla entra
+        if select.select([sys.stdin], [], [], 0)[0]:
+            key = sys.stdin.read(1)
+            #si enter
+            if key == '\n':
+                print("\n")
+                #llamar supply_interface()
+
+            #si q
+            elif key.lower() == 'q':
+                return
+            
+        #!!!!!!!!aqui poner el if para leer del kafka ¡¡¡¡¡¡¡¡
+        
+        #possible_supply_id = handle_directives(directives_consumer, cp_data.status, supply_info)
+        #supply_id = possible_supply_id if possible_supply_id else supply_id
+        #if supply_id:
+            #supply_info = SupplyInfo(config.kafka_ip, config.kafka_port, supply_id)
+            #print(f"____________________Driver connected___________________")
+            #print(" - Do you want to plug the car?(n/y | default y)")
+            #response = input("---> ")
+            #if response == "n":
+               # continue
             
 
 
-    supply_request = SupplyReqProducer(config.kafka_ip, config.kafka_port)
-    supply_response = SupplyResConsumer(config.kafka_ip, config.kafka_port, cp_data.id)
+    #supply_request = SupplyReqProducer(config.kafka_ip, config.kafka_port)
+    #supply_response = SupplyResConsumer(config.kafka_ip, config.kafka_port, cp_data.id)
     
     # menu para elegir si hacer el suministro
 
