@@ -6,7 +6,7 @@ from supply_info import SupplyInfo
 from monitor_handler import monitor_handler
 from monitor_server import MonitorServer
 from cp_status import CPStatus
-from cp_id import CPId
+from engine_data import EngineData
 from engine_app import engine_app
 
 def handle_directives(directives_consumer: DirectivesConsumer, cp_status: CPStatus, supply_info: SupplyInfo | None) -> int | None:
@@ -28,18 +28,17 @@ def main():
     config = EngineConfig()
     monitor_server = MonitorServer(config.server_ip, config.server_port)
     monitor_server.listen()
-    cp_status = CPStatus()
-    cp_id = CPId()
+    cp_data = EngineData()
 
-    monitor_server.accept(monitor_handler, cp_status, cp_id, config.location)
+    monitor_server.accept(monitor_handler, cp_data)
     # cp_status.set_active() not necessary I believe
-    directives_consumer = DirectivesConsumer(config.kafka_ip, config.kafka_port, cp_id)
+    directives_consumer = DirectivesConsumer(config.kafka_ip, config.kafka_port, cp_data.id)
     supply_info = None
     supply_id = None
     
     running = True
     while running:
-        possible_supply_id = handle_directives(directives_consumer, cp_status, supply_info)
+        possible_supply_id = handle_directives(directives_consumer, cp_data.status, supply_info)
         supply_id = possible_supply_id if possible_supply_id else supply_id
         if supply_id:
             supply_info = SupplyInfo(config.kafka_ip, config.kafka_port, supply_id)
@@ -52,7 +51,7 @@ def main():
 
 
     supply_request = SupplyReqProducer(config.kafka_ip, config.kafka_port)
-    supply_response = SupplyResConsumer(config.kafka_ip, config.kafka_port, cp_id)
+    supply_response = SupplyResConsumer(config.kafka_ip, config.kafka_port, cp_data.id)
     
     # menu para elegir si hacer el suministro
 
