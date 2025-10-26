@@ -1,3 +1,4 @@
+import sys
 from time import sleep
 from confluent_kafka import KafkaException
 
@@ -37,6 +38,30 @@ def ask_supply(cp_id: str, config: DriverConfig) -> int | None:
     return response['supply_id']
 
 
+def supplying(supply_id: int, kafka_ip: str, kafka_port: int):
+    info_consumer = SupplyInfoConsumer(kafka_ip, kafka_port, supply_id)
+    supplying = True 
+    while supplying:
+        info = None
+        try:
+            info = info_consumer.get_info()
+        except KafkaException as e:
+            error = str(e.args[0])
+            print(f"Error receiving response: {error}")
+            continue
+        
+        if info and info['type'] == 'ticket':
+            supplying = False
+            print("Ticket:")
+            print(f"Consumption: {info['consumption']}kwh")
+            print(f"Price: {info['price']}€")
+        elif info and info['type'] == 'supplying':
+            amount = info['consumption']
+            cost = info['price']
+            print(f"\r{' ' * 60}\rConsumption = {amount:.4f}kwh   Price = {cost:.4f}€", end="")
+            sys.stdout.flush()
+
+
 def main():
     driver_config = DriverConfig()
     CPs = get_cp_from_file()
@@ -58,7 +83,7 @@ def main():
             print("Central: checking if CP is available for supply...")
             supply_id = ask_supply(cp, driver_config)
             if supply_id:
-                pass
+                supplying(supply_id, driver_config.kafka_ip, driver_config.kafka_port)
             #enviar una peticion a central a cp
             next_cp = (CPs.index(cp) + 1) % len(CPs)
         elif cp == "quit":
