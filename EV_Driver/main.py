@@ -30,7 +30,7 @@ def ask_supply(cp_id: str, config: DriverConfig) -> int | None:
             continue
 
     if response['status'] == 'denied':
-        print('Supplied denied')
+        print('Supply denied')
         print(f'Reason: {response['reason']}')
         return None
     
