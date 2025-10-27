@@ -8,8 +8,8 @@ class CentralConfig:
         self.port = args['port']
         self.kafka_ip = args['kafka_ip']
         self.kafka_port = args['kafka_port']
-        self.db_ip = args['db_ip']
-        self.db_port = args['db_port']
+        # self.db_ip = args['db_ip']
+        # self.db_port = args['db_port']
         
 
     @staticmethod
@@ -19,8 +19,8 @@ class CentralConfig:
         parser.add_argument('--port', type=int, help='Listening port', required=True)
         parser.add_argument('--kafka-ip', type=str, help='Kafka server IP', required=True)
         parser.add_argument('--kafka-port', type=int, help='Kafka server port', required=True)
-        parser.add_argument('--db-ip', type=str, help='Database server IP', required=True)
-        parser.add_argument('--db-port', type=int, help='Database server port', required=True)
+        # parser.add_argument('--db-ip', type=str, help='Database server IP', required=True)
+        # parser.add_argument('--db-port', type=int, help='Database server port', required=True)
         
         args = vars(parser.parse_args())
         return args
