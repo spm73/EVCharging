@@ -1,4 +1,6 @@
 import sqlite3
+import threading
+from main import *
 
 from cp_status import CPStatus
 
@@ -25,6 +27,9 @@ class CChargingPoint:
 
     def turn_ON(self):
         #Algo implementado por sergio cabezon
+        #generar un productor que vaya diciendo cosiras
+        threading.Thread(target=directives_producer_thread, args=(0,0,0,0), daemon=True).start() 
+        #hay que ver como vuelve a su estado normal si ya se hace solo con los sockets o imlpementar algo 
         try:
             self.update_fromDB()
         except Exception as e:
@@ -36,11 +41,15 @@ class CChargingPoint:
         self.consumption_kw = 0
         self.id_driver = None
 
+        #generar un productor que vaya diciendo cosiras
+        threading.Thread(target=directives_producer_thread, args=(0,0,0,0), daemon=True).start()   
+
         conexion = sqlite3.connect("Charging_point.db")
         cursor = conexion.cursor()
         cursor.execute(f"UPDATE Charging_Point SET status=\"Stopped\", consumption=0 WHERE id={self.id}")
         conexion.commit()
         conexion.close()
+        
 
     def update_fromDB(self):
         conexion = sqlite3.connect("Charging_point.db")
