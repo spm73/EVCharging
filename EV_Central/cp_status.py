@@ -11,6 +11,11 @@ class CPStatusOptions(Enum):
 class CPStatus:
     def __init__(self):
         self.status = CPStatusOptions.DISCONNECTED
+
+    def __eq__(self, other):
+        if isinstance(other, CPStatus):
+            return self.status == other.status
+        return False
         
     def get_status(self) -> int:
         return self.status.value

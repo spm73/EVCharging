@@ -27,30 +27,33 @@ def enqueue_message(message_type, data):
     gui_queue.put((message_type, data))
 
 def process_queue(app):
-    conexion = sqlite3.connect("Charging_point.db")
-    cursor = conexion.cursor()
     while not gui_queue.empty():
         message_type, data = gui_queue.get()
         if message_type == "helth_status":
             #meter condicion, segun el estado que envie un mensaje o otro
-            cursor.execute(f"UPDATE Charging_Point SET status=\"{0}\", consumption={0}")#consumption son los kwh q lleva
-            conexion.commit()
-            app.update_panel()
-            app.add_app_message(f"Update CP {data}")
-            
+            app.modify_cp_status(0,0)#cp_id, consumption, cost
+            app.add_app_message("Ya veremos", "color tmb yaa veremos")
+
         elif message_type == "register_cp":
             #con los mensajes de kafka deber ser posible construir el cp
             cp = CChargingPoint(0,0,0)
             app.register_cp(cp)
 
         elif message_type == "supply_request":
-            cursor.execute(f"UPDATE Charging_Point SET status=\"{0}\"")#consumption son los kwh q lleva
-            conexion.commit() 
-            app.update_panel()
+            app.modify_cp_status(0,0)#cp_id, status
+            app.modify_cp_driverid(0,0)#cp_id, driver_id
             #Ver los mensajes del consumer
-            app.add_request_message(f"DATE  STARTTIME  USER    CP")
+            app.add_request_message(f"DATE  STARTTIME  USER    CP", 0)#cp_id
+        
+        elif message_type == "supply_info":
+            app.modify_cp_info(0,0,0)#cp_id, consumption, cost
+
+        elif message_type == "supply_ticket":
+            app.modify_cp_status(0,0,0)#cp_id, consumption = 0, cost = 0
+            #Ver los mensajes del consumer
+            app.delete_request_message(0)#cp_id
+
             
-    conexion.close()
     app.root.after(100, process_queue, app)
 
 def directives_producer_thread(producer, target: str, action: str, supply_id: int | None):
@@ -76,8 +79,6 @@ def health_monitor_thread():
 ##################################################################################
 
 def supply_req_consumer_thread(consumer):
-    conexion = sqlite3.connect("Charging_point.db")
-    cursor = conexion.cursor()
     #Thread que escucha un topic de Kafka de forma indefinida
     for msg in consumer:
         # Envia mensaje a la GUI
@@ -87,19 +88,19 @@ def supply_req_consumer_thread(consumer):
 
 #VA A HABER UN PROBLEMA CON LA SINCRONIZACION DE LA BD TENGO QUE VERLO MEJOR PERO DE MOMENTO SE QUEDA ASI    
 def supply_info_consumer_thread(consumer):
-    conexion = sqlite3.connect("Charging_point.db")
-    cursor = conexion.cursor()
     #Thread que escucha un topic de Kafka de forma indefinida
     for msg in consumer:
         #No hace falta enviar mensaje a la GUI porque solo modifica la bd
         #como no sé que valores pasa lo dejo comentado :)
         #es tarde ya :(
+        #contemplar el timpo y ver cual manda
+        if 1:
+            enqueue_message(("supply_info", msg.value))
+        elif 0:
+            enqueue_message(("supply_ticket", msg.value))
         #genera un producer para enviar datos al driver, no he visto como se hace confio en ti
         threading.Thread(target=supply_res_producer_thread, args=(0,0,0,0,0), daemon=True).start()
-        cursor.execute(f"UPDATE Charging_Point SET status=\"{0}\", consumption={0}")#consumption son los kwh q lleva
-        conexion.commit()
 
-    conexion.close()
 
 
 
@@ -111,11 +112,10 @@ def main():
     CPs = []
     for cp in cursor.fetchall():
         CPs.append(CChargingPoint(cp[0], cp[1], cp[2]))
-    conexion.commit()
-    conexion.close()
+
     
     root = tk.Tk()
-    app = CentralApp(root, CPs)
+    app = CentralApp(root, CPs, conexion)
 
         # Revisar la cola periódicamente
     root.after(100, process_queue, app)
@@ -132,13 +132,11 @@ def main():
     finally:
 
         #No se como funciona lo de cerrar pero intuyo que iría aqui
-        conexion = sqlite3.connect("Charging_point.db")
         cursor = conexion.cursor()
-        cursor.execute("UPDATE Charging_Point SET status=\"Disconnected\", consumption=0")
+        cursor.execute("UPDATE Charging_Point SET status=\"Disconnected\"")
         conexion.commit()
         conexion.close()
-    root = tk.Tk()
-    app = CentralApp(root)
+
     
 
 

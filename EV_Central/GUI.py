@@ -17,11 +17,13 @@ STATES = {
 
 class CentralApp:   
     MAX_MESSAGES = 5
-    def __init__(self, root, CPs_db):
+    def __init__(self, root, CPs_db, conn):
         self.root = root
         self.root.title("EVCharging Central - Monitorization panel")
         self.root.geometry("950x600")
         self.root.config(bg="#383F8F")
+
+        self.conn = conn
 
         title = tk.Label(
             root,
@@ -67,9 +69,8 @@ class CentralApp:
         self.app_title.pack(anchor="w")
 
         # Contenedores de mensajes
-        self.requests_msgs = []
+        self.requests_msgs = {}
         self.app_msgs = []
-
 
 
     def create_panel(self):
@@ -106,10 +107,9 @@ class CentralApp:
             self.panel.grid_columnconfigure(i, weight=1)
 
     def update_panel(self):
-        """Actualiza los cuadros con los datos actuales"""
+        #Actualiza los cuadros con los datos actuales
         for card in self.cards:
             cp = card["cp"]
-            cp.update_fromDB()
             frame = card["frame"]
             lbl_info = card["lbl_info"]
             lbl_id = card["lbl_id"]
@@ -131,8 +131,8 @@ class CentralApp:
             lbl_info.config(text=info, bg=STATES[cp.status])
 
         # Si al menos un punto sigue en 'Supplying', vuelve a llamar a update_panel después de X ms
-        if any(card["cp"].status == "Supplying" for card in self.cards):
-            self.panel.after(1000, self.update_panel)
+        #if any(card["cp"].status == "Supplying" for card in self.cards):
+        #    self.panel.after(1000, self.update_panel)
 
 
     def status_swap(self, cp_id):
@@ -147,7 +147,7 @@ class CentralApp:
             button.config(text = "Power_OFF")
         elif button["text"] == "Power_OFF":
             try:
-                cp.turn_OFF()
+                cp.turn_OFF(self.conn)
             except Exception as e:
                 raise Exception("There was a problem turning OFF", e)
             self.add_app_message(f"Cp {cp.id} out of order", color="#FF4C4C")
@@ -159,8 +159,8 @@ class CentralApp:
 
 
 
-    def add_request_message(self, msg):
-        """Añade un mensaje de driver request, los más recientes arriba"""
+    def add_request_message(self, msg, cp_id):
+        #Añade un mensaje de driver request, los más recientes arriba
         label = tk.Label(self.requests_frame, text=msg, bg="#383F8F", fg="white", anchor="w")
 
         if self.requests_msgs:
@@ -168,15 +168,18 @@ class CentralApp:
         else:
             label.pack(anchor="w", after=self.requests_subtitle)
 
-        self.requests_msgs.insert(0, label)
+        self.requests_msgs[cp_id] = label
 
-        if len(self.requests_msgs) > self.MAX_MESSAGES:
-            old_label = self.requests_msgs.pop()  # eliminar el más antiguo
+
+    def delete_request_message(self, cp_id):
+        if cp_id in self.requests_msgs:
+            old_label = self.requests_msgs[cp_id]
+            del self.requests_msgs[cp_id]  # eliminar el más antiguo
             old_label.destroy()
 
 
     def add_app_message(self, msg, color="white"):
-        """Añade un mensaje de aplicación, los más recientes arriba"""
+        #Añade un mensaje de aplicación, los más recientes arriba
         label = tk.Label(self.app_frame, text=msg, bg="#383F8F", fg=color, anchor="w")
 
         if self.app_msgs:
@@ -192,12 +195,14 @@ class CentralApp:
 
     def register_cp(self, cp):
         #Comprueba que anteriormente se haya introducido el Cp
-        with sqlite3.connect("Charging_point.db") as conn:
-            cursor = conn.cursor()
-            cursor.execute("SELECT 1 FROM Charging_Point WHERE id = ?", (cp.id,))
-            result = cursor.fetchone()
-            if result is None:
-                raise Exception("This CP doesn't exist in the database")
+        if cp in self.points:
+            raise Exception("The point was already registered")
+        
+
+        cursor = self.conn.cursor()
+        cursor.execute(f"INSERT INTO CP (id, location, price, status) VALUES ({cp.id}, {cp.location}, {cp.price},{cp.status.get_status()})")
+        self.conn.commit()
+
         
 
         self.points.append(cp)
@@ -230,6 +235,60 @@ class CentralApp:
 
 
         self.update_panel()
+
+        def modify_cp_status(self, cp_id, status):
+            modified = False
+            for cp in self.points:
+                if cp.id == cp_id: 
+                    cp.status = status
+                    cursor = self.conn.cursor()
+                    cursor.execute(f"UPDATE Charging_Point SET status=\"{cp.status.get_status()}\"")
+                    self.conn.commit()
+                    modified = True
+            
+            if modified:
+                self.update_panel()
+            else:
+                raise Exception("this CP wasn't registered")
+
+        def modify_cp_driverip(self, cp_id, driver_id):
+            modified = False
+            for cp in self.points:
+                if cp.id == cp_id:
+                    cp.driver_id == driver_id
+                    modified = True
+                    
+            if modified:
+                self.update_panel()
+            else:
+                raise Exception("this CP wasn't registered")
+
+            
+        def modify_cp_info(self, cp_id, consumption, cost):
+            modified = False
+            for cp in self.points:
+                if cp.id == cp_id:
+                    cp.consumption == consumption
+                    cp.cost = cost
+                    modified = True
+                    
+            if modified:
+                self.update_panel()
+            else:
+                raise Exception("this CP wasn't registered")
+
+        def reset_cp(self, cp_id):
+            modified = False
+            for cp in self.points:
+                if cp.id == cp_id:
+                    cp.consumption = 0
+                    cp.cost = 0
+                    cp.driver_id = None
+                    modified = True
+                    
+            if not modified:
+                raise Exception("this CP wasn't registered")
+
 
 if __name__ == "__main__":
     root = tk.Tk()
