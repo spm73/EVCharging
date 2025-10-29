@@ -3,7 +3,7 @@ from typing import Any
 
 from confluent_kafka import Consumer, KafkaError, KafkaException
 
-class SupplyResConsumer:
+class SupplyErrorConsumer:
     SUBSCRIBED_TOPIC = ['supply-error']
     def __init__(self, kafka_ip: str, kafka_port: int, driver_id: str, supply_id: int):
         conf = {
@@ -14,7 +14,7 @@ class SupplyResConsumer:
             'enable.auto.commit': True,
         }
         self.consumer = Consumer(conf)
-        self.consumer.subscribe(SupplyResConsumer.SUBSCRIBED_TOPIC)
+        self.consumer.subscribe(SupplyErrorConsumer.SUBSCRIBED_TOPIC)
         self.supply_id = supply_id
         
     def close(self):

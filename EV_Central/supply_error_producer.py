@@ -2,7 +2,7 @@ from json import dumps
 
 from confluent_kafka import Producer
 
-class SupplyResProducer:
+class SupplyErrorProducer:
     TOPIC_NAME = 'supply-error'
     def __init__(self, kafka_ip: str, kafka_port: int):
         conf = {
@@ -16,5 +16,5 @@ class SupplyResProducer:
             'msg': 'Engine has closed down abruptly, we are sorry'
         }
         msg = dumps(msg_content)
-        self.producer.produce(SupplyResProducer.TOPIC_NAME, value=msg)
+        self.producer.produce(SupplyErrorProducer.TOPIC_NAME, value=msg)
         self.producer.flush()

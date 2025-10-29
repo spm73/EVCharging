@@ -1,4 +1,5 @@
 from threading import Thread
+from confluent_kafka import KafkaException
 from GUI import *
 from central_config import CentralConfig
 from monitor_server import MonitorServer
@@ -6,6 +7,12 @@ from CChargingPoint import CChargingPoint
 from monitor_handler import monitor_handler
 import queue
 from stx_etx_connection import *
+from directives_producer import DirectivesProducer
+from supply_error_producer import SupplyErrorProducer
+from supply_info_consumer import SupplyInfoConsumer
+from supply_info_producer import SupplyInfoProducer
+from supply_req_consumer import SupplyReqConsumer
+from supply_res_producer import SupplyResProducer
 
 
 #################################################################################
@@ -78,34 +85,50 @@ def health_monitor_thread():
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!toca definir uno para los registros¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡#
 ##################################################################################
 
-def supply_req_consumer_thread(consumer):
-    #Thread que escucha un topic de Kafka de forma indefinida
-    for msg in consumer:
-        # Envia mensaje a la GUI
-        enqueue_message(("supply_request", msg.value))
+def supply_req_consumer_thread(consumer: SupplyReqConsumer):
+    while running:
+        request = None
+        while not request:
+            try:
+                request = consumer.get_request()
+            except KafkaException as e:
+                error = str(e.args[0])
+                print(error) # Si lo puedes hacer más bonito mejor
+        enqueue_message("supply_request", request)
     
 
 
 #VA A HABER UN PROBLEMA CON LA SINCRONIZACION DE LA BD TENGO QUE VERLO MEJOR PERO DE MOMENTO SE QUEDA ASI    
-def supply_info_consumer_thread(consumer):
-    #Thread que escucha un topic de Kafka de forma indefinida
-    for msg in consumer:
-        #No hace falta enviar mensaje a la GUI porque solo modifica la bd
-        #como no sé que valores pasa lo dejo comentado :)
-        #es tarde ya :(
-        #contemplar el timpo y ver cual manda
-        if 1:
-            enqueue_message(("supply_info", msg.value))
-        elif 0:
-            enqueue_message(("supply_ticket", msg.value))
-        #genera un producer para enviar datos al driver, no he visto como se hace confio en ti
-        threading.Thread(target=supply_res_producer_thread, args=(0,0,0,0,0), daemon=True).start()
+def supply_info_consumer_thread(consumer: SupplyInfoConsumer, producer: SupplyInfoProducer):
+    while running:
+        info = None
+        while not info:
+            try:
+                info = consumer.get_info()
+            except KafkaException as e:
+                error = str(e.args[0])
+                print(error) # Si lo puedes hacer más bonito mejor
+        producer.repeat_msg(info)
+        if info.get('type') == 'supplying':
+            enqueue_message("supply_info", info)
+        elif info.get('type') == 'ticket':
+            enqueue_message("supply_ticket", info)
+
+    #genera un producer para enviar datos al driver, no he visto como se hace confio en ti
+    threading.Thread(target=supply_res_producer_thread, args=(0,0,0,0,0), daemon=True).start()
 
 
 
-
+running = True
 
 def main():
+    config = CentralConfig()
+    req_consumer = SupplyReqConsumer(config.kafka_ip, config.kafka_port)
+    info_consumer = SupplyInfoConsumer(config.kafka_ip, config.kafka_port)
+    info_producer = SupplyInfoProducer(config.kafka_ip, config.kafka_port)
+    directives_producer = DirectivesProducer(config.kafka_ip, config.kafka_port)
+    res_producer = SupplyResProducer(config.kafka_ip, config.kafka_port)
+    error_producer = SupplyErrorProducer(config.kafka_ip, config.kafka_port)
     conexion = sqlite3.connect("Charging_point.db")
     cursor = conexion.cursor()
     cursor.execute("SELECT * FROM Charging_Point")
@@ -119,18 +142,16 @@ def main():
 
         # Revisar la cola periódicamente
     root.after(100, process_queue, app)
-    req_consumer = 0 #crear consumer
-    info_consumer = 0 #crear consumer
     threading.Thread(target=health_monitor_thread, daemon=True).start()
     threading.Thread(target=supply_req_consumer_thread, args=(req_consumer), daemon=True).start()
-    threading.Thread(target=supply_info_consumer_thread, args=(req_consumer), daemon=True).start()
+    threading.Thread(target=supply_info_consumer_thread, args=(info_consumer, info_producer), daemon=True).start()
 
     try:
         root.mainloop()
     except Exception as e:
         raise Exception("putada gorda", e)
     finally:
-
+        running = False
         #No se como funciona lo de cerrar pero intuyo que iría aqui
         cursor = conexion.cursor()
         cursor.execute("UPDATE Charging_Point SET status=\"Disconnected\"")

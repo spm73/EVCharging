@@ -4,7 +4,7 @@ from typing import Any
 from confluent_kafka import Consumer, KafkaError, KafkaException
 
 class SupplyInfoConsumer:
-    SUBSCRIBED_TOPIC = ['supply-data']
+    SUBSCRIBED_TOPIC = ['supply-data2']
     def __init__(self, kafka_ip: str, kafka_port: int, supply_id: int):
         conf = {
             'bootstrap.servers': f'{kafka_ip}:{kafka_port}',
