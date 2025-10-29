@@ -1,5 +1,7 @@
 import sys
 import select
+import threading
+import time
 from confluent_kafka import KafkaException
 
 from engine_config import EngineConfig
@@ -9,130 +11,279 @@ from supply_res_consumer import SupplyResConsumer
 from supply_info import SupplyInfo
 from monitor_handler import monitor_handler
 from monitor_server import MonitorServer
-from cp_status import CPStatus
 from engine_data import EngineData
-from engine_app import *
 
-def handle_directives(directives_consumer: DirectivesConsumer, cp_status: CPStatus, supply_info: SupplyInfo | None) -> int | None:
-    try:
-        directive = directives_consumer.get_directive()
-    except KafkaException as e:
-        error = str(e.args[0])
-        print(f"Error receiving response {error}")
-        return
-    
-    if not directive:
-        return None
-    
-    match directive['action']:
-        case 'start-supply' if cp_status.is_active():
-            cp_status.set_waiting_for_supplying()
-            return directive['supply_id']
-        case 'stop' if cp_status.is_active() or cp_status.is_waiting_for_supply():
-            cp_status.set_stopped()
-        case 'stop' if cp_status.is_supplying() and supply_info:
-            supply_info.send_ticket()
-        case 'resume' if cp_status.is_stopped():
-            cp_status.set_active()
-            # entrar en la interfaz de Nico
+class EngineApp:
+    def __init__(self):
+        self.config = EngineConfig()
+        self.cp_data = EngineData(self.config.location)
+        self.monitor_server = MonitorServer(self.config.server_ip, self.config.server_port)
+        self.directives_consumer = None
+        self.supply_info = None
+        self.supply_id = None
+        self.running = True
+        self.monitor_connected = False
+        self.directive_thread = None
+        self.pending_supply_start = False
+        self.lock = threading.Lock()
+
+    def wait_for_monitor(self):
+        """Espera a que el monitor se conecte antes de continuar"""
+        print("=" * 60)
+        print("EV_CP_E - Charging Point Engine")
+        print("=" * 60)
+        print(f"CP ID: {self.cp_data.id}")
+        print(f"Location: {self.cp_data.location}")
+        print(f"Listening on {self.config.server_ip}:{self.config.server_port}")
+        print("\nWaiting for Monitor to connect...")
+        print("=" * 60)
+        
+        self.monitor_server.listen()
+        self.monitor_server.accept(monitor_handler, self.cp_data)
+        
+        self.monitor_connected = True
+        print("\n✓ Monitor connected successfully!")
+        print("=" * 60)
+        #time.sleep(1)
+
+    def handle_directives_thread(self):
+        """Hilo que constantemente escucha directivas de la central"""
+        while self.running:
+            try:
+                directive = self.directives_consumer.get_directive()
+                
+                if not directive:
+                    #time.sleep(0.1)
+                    continue
+                
+                with self.lock:
+                    self._process_directive(directive)
+                    
+            except KafkaException as e:
+                error = str(e.args[0])
+                print(f"\n[ERROR] Kafka error in directives: {error}")
+                #time.sleep(1)
+            except Exception as e:
+                print(f"\n[ERROR] Unexpected error in directives thread: {e}")
+                #time.sleep(1)
+
+    def _process_directive(self, directive):
+        """Procesa una directiva recibida de la central"""
+        action = directive.get('action')
+        
+        if action == 'start-supply' and self.cp_data.status.is_active():
+            self.supply_id = directive.get('supply_id')
+            self.pending_supply_start = True
+            print(f"\n\n[CENTRAL] Supply request received (ID: {self.supply_id})")
+            print("[INFO] Waiting for driver to plug the vehicle...")
+                
+        elif action == 'stop' and self.cp_data.status.is_active() or self.cp_data.status.is_waiting_for_supply():
+            self.cp_data.status.set_stopped()
+            print("\n\n[CENTRAL] CP has been STOPPED by Central")
+            print("[INFO] CP is now OUT OF SERVICE")
+            self.show_initial_menu()
+                
+        elif action == 'stop' and self.cp_data.status.is_supplying() and self.supply_info:
+            print("\n\n[CENTRAL] EMERGENCY STOP during supply!")
+            self.cp_data.status.set_active()
+            self.supply_info.send_ticket()
+            print("[INFO] Supply terminated. Ticket sent.")
+            self.supply_info = None
+            self.show_initial_menu()
+                
+        elif action == 'resume' and self.cp_data.status.is_stopped():
+            self.cp_data.status.set_active()
+            print("\n\n[CENTRAL] CP has been RESUMED by Central")
+            print("[INFO] CP is now ACTIVE and available")
+            self.show_initial_menu()
+
+    def show_initial_menu(self):
+        """Muestra el menú inicial del CP"""
+        print("\n" + "=" * 60)
+        print(f"CP Status: {self.cp_data.status.get_status_name()}")
+        print("=" * 60)
+        print("OPTIONS:")
+        print("  [ENTER] - Start manual supply (without driver app)")
+        print("  [q]     - Shutdown engine")
+        print("=" * 60)
+        print("Waiting for input or driver connection via Central...")
+
+    def request_manual_supply(self):
+        """Solicita un suministro manual (sin app del conductor)"""
+        print("\n[MANUAL SUPPLY] Requesting authorization from Central...")
+        
+        supply_request = SupplyReqProducer(self.config.kafka_ip, self.config.kafka_port)
+        supply_response = SupplyResConsumer(self.config.kafka_ip, self.config.kafka_port, self.cp_data.id)
+        
+        supply_request.send_request(self.cp_data.id)
+        print("[CENTRAL] Checking if CP is available for supply...")
+        
+        response = None
+        
+        while not response:
+            try:
+                response = supply_response.get_response()
+            except KafkaException as e:
+                error = str(e.args[0])
+                print(f"[ERROR] {error}")
+                #time.sleep(0.5)
+                continue
+        
+        supply_response.close()
+        
+        if response['status'] == 'denied':
+            print(f"[CENTRAL] Supply DENIED")
+            print(f"[REASON] {response['reason']}")
+            return False
+        
+        print("[CENTRAL] Supply AUTHORIZED")
+        return True
+
+    def wait_for_supply_directive(self):
+        """Espera a recibir la directiva start-supply"""
+        print("[INFO] Waiting for supply directive from Central...")
+        
+        while True:
+            with self.lock:
+                if self.pending_supply_start:
+                    self.pending_supply_start = False
+                    return self.supply_id
+            #time.sleep(0.1)
+
+    def execute_supply(self, supply_id):
+        """Ejecuta el suministro de energía"""
+        print("\n" + "=" * 60)
+        print(f"SUPPLY ID: {supply_id}")
+        print("=" * 60)
+        print("Do you want to plug the car? (y/n) [default: y]")
+        
+        ready, _, _ = select.select([sys.stdin], [], [], 0)
+        
+        if ready:
+            response = sys.stdin.readline().strip().lower()
+            if response == 'n':
+                print("\n[INFO] Supply cancelled by operator")
+                return
+        else:
+            # Si no hay respuesta inmediata, asumir 'y'
+            pass
+        
+        # Iniciar suministro
+        self.cp_data.status.set_supplying()
+        self.supply_info = SupplyInfo(self.config.kafka_ip, self.config.kafka_port, supply_id)
+        
+        print("\n" + "=" * 60)
+        print("SUPPLYING ENERGY")
+        print("=" * 60)
+        print("Press [ENTER] to unplug and finish supply")
+        print("-" * 60)
+        
+        time_ini = time.time()
+        
+        while self.cp_data.status.is_supplying():
+            time_elapsed = time.time() - time_ini
+            
+            with self.lock:
+                if not self.cp_data.status.is_supplying():
+                    break
+                    
+                self.supply_info.send_info()
+                amount = self.supply_info.get_consumption()
+                cost = self.supply_info.get_cost()
+            
+            print(f"\rTime: {time_elapsed:.2f}s | Energy: {amount:.4f} kWh | Cost: {cost:.4f} €", 
+                  end="", flush=True)
+            
+            # Comprobar si se pulsa ENTER para desenchufar
+            if select.select([sys.stdin], [], [], 0.1)[0]:
+                sys.stdin.readline()  # Limpiar buffer
+                print("\n\n[INFO] Vehicle unplugged by operator")
+                self.cp_data.status.set_active()
+                break
+        
+        # Enviar ticket final
+        if self.supply_info:
+            self.supply_info.send_ticket()
+            print("\n" + "=" * 60)
+            print("SUPPLY COMPLETED - Thank you for using our service! :)")
+            print("=" * 60)
+            self.supply_info = None
+
+    def run(self):
+        """Función principal de ejecución"""
+        # 1. Esperar al monitor
+        self.wait_for_monitor()
+        
+        # 2. Iniciar consumer de directivas
+        self.directives_consumer = DirectivesConsumer(
+            self.config.kafka_ip, 
+            self.config.kafka_port, 
+            self.cp_data.id
+        )
+        
+        # 3. Iniciar hilo para escuchar directivas
+        self.directive_thread = threading.Thread(target=self.handle_directives_thread, daemon=True)
+        self.directive_thread.start()
+        
+        # 4. Mostrar menú inicial
+        self.show_initial_menu()
+        
+        # 5. Bucle principal
+        while self.running:
+            # Comprobar si hay directiva pendiente de supply
+            with self.lock:
+                if self.pending_supply_start:
+                    supply_id = self.supply_id
+                    self.pending_supply_start = False
+                    self.execute_supply(supply_id)
+                    self.show_initial_menu()
+                    continue
+            
+            # Esperar input del usuario
+            if select.select([sys.stdin], [], [], 0.5)[0]:
+                key = sys.stdin.read(1)
+                
+                if key == '\n':  # ENTER - suministro manual
+                    if not self.cp_data.status.is_active():
+                        print("\n[ERROR] CP is not active. Cannot start supply.")
+                        print(f"Current status: {self.cp_data.status.get_status_name()}")
+                        continue
+                    
+                    # Solicitar autorización manual
+                    if self.request_manual_supply():
+                        # Esperar directiva de la central
+                        supply_id = self.wait_for_supply_directive()
+                        #supply_id = self.supply_id
+                        if supply_id:
+                            self.execute_supply(supply_id)
+                        else:
+                            print("[ERROR] Failed to receive supply directive")
+                    
+                    self.show_initial_menu()
+                    
+                elif key.lower() == 'q':  # Apagar
+                    print("\n[INFO] Shutting down engine...")
+                    self.running = False
+                    break
+        
+        # Cleanup
+        print("\n[INFO] Engine stopped")
+        if self.directives_consumer:
+            self.directives_consumer.close()
 
 
 def main():
-    config = EngineConfig()
-    monitor_server = MonitorServer(config.server_ip, config.server_port)
-    monitor_server.listen()
-    cp_data = EngineData()
-
-    monitor_server.accept(monitor_handler, cp_data)
-    # cp_status.set_active() not necessary I believe
-    directives_consumer = DirectivesConsumer(config.kafka_ip, config.kafka_port, cp_data.id)
-    supply_info = None
-    supply_id = None
-    
-    running = True
-    print("The engine is waiting for a supply...")
-    print("- To turn off press letter \"q\"")
-    print("- If you want start a supply without driver press \"ENTER\"")
-    while running: # is_active
-
-        #!!!!!!!!primero que compruebe si ha habido un error, si lo hay para el cp¡¡¡¡¡¡¡¡
-
-        #si se pulsa una tecla entra
-        if select.select([sys.stdin], [], [], 0)[0]:
-            key = sys.stdin.read(1)
-            #si enter
-            if key == '\n':
-                supply_request = SupplyReqProducer(config.kafka_ip, config.kafka_port)
-                supply_response = SupplyResConsumer(config.kafka_ip, config.kafka_port, cp_data.id)
-                supply_request.send_request(cp_data.id)
-                print("Central: checking if CP is available for supply...")
-                response = None
-                while not response:
-                    try:
-                        response = supply_response.get_response()
-                    except KafkaException as e:
-                        error = str(e.args[0])
-                        print(f"Error receiving response {error}")
-                        continue
-                    
-                supply_response.close()
-                if response['status'] == 'denied':
-                    print("Supply was denied")
-                    print(f"Reason: {response['reason']}")
-                    # limpiar la pantalla
-                    print("The engine is waiting for a supply...")
-                    print("- To turn off press letter \"q\"")
-                    print("- If you want start a supply without driver press \"ENTER\"")
-                    continue
-                
-                possible_supply_id = None
-                while not possible_supply_id: # refinar bucle para que pasa si le llega otro tipo de directivas
-                    possible_supply_id = handle_directives(directives_consumer, cp_data.status, supply_info)
-                supply_id = possible_supply_id if possible_supply_id else supply_id
-                if supply_id:
-                    print(f"____________________Driver connected___________________")
-                    print(" - Do you want to plug the car?(n/y | default y)")
-                    response = input("---> ")
-                    if response == "n":
-                        # limpiar la pantalla
-                        print("The engine is waiting for a supply...")
-                        print("- To turn off press letter \"q\"")
-                        print("- If you want start a supply without driver press \"ENTER\"")
-                        continue
-                    
-                    cp_data.status.set_supplying()
-                    supply_info = SupplyInfo(config.kafka_ip, config.kafka_port, supply_id)
-                    time_ini = time.time()
-                    print("Press \'Enter\' to unplug:")
-                    while cp_data.status.is_supplying():
-                        time_plug = time.time() - time_ini
-                        supply_info.send_info()
-                        amount = supply_info.get_consumption()
-                        cost = supply_info.get_cost()
-                        print(f"\r{' ' * 60}\rTime = {time_plug:.2f}s    Amount = {amount:.4f}kwh   Cost = {cost:.4f}€", end="")
-                        sys.stdout.flush()
-
-                        if select.select([sys.stdin], [], [], 0)[0]:
-                            input()  # limpia el buffer
-                            print("\n")
-                            cp_data.status.set_active()
-
-                    supply_info.send_ticket()
-                    print("\"\"\" Thank you for using our service. :)\"\"\"")
-                    
-                print("\n")
-                #llamar supply_interface()
-
-            #si q
-            elif key.lower() == 'q':
-                return
-            
-        #!!!!!!!!aqui poner el if para leer del kafka ¡¡¡¡¡¡¡¡
-        
-        
-    
-    # menu para elegir si hacer el suministro
-
+    app = EngineApp()
+    try:
+        app.run()
+    except KeyboardInterrupt:
+        print("\n\n[INFO] Engine interrupted by user")
+    except Exception as e:
+        print(f"\n[ERROR] Fatal error: {e}")
+        import traceback
+        traceback.print_exc()
+    finally:
+        print("[INFO] Cleanup completed")
 
 
 if __name__ == '__main__':
