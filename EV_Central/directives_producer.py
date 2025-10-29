@@ -21,6 +21,7 @@ class DirectivesProducer:
         
         json_msg = dumps(msg)
         self.producer.produce(DirectivesProducer.TOPIC_NAME, value=json_msg)
+        self.producer.flush()
         
     def start_supply(self, target: str, supply_id: int):
         self._send_directive(target, 'start-supply', supply_id)

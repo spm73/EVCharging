@@ -17,3 +17,4 @@ class SupplyReqProducer:
         }
         json_msg = dumps(msg)
         self.producer.produce(SupplyReqProducer.TOPIC_NAME, value=json_msg)
+        self.producer.flush()

@@ -21,6 +21,7 @@ class SupplyInfoProducer:
         
         json_msg = dumps(msg)
         self.producer.produce(SupplyInfoProducer.TOPIC_NAME, value=json_msg)
+        self.producer.flush()
     
     def send_ticket(self, total_consumption: float, total_price: float):
         msg = {
@@ -32,3 +33,4 @@ class SupplyInfoProducer:
         
         json_msg = dumps(msg)
         self.producer.produce(SupplyInfoProducer.TOPIC_NAME, value=json_msg)
+        self.producer.flush()

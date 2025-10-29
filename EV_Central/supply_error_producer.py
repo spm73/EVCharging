@@ -17,3 +17,4 @@ class SupplyResProducer:
         }
         msg = dumps(msg_content)
         self.producer.produce(SupplyResProducer.TOPIC_NAME, value=msg)
+        self.producer.flush()
