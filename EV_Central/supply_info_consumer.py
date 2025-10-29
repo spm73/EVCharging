@@ -31,7 +31,7 @@ class SupplyInfoConsumer:
                     raise KafkaException(raw_msg.error())
             
             msg = loads(raw_msg.value().decode('utf-8'))
-            self.consumer.commit(raw_msg)
+            self.consumer.commit(message=raw_msg)
             return msg
         except RuntimeError:
             print("Consumer is closed and cannot make operations")
