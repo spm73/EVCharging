@@ -39,7 +39,7 @@ class EngineApp:
         print("=" * 60)
         
         self.monitor_server.listen()
-        self.monitor_server.accept(monitor_handler, self.cp_data)
+        self.monitor_server.accept(monitor_handler, self.cp_data, self.lock)
         
         self.monitor_connected = True
         print("\n✓ Monitor connected successfully!")
@@ -113,9 +113,9 @@ class EngineApp:
         print("\n[MANUAL SUPPLY] Requesting authorization from Central...")
         
         supply_request = SupplyReqProducer(self.config.kafka_ip, self.config.kafka_port)
-        supply_response = SupplyResConsumer(self.config.kafka_ip, self.config.kafka_port, self.cp_data.id)
+        supply_response = SupplyResConsumer(self.config.kafka_ip, self.config.kafka_port, self.cp_data.id.get_id())
         
-        supply_request.send_request(self.cp_data.id)
+        supply_request.send_request(self.cp_data.id.get_id())
         print("[CENTRAL] Checking if CP is available for supply...")
         
         response = None
@@ -218,7 +218,7 @@ class EngineApp:
         self.directives_consumer = DirectivesConsumer(
             self.config.kafka_ip, 
             self.config.kafka_port, 
-            self.cp_data.id
+            self.cp_data.id.get_id()
         )
         
         # 3. Iniciar hilo para escuchar directivas
