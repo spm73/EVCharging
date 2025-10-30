@@ -33,8 +33,9 @@ class CChargingPoint:
     def turn_ON(self):
         #Algo implementado por sergio cabezon
         #generar un productor que vaya diciendo cosiras
-        threading.Thread(target=directives_producer_thread, args=(0,0,0,0), daemon=True).start() 
+        #threading.Thread(target=directives_producer_thread, args=(0,0,0,0), daemon=True).start() 
         #hay que ver como vuelve a su estado normal si ya se hace solo con los sockets o imlpementar algo 
+        pass
 
     
     def turn_OFF(self, conn):
@@ -44,7 +45,7 @@ class CChargingPoint:
         self.id_driver = None
 
         #generar un productor que vaya diciendo cosiras
-        threading.Thread(target=directives_producer_thread, args=(0,0,0,0), daemon=True).start()   
+        #threading.Thread(target=directives_producer_thread, args=(0,0,0,0), daemon=True).start()   
 
 
         cursor = conn.cursor()

@@ -13,6 +13,8 @@ from supply_info_consumer import SupplyInfoConsumer
 from supply_info_producer import SupplyInfoProducer
 from supply_req_consumer import SupplyReqConsumer
 from supply_res_producer import SupplyResProducer
+from datetime import datetime, date
+
 
 
 #################################################################################
@@ -36,6 +38,8 @@ def enqueue_message(message_type, data):
 def process_queue(app):
     while not gui_queue.empty():
         message_type, data = gui_queue.get()
+#Estas dos son la de los monitores, como no lo pillo miralo a ver como lo llamas
+#########################################################################################################
         if message_type == "helth_status":
             #meter condicion, segun el estado que envie un mensaje o otro
             app.modify_cp_status(0,0)#cp_id, consumption, cost
@@ -45,20 +49,20 @@ def process_queue(app):
             #con los mensajes de kafka deber ser posible construir el cp
             cp = CChargingPoint(0,0,0)
             app.register_cp(cp)
+#########################################################################################################
 
         elif message_type == "supply_request":
-            app.modify_cp_status(0,0)#cp_id, status
-            app.modify_cp_driverid(0,0)#cp_id, driver_id
+            if app.check_cp_active(data['cp_id']):#cp_id, status
+                app.modify_cp_driverid(data['cp_id'],data['applicant_id'])#cp_id, driver_id
             #Ver los mensajes del consumer
-            app.add_request_message(f"DATE  STARTTIME  USER    CP", 0)#cp_id
+            app.add_request_message(f"{date.today()}  {datetime.now().time()}  {data['applicant_id']}    {data['cp_id']}", data['cp_id'])#cp_id
         
         elif message_type == "supply_info":
             app.modify_cp_info(0,0,0)#cp_id, consumption, cost
 
         elif message_type == "supply_ticket":
-            app.modify_cp_status(0,0,0)#cp_id, consumption = 0, cost = 0
             #Ver los mensajes del consumer
-            app.delete_request_message(0)#cp_id
+            app.delete_request_message(data['cp_id'])#cp_id
 
             
     app.root.after(100, process_queue, app)
@@ -114,8 +118,8 @@ def supply_info_consumer_thread(consumer: SupplyInfoConsumer, producer: SupplyIn
         elif info.get('type') == 'ticket':
             enqueue_message("supply_ticket", info)
 
-    #genera un producer para enviar datos al driver, no he visto como se hace confio en ti
-    threading.Thread(target=supply_res_producer_thread, args=(0,0,0,0,0), daemon=True).start()
+
+
 
 
 
@@ -138,7 +142,7 @@ def main():
 
     
     root = tk.Tk()
-    app = CentralApp(root, CPs, conexion)
+    app = CentralApp(root, CPs, conexion, directives_producer, error_producer)
 
         # Revisar la cola periódicamente
     root.after(100, process_queue, app)
