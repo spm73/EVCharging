@@ -20,13 +20,12 @@ from supply_res_producer import SupplyResProducer
 #################################################################################
 gui_queue = queue.Queue()
 
-def monitor_server_run(config: CentralConfig, cp_list: list[CChargingPoint]):
+def monitor_server_run(config: CentralConfig):
     monitor_server = MonitorServer(config.ip, config.port)
     monitor_server.listen()
     
     while True:
-        monitor_server.accept(monitor_handler) # faltaria pasar la data, que es una instancia de
-        # un CChargingPoint para que pueda actualizar el estado del cp
+        monitor_server.accept(monitor_handler)
 
 
 def enqueue_message(message_type, data):
@@ -123,6 +122,7 @@ running = True
 
 def main():
     config = CentralConfig()
+    threading.Thread(target=monitor_server_run, args=(config))
     req_consumer = SupplyReqConsumer(config.kafka_ip, config.kafka_port)
     info_consumer = SupplyInfoConsumer(config.kafka_ip, config.kafka_port)
     info_producer = SupplyInfoProducer(config.kafka_ip, config.kafka_port)
