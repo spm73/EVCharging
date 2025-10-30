@@ -17,13 +17,16 @@ STATES = {
 
 class CentralApp:   
     MAX_MESSAGES = 5
-    def __init__(self, root, CPs_db, conn):
+    def __init__(self, root, CPs_db, conn, directives_producer):
         self.root = root
         self.root.title("EVCharging Central - Monitorization panel")
         self.root.geometry("950x600")
         self.root.config(bg="#383F8F")
 
         self.conn = conn
+
+        self.directives_producer = directives_producer
+
 
         title = tk.Label(
             root,
@@ -141,11 +144,19 @@ class CentralApp:
         button = card["button"]
         if button["text"] == "Power_ON":
             try:
+                self.directives_producer.resume_cp(cp.driver_id)
+            except Exception as e:
+                raise e
+            try:
                 cp.turn_ON()
             except Exception as e:
                 raise Exception("There was a problem turning ON", e)
             button.config(text = "Power_OFF")
         elif button["text"] == "Power_OFF":
+            try:
+                self.directives_producer.stop_cp(cp.driver_id)
+            except Exception as e:
+                raise e
             try:
                 cp.turn_OFF(self.conn)
             except Exception as e:
@@ -250,6 +261,20 @@ class CentralApp:
                 self.update_panel()
             else:
                 raise Exception("this CP wasn't registered")
+            
+        def check_cp_active(self,cp_id):
+            existing = False
+            for cp in self.points:
+                if cp.id == cp_id: 
+                    if cp.is_active():
+                        return True
+                    existing = True
+            
+            if existing:
+                return False
+            else:
+                raise Exception("this CP wasn't registered")
+
 
         def modify_cp_driverip(self, cp_id, driver_id):
             modified = False
@@ -288,6 +313,7 @@ class CentralApp:
                     
             if not modified:
                 raise Exception("this CP wasn't registered")
+            
 
 
 if __name__ == "__main__":
