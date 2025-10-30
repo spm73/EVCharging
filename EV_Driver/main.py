@@ -38,8 +38,8 @@ def ask_supply(cp_id: str, config: DriverConfig) -> int | None:
     return response['supply_id']
 
 
-def supplying(supply_id: int, kafka_ip: str, kafka_port: int):
-    info_consumer = SupplyInfoConsumer(kafka_ip, kafka_port, supply_id)
+def supplying(supply_id: int, config: DriverConfig):
+    info_consumer = SupplyInfoConsumer(config.kafka_ip, config.kafka_port, supply_id, config.client_id)
     supplying = True 
     while supplying:
         info = None

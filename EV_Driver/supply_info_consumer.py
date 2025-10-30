@@ -5,10 +5,10 @@ from confluent_kafka import Consumer, KafkaError, KafkaException
 
 class SupplyInfoConsumer:
     SUBSCRIBED_TOPIC = ['supply-data2']
-    def __init__(self, kafka_ip: str, kafka_port: int, supply_id: int):
+    def __init__(self, kafka_ip: str, kafka_port: int, supply_id: int, driver_id: str):
         conf = {
             'bootstrap.servers': f'{kafka_ip}:{kafka_port}',
-            'group.id': supply_id,
+            'group.id': driver_id,
             'auto.offset.reset': 'latest', # process everything not committed
             'enable.auto.commit': True, # manual commit management
         }
