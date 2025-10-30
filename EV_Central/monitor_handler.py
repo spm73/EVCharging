@@ -1,80 +1,99 @@
 from json import loads, dumps
-from typing import Literal
+from typing import Literal, Any
 import sqlite3
 from random import random
 
+from main import enqueue_message
 from stx_etx_connection import STXETXConnection
 from connection_closed_exception import ConnectionClosedException
 from closing_connection_exception import ClosingConnectionException
 from cp_status import CPStatus
 
-def monitor_handler(monitor_connection: STXETXConnection, status: CPStatus):
+def monitor_handler(monitor_connection: STXETXConnection):
     try:
         monitor_connection.enq_answer()
     except ConnectionClosedException:
-        status.set_disconnected()
+        monitor_connection.close()
         return
     
     running = True
+    cp_id = None
     while running:
         try:
             petition = loads(monitor_connection.recv_message())
             msg_type = petition['type']
             if msg_type == 'auth':
-                auth_result, price = authorize(petition['cp_id'])
+                result = authorize(petition['cp_id'])
                 answer = {
-                    'status': auth_result
+                    'status': result['result']
                 }
-                if price:
-                    answer['price'] = price
+                if result.get('price'):
+                    answer['price'] = result['price']
                 monitor_connection.send_message(dumps(answer))
+                if result.get('cp_id'):
+                    cp_id = result.get('cp_id')
             elif msg_type == 'register':
-                register_result, price = register(petition['cp_id'], petition['location'])
+                result = register(petition['cp_id'], petition['location'])
                 answer = {
-                    'status': register_result
+                    'status': result['result']
                 }
-                if price:
-                    answer['price'] = price
+                if result.get('price'):
+                    answer['price'] = result.get('price')
                 monitor_connection.send_message(dumps(answer))
+                if result.get('cp_id'):
+                    cp_id = result.get('cp_id')
             elif msg_type == 'status':
                 match petition['status']:
                     case 1:
-                        status.set_active()
+                        enqueue_message('set_active', cp_id)
                     case 2:
-                        status.set_supplying()
+                        enqueue_message('set_supplying', cp_id)
                     case 3:
-                        status.set_stopped()
+                        enqueue_message('set_stopped', cp_id)
                     case 4:
-                        status.set_waiting_for_supplying()
-                    case 5:
-                        status.set_broken_down()
+                        enqueue_message('set_waiting_for_supplying', cp_id)
+                    case 5:                        
+                        enqueue_message('set_broken_down', cp_id)
                     case _:
-                        status.set_disconnected()
+                        enqueue_message('set_disconnected', cp_id)
                 answer = {
-                    'status': status.get_status()
+                    'status': petition['status']
                 }
                 monitor_connection.send_message(dumps(answer))
         except ClosingConnectionException:
-            status.set_disconnected()
+            enqueue_message('set_disconnected', cp_id)
             running = False
             monitor_connection.close()
         except ConnectionClosedException:
-            status.set_disconnected()
+            enqueue_message('set_disconnected', cp_id)
+            monitor_connection.close()
             return
 
         
-def register(cp_id: str, location: str) -> tuple[Literal['registered', 'error'], float | None]:
+def register(cp_id: str, location: str) -> dict[str, Any]:
     conexion = sqlite3.connect("Charging_point.db")
     cursor = conexion.cursor()
     price = random()
     status = CPStatus()
-    values = (cp_id, location, price, status)
-    cursor.execute(f"INSERT INTO CP (id, location, price, status) VALUES (?, ?, ?, ?)", values)
-    conexion.commit()
-    conexion.close()
+    values = (cp_id, location, price, status.get_status())
+    
+    try:
+        cursor.execute(f"INSERT INTO CP (id, location, price, status) VALUES (?, ?, ?, ?)", values)
+        conexion.commit()
+        return {
+            'result': 'registered',
+            'cp_id': cp_id,
+            'price': price
+        }
+    except sqlite3.IntegrityError:
+        return {
+            'result': 'denied'
+        }
+    finally:
+        conexion.close()
+    
 
-
-def authorize(cp_id: str) -> tuple[Literal['authorized', 'denied'], float | None]:
+def authorize(cp_id: str) -> dict[str, Any]:
     conexion = sqlite3.connect("Charging_point.db")
     cursor = conexion.cursor()
     cursor.execute(f"SELECT * FROM CP WHERE id = {cp_id}")
@@ -82,8 +101,12 @@ def authorize(cp_id: str) -> tuple[Literal['authorized', 'denied'], float | None
     conexion.commit()
     conexion.close()
     if len(cp_registers) == 1:
-        return ('authorized', cp_registers[0][2])
+        return {
+            'result': 'authorized',
+            'cp_id': cp_id,
+            'price': cp_registers[0][2]
+        }
     else:
-        return ('denied', None)
-    
-    # falta juntar esto con la interfaz gráfica
+        return {
+            'result': 'denied',
+        }

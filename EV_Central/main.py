@@ -1,4 +1,4 @@
-from threading import Thread
+import threading
 from confluent_kafka import KafkaException
 from GUI import *
 from central_config import CentralConfig
@@ -20,12 +20,12 @@ from supply_res_producer import SupplyResProducer
 #################################################################################
 gui_queue = queue.Queue()
 
-#def monitor_server_run(config: CentralConfig, cp_list: list[CChargingPoint]):
-#    monitor_server = MonitorServer(config.ip, config.port)
-#    monitor_server.listen()
+def monitor_server_run(config: CentralConfig, cp_list: list[CChargingPoint]):
+    monitor_server = MonitorServer(config.ip, config.port)
+    monitor_server.listen()
     
-#    while True:
-#        monitor_server.accept(monitor_handler) # faltaria pasar la data, que es una instancia de
+    while True:
+        monitor_server.accept(monitor_handler) # faltaria pasar la data, que es una instancia de
         # un CChargingPoint para que pueda actualizar el estado del cp
 
 
