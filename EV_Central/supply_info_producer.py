@@ -4,7 +4,7 @@ from typing import Any
 from confluent_kafka import Producer
 
 class SupplyInfoProducer:
-    TOPIC_NAME = 'supply-data'
+    TOPIC_NAME = 'supply-data2'
     def __init__(self, kafka_ip: str, kafka_port: int):
         conf = {
             'bootstrap.servers': f'{kafka_ip}:{kafka_port}'
