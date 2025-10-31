@@ -1,6 +1,6 @@
 import sqlite3
-import threading
-from main import *
+
+
 
 from cp_status import CPStatus
 

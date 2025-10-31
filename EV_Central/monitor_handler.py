@@ -2,14 +2,13 @@ from json import loads, dumps
 from typing import Literal, Any
 import sqlite3
 from random import random
-
-from main import enqueue_message
+from queue import Queue
 from stx_etx_connection import STXETXConnection
 from connection_closed_exception import ConnectionClosedException
 from closing_connection_exception import ClosingConnectionException
 from cp_status import CPStatus
 
-def monitor_handler(monitor_connection: STXETXConnection):
+def monitor_handler(monitor_connection: STXETXConnection, queue: Queue):
     try:
         monitor_connection.enq_answer()
     except ConnectionClosedException:
@@ -45,27 +44,27 @@ def monitor_handler(monitor_connection: STXETXConnection):
             elif msg_type == 'status':
                 match petition['status']:
                     case 1:
-                        enqueue_message('set_active', cp_id)
+                        queue.put(('set_active', cp_id))
                     case 2:
-                        enqueue_message('set_supplying', cp_id)
+                        queue.put(('set_supplying', cp_id))
                     case 3:
-                        enqueue_message('set_stopped', cp_id)
+                        queue.put(('set_stopped', cp_id))
                     case 4:
-                        enqueue_message('set_waiting_for_supplying', cp_id)
+                        queue.put(('set_waiting_for_supplying', cp_id))
                     case 5:                        
-                        enqueue_message('set_broken_down', cp_id)
+                        queue.put(('set_broken_down', cp_id))
                     case _:
-                        enqueue_message('set_disconnected', cp_id)
+                        queue.put(('set_disconnected', cp_id))
                 answer = {
                     'status': petition['status']
                 }
                 monitor_connection.send_message(dumps(answer))
         except ClosingConnectionException:
-            enqueue_message('set_disconnected', cp_id)
+            queue.put(('set_disconnected', cp_id))
             running = False
             monitor_connection.close()
         except ConnectionClosedException:
-            enqueue_message('set_disconnected', cp_id)
+            queue.put(('set_disconnected', cp_id))
             monitor_connection.close()
             return
 

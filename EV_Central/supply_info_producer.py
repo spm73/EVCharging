@@ -5,12 +5,11 @@ from confluent_kafka import Producer
 
 class SupplyInfoProducer:
     TOPIC_NAME = 'supply-data'
-    def __init__(self, kafka_ip: str, kafka_port: int, supply_id):
+    def __init__(self, kafka_ip: str, kafka_port: int):
         conf = {
-            'bootrsap.servers': f'{kafka_ip}:{kafka_port}'
+            'bootstrap.servers': f'{kafka_ip}:{kafka_port}'
         }
         self.producer = Producer(conf)
-        self.supply_id = supply_id
         
     def repeat_msg(self, msg: dict[str, Any]):
         json_msg = dumps(msg)

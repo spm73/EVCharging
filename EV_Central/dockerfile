@@ -1,5 +1,8 @@
 FROM python:3.12-slim
 
+# ENV PATH="${PATH}:/sbin"
+
+RUN apt update && apt -y install tk
 RUN pip install confluent-kafka
 
 WORKDIR /usr/src/EV_Central

@@ -27,7 +27,7 @@ def monitor_server_run(config: CentralConfig):
     monitor_server.listen()
     
     while True:
-        monitor_server.accept(monitor_handler)
+        monitor_server.accept(monitor_handler, gui_queue)
 
 
 def enqueue_message(message_type, data):
@@ -118,11 +118,8 @@ def supply_info_consumer_thread(consumer: SupplyInfoConsumer, producer: SupplyIn
             enqueue_message("supply_ticket", info)
 
 
-
-
-
-
 running = True
+current_supply_id = 1
 
 def main():
     config = CentralConfig()
@@ -135,14 +132,14 @@ def main():
     error_producer = SupplyErrorProducer(config.kafka_ip, config.kafka_port)
     conexion = sqlite3.connect("Charging_point.db")
     cursor = conexion.cursor()
-    cursor.execute("SELECT * FROM Charging_Point")
+    cursor.execute("SELECT * FROM CP")
     CPs = []
     for cp in cursor.fetchall():
         CPs.append(CChargingPoint(cp[0], cp[1], cp[2]))
 
     
     root = tk.Tk()
-    app = CentralApp(root, CPs, conexion, directives_producer, error_producer)
+    app = CentralApp(root, CPs, conexion, directives_producer)
 
         # Revisar la cola periódicamente
     root.after(100, process_queue, app)
@@ -158,7 +155,7 @@ def main():
         running = False
         #No se como funciona lo de cerrar pero intuyo que iría aqui
         cursor = conexion.cursor()
-        cursor.execute("UPDATE Charging_Point SET status=\"Disconnected\"")
+        cursor.execute("UPDATE CP SET status=\"Disconnected\"")
         conexion.commit()
         conexion.close()
 
