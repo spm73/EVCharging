@@ -1,4 +1,4 @@
-# import socket
+import socket
 from json import dumps, loads
 from typing import Any
 
@@ -7,7 +7,9 @@ from cp_status import CPStatus
 
 class CentralConnection(STXETXConnection):
     def __init__(self, ip_addr: str, port_number: int):
-        super().__init__(ip_addr, port_number)
+        connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        connection.connect((ip_addr, port_number))
+        super().__init__(connection)
         
     def start_connection(self):
         self.enq_message()

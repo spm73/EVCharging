@@ -14,7 +14,7 @@ class MonitorConfig:
     def _get_monitor_config():
         parser = argparse.ArgumentParser()
         
-        parser.add_argument('--id', type=int, required=True, help='Charging point ID')
+        parser.add_argument('--id', type=str, required=True, help='Charging point ID')
         parser.add_argument('--central-ip', type=str, required=True, help='Central server IP')
         parser.add_argument('--central-port', type=int, required=True, help='Central server port')
         parser.add_argument('--engine-ip', type=str, required=True, help='Engine IP')

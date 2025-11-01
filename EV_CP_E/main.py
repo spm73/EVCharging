@@ -32,7 +32,7 @@ class EngineApp:
         print("=" * 60)
         print("EV_CP_E - Charging Point Engine")
         print("=" * 60)
-        print(f"CP ID: {self.cp_data.id}")
+        print(f"CP ID: {self.cp_data.id.get_id()}")
         print(f"Location: {self.cp_data.location}")
         print(f"Listening on {self.config.server_ip}:{self.config.server_port}")
         print("\nWaiting for Monitor to connect...")

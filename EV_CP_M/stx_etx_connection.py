@@ -17,9 +17,9 @@ class STXETXConnection:
     # ETX_HEADER = '<ETX>'.encode()
     # ACK_HEADER = '<ACK>'.encode()
     # NACK_HEADER = '<NACK>'.encode()
-    def __init__(self, ip_addr: str, port_number: int):
-        self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.client.connect((ip_addr, port_number))
+    # def __init__(self, ip_addr: str, port_number: int):
+    #     self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    #     self.client.connect((ip_addr, port_number))
         
     def __init__(self, client_socket: socket.socket):
         self.client = client_socket
