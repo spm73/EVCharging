@@ -7,6 +7,7 @@ from driver_config import DriverConfig
 from supply_req_producer import SupplyReqProducer
 from supply_res_consumer import SupplyResConsumer
 from supply_info_consumer import SupplyInfoConsumer
+from recover_last_data import get_latest_info
 
 RECOVER_PATH = '/var/recover'
 
@@ -93,6 +94,16 @@ def main():
     CPs = get_cp_from_file()
 
     next_cp = 0
+    unchecked_supply_id = check_recover_file(driver_config)
+    if unchecked_supply_id:
+        most_recent_message = get_latest_info(driver_config, unchecked_supply_id)
+        if most_recent_message and most_recent_message['type'] == 'ticket':
+            print("Ticket:")
+            print(f"Consumption: {most_recent_message['consumption']}kwh")
+            print(f"Price: {most_recent_message['price']}€")
+        elif most_recent_message and most_recent_message['type'] == 'supplying':
+            supplying(unchecked_supply_id, driver_config)
+
 
     while True:
         print(f"> These are the existing charging points: ")
