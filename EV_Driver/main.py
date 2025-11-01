@@ -1,6 +1,7 @@
 import sys
 from time import sleep
 from confluent_kafka import KafkaException
+import os
 
 from driver_config import DriverConfig
 from supply_req_producer import SupplyReqProducer
@@ -36,6 +37,27 @@ def ask_supply(cp_id: str, config: DriverConfig) -> int | None:
     
     res_consumer.close()
     return response['supply_id']
+
+
+def check_recover_file(driver_config: DriverConfig) -> int | None:
+    file_path = "." + driver_config.client_id + ".txt"
+    # state_file = os.path.join(STATE_DIR, f".supply_{driver_id}")
+    if os.path.exists(file_path):
+        with open(file_path, 'r') as f:
+            supply_id = int(f.readline())
+            return supply_id
+    return None
+
+
+def create_recover_file(supply_id: int, config: DriverConfig):
+    file_name = "." + config.client_id + ".txt"
+    with open(file_name, 'w') as file:
+        file.write(supply_id)
+
+
+def delete_recover_file(config: DriverConfig):
+    file_path = "." + config.client_id + ".txt"
+    os.remove(file_path)
 
 
 def supplying(supply_id: int, config: DriverConfig):
@@ -83,7 +105,9 @@ def main():
             print("Central: checking if CP is available for supply...")
             supply_id = ask_supply(cp, driver_config)
             if supply_id:
-                supplying(supply_id, driver_config.kafka_ip, driver_config.kafka_port)
+                create_recover_file(supply_id, driver_config)
+                supplying(supply_id, driver_config)
+                delete_recover_file(driver_config)
             #enviar una peticion a central a cp
             next_cp = (CPs.index(cp) + 1) % len(CPs)
         elif cp == "quit":
