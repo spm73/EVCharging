@@ -111,7 +111,7 @@ current_supply_id = 1
 
 def main():
     config = CentralConfig()
-    threading.Thread(target=monitor_server_run, args=(config))
+    threading.Thread(target=monitor_server_run, args=(config,))
     req_consumer = SupplyReqConsumer(config.kafka_ip, config.kafka_port)
     info_consumer = SupplyInfoConsumer(config.kafka_ip, config.kafka_port)
     info_producer = SupplyInfoProducer(config.kafka_ip, config.kafka_port)
@@ -131,7 +131,7 @@ def main():
 
         # Revisar la cola periódicamente
     root.after(100, process_queue, app)
-    threading.Thread(target=supply_req_consumer_thread, args=(req_consumer), daemon=True).start()
+    threading.Thread(target=supply_req_consumer_thread, args=(req_consumer,), daemon=True).start()
     threading.Thread(target=supply_info_consumer_thread, args=(info_consumer, info_producer), daemon=True).start()
 
     try:
