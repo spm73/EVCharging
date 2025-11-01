@@ -42,40 +42,42 @@ def monitor_handler(monitor_connection: STXETXConnection, queue: Queue):
                 if result.get('cp_id'):
                     cp_id = result.get('cp_id')
             elif msg_type == 'status':
+                cpstatus = CPStatus()
                 match petition['status']:
                     case 1:
+
                         data = {
-                            'action': 'set_active',
+                            'action': cpstatus.set_active(),
                             'cp_id': cp_id
                         }
                         queue.put(('health_status', data))
                     case 2:
                         data = {
-                            'action': 'set_supplying',
+                            'action': cpstatus.set_supplying(),
                             'cp_id': cp_id
                         }
                         queue.put(('health_status', data))
                     case 3:
                         data = {
-                            'action': 'set_stopped',
+                            'action': cpstatus.set_stopped(),
                             'cp_id': cp_id
                         }
                         queue.put(('health_status', data))
                     case 4:
                         data = {
-                            'action': 'set_waiting_for_supplying',
+                            'action': cpstatus.set_waiting_for_supplying(),
                             'cp_id': cp_id
                         }
                         queue.put(('health_status', data))
                     case 5:
                         data = {
-                            'action': 'set_broken_down',
+                            'action': cpstatus.set_broken_down(),
                             'cp_id': cp_id
                         }
                         queue.put(('health_status', data))
                     case _:
                         data = {
-                            'action': 'set_disconnected',
+                            'action': cpstatus.set_disconnected(),
                             'cp_id': cp_id
                         }
                         queue.put(('health_status', data))
