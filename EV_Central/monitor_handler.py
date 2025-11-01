@@ -44,27 +44,60 @@ def monitor_handler(monitor_connection: STXETXConnection, queue: Queue):
             elif msg_type == 'status':
                 match petition['status']:
                     case 1:
-                        queue.put(('set_active', cp_id))
+                        data = {
+                            'action': 'set_active',
+                            'cp_id': cp_id
+                        }
+                        queue.put(('health_status', data))
                     case 2:
-                        queue.put(('set_supplying', cp_id))
+                        data = {
+                            'action': 'set_supplying',
+                            'cp_id': cp_id
+                        }
+                        queue.put(('health_status', data))
                     case 3:
-                        queue.put(('set_stopped', cp_id))
+                        data = {
+                            'action': 'set_stopped',
+                            'cp_id': cp_id
+                        }
+                        queue.put(('health_status', data))
                     case 4:
-                        queue.put(('set_waiting_for_supplying', cp_id))
-                    case 5:                        
-                        queue.put(('set_broken_down', cp_id))
+                        data = {
+                            'action': 'set_waiting_for_supplying',
+                            'cp_id': cp_id
+                        }
+                        queue.put(('health_status', data))
+                    case 5:
+                        data = {
+                            'action': 'set_broken_down',
+                            'cp_id': cp_id
+                        }
+                        queue.put(('health_status', data))
                     case _:
-                        queue.put(('set_disconnected', cp_id))
+                        data = {
+                            'action': 'set_disconnected',
+                            'cp_id': cp_id
+                        }
+                        queue.put(('health_status', data))
                 answer = {
                     'status': petition['status']
                 }
                 monitor_connection.send_message(dumps(answer))
         except ClosingConnectionException:
-            queue.put(('set_disconnected', cp_id))
+            data = {
+                'action': 'set_disconnected',
+                'cp_id': cp_id
+            }
+            queue.put(('health_status', data))
             running = False
+            cp_id = None
             monitor_connection.close()
         except ConnectionClosedException:
-            queue.put(('set_disconnected', cp_id))
+            data = {
+                'action': 'set_disconnected',
+                'cp_id': cp_id
+            }
+            queue.put(('health_status', data))
             monitor_connection.close()
             return
 
