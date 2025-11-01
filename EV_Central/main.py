@@ -75,15 +75,6 @@ def supply_error_producer_thread(producer, supply_id):
 def supply_res_producer_thread(producer, drive_id: str, status: bool, reason: str | None, supply_id: int | None):
     producer.send_response(drive_id, status, reason, supply_id)
 
-
-def health_monitor_thread():
-    #no se que puertos brody
-    connection = STXETXConnection(0,0)
-    running = True
-    while running:
-        enqueue_message("helth_status", connection.recv_message())
-        #Ver como se comprueba que sigue la conexion y cuando pare salir del while
-
 ##################################################################################
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!toca definir uno para los registros¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡#
 ##################################################################################
@@ -143,7 +134,6 @@ def main():
 
         # Revisar la cola periódicamente
     root.after(100, process_queue, app)
-    threading.Thread(target=health_monitor_thread, daemon=True).start()
     threading.Thread(target=supply_req_consumer_thread, args=(req_consumer), daemon=True).start()
     threading.Thread(target=supply_info_consumer_thread, args=(info_consumer, info_producer), daemon=True).start()
 
