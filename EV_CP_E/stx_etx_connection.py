@@ -27,12 +27,12 @@ class STXETXConnection:
         self.client.sendall(STXETXConnection.ENQ_MESSAGE)
         answer = self.client.recv(6).decode()
         if not answer:
-            raise ConnectionClosedException('No response from server')
+            raise ConnectionClosedException()
         
     def enq_answer(self):
         answer = self.client.recv(6).decode()
         if not answer:
-            raise ConnectionClosedException('No response from server')
+            raise ConnectionClosedException()
         self.send_ack()
         
     def close(self):
@@ -56,7 +56,7 @@ class STXETXConnection:
             self.client.sendall(msg)
             confirmation = self.client.recv(6).decode()
             if not confirmation:
-                raise ConnectionClosedException('No response from server')
+                raise ConnectionClosedException()
         
     def recv_message(self) -> str:
         answer = None
@@ -65,7 +65,7 @@ class STXETXConnection:
         while answer is None or comprobation != lrc:
             raw_answer = self.client.recv(1024)
             if not raw_answer:
-                raise ConnectionClosedException('No response from server')
+                raise ConnectionClosedException()
             elif raw_answer == STXETXConnection.EOT_MESSAGE:
                 raise ClosingConnectionException()
             

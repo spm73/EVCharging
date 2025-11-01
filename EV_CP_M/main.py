@@ -12,7 +12,7 @@ def main():
 
     central_connection.start_connection()
     central_working = True
-    engine_connection.start_connection()
+    engine_connection.start_connection(monitor_config.cp_ip)
     price = None
 
     try:

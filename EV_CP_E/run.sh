@@ -35,7 +35,7 @@ echo
 docker build -t engine .
 
 # Ejecutar contenedor con parámetros
-docker run -p "$SERVER_PORT":"$SERVER_PORT" -it engine \
+docker run -p 0.0.0.0:"$SERVER_PORT":"$SERVER_PORT" -it engine \
   --kafka-ip "$KAFKA_IP" \
   --kafka-port "$KAFKA_PORT" \
   --server-ip "$SERVER_IP" \

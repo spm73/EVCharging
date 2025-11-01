@@ -215,6 +215,7 @@ class EngineApp:
         self.wait_for_monitor()
         
         # 2. Iniciar consumer de directivas
+        print(f"CP_ID: {self.cp_data.id.get_id()}")
         self.directives_consumer = DirectivesConsumer(
             self.config.kafka_ip, 
             self.config.kafka_port, 
