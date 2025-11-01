@@ -104,7 +104,7 @@ def monitor_handler(monitor_connection: STXETXConnection, queue: Queue):
             return
 
         
-def register(cp_id: str, location: str) -> dict[str, Any]:
+def register(cp_id: str, location: str, queue: Queue) -> dict[str, Any]:
     conexion = sqlite3.connect("Charging_point.db")
     cursor = conexion.cursor()
     price = random()
@@ -114,6 +114,10 @@ def register(cp_id: str, location: str) -> dict[str, Any]:
     try:
         cursor.execute(f"INSERT INTO CP (id, location, price, status) VALUES (?, ?, ?, ?)", values)
         conexion.commit()
+        data = {
+            'cp_id': cp_id
+        }
+        queue.put(('register_cp'), data)
         return {
             'result': 'registered',
             'cp_id': cp_id,
