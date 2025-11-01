@@ -8,6 +8,8 @@ from supply_req_producer import SupplyReqProducer
 from supply_res_consumer import SupplyResConsumer
 from supply_info_consumer import SupplyInfoConsumer
 
+RECOVER_PATH = '/var/recover'
+
 def get_cp_from_file() -> list[str]:
     CPs = []
     with open("cp_list.txt", "r") as archivo:
@@ -40,8 +42,8 @@ def ask_supply(cp_id: str, config: DriverConfig) -> int | None:
 
 
 def check_recover_file(driver_config: DriverConfig) -> int | None:
-    file_path = "." + driver_config.client_id + ".txt"
-    # state_file = os.path.join(STATE_DIR, f".supply_{driver_id}")
+    file_name = "." + driver_config.client_id
+    file_path = os.path.join(RECOVER_PATH, file_name)
     if os.path.exists(file_path):
         with open(file_path, 'r') as f:
             supply_id = int(f.readline())
@@ -50,13 +52,15 @@ def check_recover_file(driver_config: DriverConfig) -> int | None:
 
 
 def create_recover_file(supply_id: int, config: DriverConfig):
-    file_name = "." + config.client_id + ".txt"
-    with open(file_name, 'w') as file:
+    file_name = "." + config.client_id
+    file_path = os.path.join(RECOVER_PATH, file_name)
+    with open(file_path, 'w') as file:
         file.write(supply_id)
 
 
 def delete_recover_file(config: DriverConfig):
-    file_path = "." + config.client_id + ".txt"
+    file_name = "." + config.client_id
+    file_path = os.path.join(RECOVER_PATH, file_name)
     os.remove(file_path)
 
 
