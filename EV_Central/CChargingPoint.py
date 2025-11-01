@@ -54,16 +54,3 @@ class CChargingPoint:
 
         
 
-    #def update_fromDB(self):
-    #    conexion = sqlite3.connect("Charging_point.db")
-    #    cursor = conexion.cursor()
-    #    cursor.execute(f"SELECT * FROM CP WHERE id={self.id}")
-    #    cp = cursor.fetchall()[0]
-    #    conexion.commit()
-    #    conexion.close()
-        
-    #    self.id = cp[0]
-    #    self.location = cp[1]
-    #    self.price = cp[2]
-    #    self.status = cp[3]
-    #    self.consumption_kw = cp[4]

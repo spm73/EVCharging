@@ -204,17 +204,20 @@ class CentralApp:
             old_label = self.app_msgs.pop()  # eliminar el más antiguo
             old_label.destroy()
 
-    def register_cp(self, cp):
-        #Comprueba que anteriormente se haya introducido el Cp
-        if cp in self.points:
-            raise Exception("The point was already registered")
-        
 
-        cursor = self.conn.cursor()
-        cursor.execute(f"INSERT INTO CP (id, location, price, status) VALUES ({cp.id}, {cp.location}, {cp.price},{cp.status.get_status()})")
-        self.conn.commit()
+    def update_fromDB(cp_id):
+        cursor = conexion.cursor()
+        cursor.execute(f"SELECT * FROM CP WHERE id={cp_id}")
+        cp_db = cursor.fetchall()[0]
+        cp = CChargingPoint(cp[0],cp[1],cp[2])
+        cp.status.set_active()
+        return cp
 
+
+
+    def register_cp(self, cp_id):
         
+        cp = self.update_fromDB(cp_id)
 
         self.points.append(cp)
         frame = tk.Frame(self.panel, bg=STATES["Disconnected"], relief="raised", bd=2)

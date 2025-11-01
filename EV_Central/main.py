@@ -37,18 +37,15 @@ def enqueue_message(message_type, data):
 def process_queue(app):
     while not gui_queue.empty():
         message_type, data = gui_queue.get()
-#Estas dos son la de los monitores, como no lo pillo miralo a ver como lo llamas
-#########################################################################################################
+
         if message_type == "helth_status":
             #meter condicion, segun el estado que envie un mensaje o otro
-            app.modify_cp_status(0,0)#cp_id, consumption, cost
-            app.add_app_message("Ya veremos", "color tmb yaa veremos")
+            app.modify_cp_status(data['cp_id'],data['action'])#cp_id, consumption, cost
+
 
         elif message_type == "register_cp":
             #con los mensajes de kafka deber ser posible construir el cp
-            cp = CChargingPoint(0,0,0)
-            app.register_cp(cp)
-#########################################################################################################
+            app.register_cp(data)
 
         elif message_type == "supply_request":
             if app.check_cp_active(data['cp_id']):#cp_id, status
