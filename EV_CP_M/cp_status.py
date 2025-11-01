@@ -11,8 +11,8 @@ class CPStatus:
     def __init__(self):
         self.status = CPStatusOptions.BROKEN_DOWN
         
-    def __init__(self, status_number: int):
-        self.status = CPStatusOptions(status_number)
+    # def __init__(self, status_number: int):
+    #     self.status = CPStatusOptions(status_number)
         
     def get_status(self) -> int:
         return self.status.value

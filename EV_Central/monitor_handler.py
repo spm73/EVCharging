@@ -32,7 +32,7 @@ def monitor_handler(monitor_connection: STXETXConnection, queue: Queue):
                 if result.get('cp_id'):
                     cp_id = result.get('cp_id')
             elif msg_type == 'register':
-                result = register(petition['cp_id'], petition['location'])
+                result = register(petition['cp_id'], petition['location'], queue)
                 answer = {
                     'status': result['result']
                 }

@@ -1,6 +1,7 @@
 import socket
 import threading
 from collections.abc import Callable
+from queue import Queue
 
 from stx_etx_connection import STXETXConnection
 from cp_status import CPStatus
@@ -16,12 +17,12 @@ class MonitorServer:
         print("Server waiting for connections")
         
     # CPStatus es el que esta almacenado en CChargingPoint, habrá que cambiarlo. data es una instancia de ese tipo
-    def accept(self, client_handler: Callable[[STXETXConnection], None]):
+    def accept(self, client_handler: Callable[[STXETXConnection, Queue], None], gui_queue: Queue):
         monitor_socket, _ = self.server.accept()
         connection = STXETXConnection(monitor_socket)
         thread = threading.Thread(
             target=client_handler,
-            args=(connection,)
+            args=(connection, gui_queue)
         )
         thread.start()
 

@@ -111,7 +111,7 @@ current_supply_id = 1
 
 def main():
     config = CentralConfig()
-    threading.Thread(target=monitor_server_run, args=(config,))
+    threading.Thread(target=monitor_server_run, args=(config,)).start()
     req_consumer = SupplyReqConsumer(config.kafka_ip, config.kafka_port)
     info_consumer = SupplyInfoConsumer(config.kafka_ip, config.kafka_port)
     info_producer = SupplyInfoProducer(config.kafka_ip, config.kafka_port)
