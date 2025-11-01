@@ -3,7 +3,7 @@
 # Uso: ./run.sh <IP> <PUERTO> <KAFKA_IP> <KAFKA_PORT>
 # Ejemplo: ./run.sh 172.21.42.18 12345 172.21.42.17 9092
 
-IP=${1:-172.21.42.18}          # Valor por defecto si no se pasa argumento
+IP=${1:-0.0.0.0}          # Valor por defecto si no se pasa argumento
 PORT=${2:-12345}
 KAFKA_IP=${3:-172.21.42.17}
 KAFKA_PORT=${4:-9092}
@@ -20,6 +20,7 @@ docker run -u=$(id -u $USER):$(id -g $USER) \
   -e DISPLAY=$DISPLAY \
   -v /tmp/.X11-unix:/tmp/.X11-unix:rw \
   -v $(pwd)/app:/app \
+  -p "$PORT":"$PORT" \
   --rm -it central \
   --ip "$IP" \
   --port "$PORT" \
