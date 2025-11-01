@@ -101,8 +101,10 @@ def main():
             print("Ticket:")
             print(f"Consumption: {most_recent_message['consumption']}kwh")
             print(f"Price: {most_recent_message['price']}€")
+            delete_recover_file(driver_config)
         elif most_recent_message and most_recent_message['type'] == 'supplying':
             supplying(unchecked_supply_id, driver_config)
+            delete_recover_file(driver_config)
 
 
     while True:
