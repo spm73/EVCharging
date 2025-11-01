@@ -21,7 +21,7 @@ class MonitorServer:
         connection = STXETXConnection(monitor_socket)
         thread = threading.Thread(
             target=client_handler,
-            args=(connection)
+            args=(connection,)
         )
         thread.start()
 
