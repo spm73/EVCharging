@@ -1,0 +1,4 @@
+*.zip
+__pycache__
+EV_Central/db
+EV_Central/db
