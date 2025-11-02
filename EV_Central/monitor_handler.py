@@ -82,7 +82,6 @@ def monitor_handler(monitor_connection: STXETXConnection, queue: Queue):
                 answer = {
                     'status': petition['status']
                 }
-                print(answer)
                 monitor_connection.send_message(dumps(answer))
         except ClosingConnectionException:
             data = {

@@ -8,11 +8,12 @@ import sqlite3
 
 # Estados y colores
 STATES = {
-    "Activated": "#4CAF50",        # verde
-    "Stopped": "#F56929",          # naranja
-    "Supplying": "#4CAF50",   # verde
-    "Broken": "#FF4C4C",        # rojo
-    "Disconnected": "#7A7070"     # gris
+    1: "#4CAF50", # verde, active
+    2: "#4CAF50", # verde, supplying
+    3: "#F56929", # naranja, stopped
+    4: "#4CAF50", # verde, waiting_for_supply
+    5: "#FF4C4C", # rojo, broken_down
+    6: "#7A7070"  # gris, disconnected
 }
 
 class CentralApp:   
@@ -79,19 +80,19 @@ class CentralApp:
     def create_panel(self):
         """Crea los cuadros para cada punto"""
         for i, cp in enumerate(self.points):
-            frame = tk.Frame(self.panel, bg=STATES["Disconnected"], relief="raised", bd=2)
+            frame = tk.Frame(self.panel, bg=STATES[6], relief="raised", bd=2)
             frame.grid(row=i // 4, column=i % 4, padx=10, pady=10, ipadx=10, ipady=10, sticky="nsew")
 
-            lbl_id = tk.Label(frame, text= f"Cp={cp.id}" , font=("Arial", 16, "bold"), bg=STATES["Disconnected"], fg="white")
+            lbl_id = tk.Label(frame, text= f"Cp={cp.id}" , font=("Arial", 16, "bold"), bg=STATES[6], fg="white")
             lbl_id.pack(anchor="w")
 
-            lbl_location = tk.Label(frame, font=("Arial", 10, "bold"),text=f"Location: {cp.location}", bg=STATES["Disconnected"], fg="white")
+            lbl_location = tk.Label(frame, font=("Arial", 10, "bold"),text=f"Location: {cp.location}", bg=STATES[6], fg="white")
             lbl_location.pack(anchor="w")
 
-            lbl_price = tk.Label(frame, font=("Arial", 10, "bold"),text=f"Price: {cp.price} €/kWh", bg=STATES["Disconnected"], fg="white")
+            lbl_price = tk.Label(frame, font=("Arial", 10, "bold"),text=f"Price: {cp.price} €/kWh", bg=STATES[6], fg="white")
             lbl_price.pack(anchor="w")
 
-            lbl_info = tk.Label(frame, font=("Arial", 10, "bold"),text="", bg=STATES["Disconnected"], fg="white")
+            lbl_info = tk.Label(frame, font=("Arial", 10, "bold"),text="", bg=STATES[6], fg="white")
             lbl_info.pack()
             button = ttk.Button(frame, text="Power_OFF", command=lambda cp=cp: self.status_swap(cp.id))
             button.pack(pady=(0, 10))
@@ -119,10 +120,11 @@ class CentralApp:
             lbl_location = card["lbl_location"]
             lbl_price = card["lbl_price"]
 
-            frame.config(bg=STATES[cp.status])
-            lbl_id.config(bg=STATES[cp.status])
-            lbl_location.config(bg=STATES[cp.status])
-            lbl_price.config(bg=STATES[cp.status])
+            frame_color = STATES[cp.status.get_status()]
+            frame.config(bg=frame_color)
+            lbl_id.config(bg=frame_color)
+            lbl_location.config(bg=frame_color)
+            lbl_price.config(bg=frame_color)
 
             if cp.status == "Supplying":
                 info = f"Consumption: {cp.consumption_kw} kW\nCost: {cp.cost} €\nDriver: {cp.id_driver}"
@@ -131,7 +133,7 @@ class CentralApp:
             else:
                 info = ""
 
-            lbl_info.config(text=info, bg=STATES[cp.status])
+            lbl_info.config(text=info, bg=frame_color)
 
         # Si al menos un punto sigue en 'Supplying', vuelve a llamar a update_panel después de X ms
         #if any(card["cp"].status == "Supplying" for card in self.cards):
@@ -220,19 +222,19 @@ class CentralApp:
         cp = self.update_fromDB(cp_id)
 
         self.points.append(cp)
-        frame = tk.Frame(self.panel, bg=STATES["Disconnected"], relief="raised", bd=2)
+        frame = tk.Frame(self.panel, bg=STATES[6], relief="raised", bd=2)
         frame.grid(row=len(self.cards) // 4, column=len(self.cards) % 4, padx=10, pady=10, ipadx=10, ipady=10, sticky="nsew")
 
-        lbl_id = tk.Label(frame, text= f"Cp={cp.id}" , font=("Arial", 16, "bold"), bg=STATES["Disconnected"], fg="white")
+        lbl_id = tk.Label(frame, text= f"Cp={cp.id}" , font=("Arial", 16, "bold"), bg=STATES[6], fg="white")
         lbl_id.pack(anchor="w")
 
-        lbl_location = tk.Label(frame, font=("Arial", 10, "bold"),text=f"Location: {cp.location}", bg=STATES["Disconnected"], fg="white")
+        lbl_location = tk.Label(frame, font=("Arial", 10, "bold"),text=f"Location: {cp.location}", bg=STATES[6], fg="white")
         lbl_location.pack(anchor="w")
 
-        lbl_price = tk.Label(frame, font=("Arial", 10, "bold"),text=f"Price: {cp.price} €/kWh", bg=STATES["Disconnected"], fg="white")
+        lbl_price = tk.Label(frame, font=("Arial", 10, "bold"),text=f"Price: {cp.price} €/kWh", bg=STATES[6], fg="white")
         lbl_price.pack(anchor="w")
 
-        lbl_info = tk.Label(frame, font=("Arial", 10, "bold"),text="", bg=STATES["Disconnected"], fg="white")
+        lbl_info = tk.Label(frame, font=("Arial", 10, "bold"),text="", bg=STATES[6], fg="white")
         lbl_info.pack()
         button = ttk.Button(frame, text="Power_OFF", command=lambda cp=cp: self.status_swap(cp.id))
         button.pack(pady=(0, 10))
@@ -276,6 +278,7 @@ class CentralApp:
             cursor.execute(f"UPDATE Charging_Point SET status=\"{cp.status.get_status()}\"")
             self.conn.commit()
             modified = True
+            break
         
         if modified:
             self.update_panel()
