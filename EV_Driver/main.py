@@ -131,6 +131,12 @@ def main():
             break
         else:
             print(f"Connecting with CP {CPs[next_cp]}...")
+            print("Central: checking if CP is available for supply...")
+            supply_id = ask_supply(CPs[next_cp], driver_config)
+            if supply_id:
+                create_recover_file(supply_id, driver_config)
+                supplying(supply_id, driver_config)
+                delete_recover_file(driver_config)
             #enviar una peticion a central a CPs[next_cp]
             next_cp = (next_cp + 1) % len(CPs)
         sleep(4)
