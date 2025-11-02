@@ -250,72 +250,89 @@ class CentralApp:
 
         self.update_panel()
 
-        def modify_cp_status(self, cp_id, status):
-            modified = False
-            for cp in self.points:
-                if cp.id == cp_id: 
-                    cp.status = status
-                    cursor = self.conn.cursor()
-                    cursor.execute(f"UPDATE Charging_Point SET status=\"{cp.status.get_status()}\"")
-                    self.conn.commit()
-                    modified = True
+    def modify_cp_status(self, cp_id, action):
+        modified = False
+        for cp in self.points:
+            if cp.id != cp_id: 
+                continue
             
-            if modified:
-                self.update_panel()
-            else:
-                raise Exception("this CP wasn't registered")
-            
-        def check_cp_active(self,cp_id):
-            existing = False
-            for cp in self.points:
-                if cp.id == cp_id: 
-                    if cp.is_active():
-                        return True
-                    existing = True
-            
-            if existing:
-                return False
-            else:
-                raise Exception("this CP wasn't registered")
-
-
-        def modify_cp_driverip(self, cp_id, driver_id):
-            modified = False
-            for cp in self.points:
-                if cp.id == cp_id:
-                    cp.driver_id == driver_id
-                    modified = True
+            match action:
+                case 'set_active':
+                    cp.status.set_active()
+                case 'set_supplying':
+                    cp.status.set_supplying()
+                case 'set_stopped':
+                    cp.status.set_stopped()
+                case 'set_waiting_for_supplying':
+                    cp.status.set_waiting_for_supplying()
+                case 'set_broken_down':
+                    cp.status.set_broken_down()
+                case 'set_disconnected':
+                    cp.status.set_disconnected()
+                case _:
+                    cp.status.set_disconnected()
                     
-            if modified:
-                self.update_panel()
-            else:
-                raise Exception("this CP wasn't registered")
+            cursor = self.conn.cursor()
+            cursor.execute(f"UPDATE Charging_Point SET status=\"{cp.status.get_status()}\"")
+            self.conn.commit()
+            modified = True
+        
+        if modified:
+            self.update_panel()
+        else:
+            raise Exception("this CP wasn't registered")
+        
+    def check_cp_active(self,cp_id):
+        existing = False
+        for cp in self.points:
+            if cp.id == cp_id: 
+                if cp.is_active():
+                    return True
+                existing = True
+        
+        if existing:
+            return False
+        else:
+            raise Exception("this CP wasn't registered")
 
-            
-        def modify_cp_info(self, cp_id, consumption, cost):
-            modified = False
-            for cp in self.points:
-                if cp.id == cp_id:
-                    cp.consumption == consumption
-                    cp.cost = cost
-                    modified = True
-                    
-            if modified:
-                self.update_panel()
-            else:
-                raise Exception("this CP wasn't registered")
 
-        def reset_cp(self, cp_id):
-            modified = False
-            for cp in self.points:
-                if cp.id == cp_id:
-                    cp.consumption = 0
-                    cp.cost = 0
-                    cp.driver_id = None
-                    modified = True
-                    
-            if not modified:
-                raise Exception("this CP wasn't registered")
+    def modify_cp_driverip(self, cp_id, driver_id):
+        modified = False
+        for cp in self.points:
+            if cp.id == cp_id:
+                cp.driver_id == driver_id
+                modified = True
+                
+        if modified:
+            self.update_panel()
+        else:
+            raise Exception("this CP wasn't registered")
+
+        
+    def modify_cp_info(self, cp_id, consumption, cost):
+        modified = False
+        for cp in self.points:
+            if cp.id == cp_id:
+                cp.consumption == consumption
+                cp.cost = cost
+                modified = True
+                
+        if modified:
+            self.update_panel()
+        else:
+            raise Exception("this CP wasn't registered")
+
+    def reset_cp(self, cp_id):
+        modified = False
+        for cp in self.points:
+            if cp.id == cp_id:
+                cp.consumption = 0
+                cp.cost = 0
+                cp.driver_id = None
+                modified = True
+                
+        if not modified:
+            raise Exception("this CP wasn't registered")
             
 
 

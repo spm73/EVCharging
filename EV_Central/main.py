@@ -38,7 +38,7 @@ def process_queue(app):
     while not gui_queue.empty():
         message_type, data = gui_queue.get()
 
-        if message_type == "helth_status":
+        if message_type == "health_status":
             #meter condicion, segun el estado que envie un mensaje o otro
             app.modify_cp_status(data['cp_id'],data['action'])#cp_id, consumption, cost
 
