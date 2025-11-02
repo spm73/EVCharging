@@ -63,7 +63,7 @@ def process_queue(app, res_producer: SupplyResProducer, error_producer: SupplyEr
                 res_producer.send_response(data['applicant_id'], False, 'CP does not exists', None)
         
         elif message_type == "supply_info":
-            app.modify_cp_info(0,0,0)#cp_id, consumption, cost
+            app.modify_cp_info(data['cp_id'], data['consumption'], data['price'])#cp_id, consumption, cost
 
         elif message_type == "supply_ticket":
             #Ver los mensajes del consumer

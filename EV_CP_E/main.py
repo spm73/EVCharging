@@ -184,7 +184,7 @@ class EngineApp:
         
         # Iniciar suministro
         self.cp_data.status.set_supplying()
-        self.supply_info = SupplyInfo(self.config.kafka_ip, self.config.kafka_port, supply_id)
+        self.supply_info = SupplyInfo(self.config.kafka_ip, self.config.kafka_port, supply_id, self.cp_data.price)
         
         print("\n" + "=" * 60)
         print("SUPPLYING ENERGY")
