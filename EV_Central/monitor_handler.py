@@ -134,9 +134,8 @@ def register(cp_id: str, location: str, queue: Queue) -> dict[str, Any]:
 def authorize(cp_id: str) -> dict[str, Any]:
     conexion = sqlite3.connect("Charging_point.db")
     cursor = conexion.cursor()
-    cursor.execute(f"SELECT * FROM CP WHERE id = {cp_id}")
+    cursor.execute("SELECT * FROM CP WHERE id = ?", (cp_id,))
     cp_registers = cursor.fetchall()
-    conexion.commit()
     conexion.close()
     if len(cp_registers) == 1:
         return {

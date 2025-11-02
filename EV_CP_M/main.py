@@ -20,7 +20,9 @@ def main():
         if auth_answer['status'] != 'authorized':
             print("Authorization went wrong, trying to register CP")
             location = engine_connection.req_location()
+            print(location)
             reg_answer = central_connection.register(monitor_config.cp_ip, location)
+            print(reg_answer)
             if reg_answer['status'] != 'registered':
                 print("Registration went wrong, closing CP")
                 engine_connection.close_connection()

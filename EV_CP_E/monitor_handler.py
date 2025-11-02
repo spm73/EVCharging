@@ -9,6 +9,7 @@ LOCATION_MSG = "req-location"
 CENTRAL_FALLEN_MSG = "central-fallen"
 CENTRAL_RESTORED_MSG = "central-restored"
 PRICE_MSG = "price="
+ON_LOOP_MSG = "on_loop"
 
 def monitor_handler(monitor_connection: STXETXConnection, data: EngineData, lock: threading.Lock, id_received: threading.Event = None):
     """
@@ -27,6 +28,7 @@ def monitor_handler(monitor_connection: STXETXConnection, data: EngineData, lock
         if id_received:
             id_received.set()
                 
+        monitor_connection.send_message(ON_LOOP_MSG)
     except ConnectionClosedException:
         with lock:
             data.status.set_stopped()

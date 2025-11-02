@@ -9,6 +9,7 @@ class EngineConnection(STXETXConnection):
     CENTRAL_FALLEN_MSG = "central-fallen"
     CENTRAL_RESTORED_MSG = "central-restored"
     PRICE_MSG = "price="
+    ON_LOOP_MSG = "on_loop"
 
     def __init__(self, ip_addr: str, port_number: int):
         connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -18,6 +19,11 @@ class EngineConnection(STXETXConnection):
     def start_connection(self, cp_id: str):
         self.enq_message()
         self.send_message(cp_id)
+        on_loop = self.recv_message()
+        if on_loop == EngineConnection.ON_LOOP_MSG:
+            print(on_loop)
+        else:
+            print("error on loop")
         
     def close_connection(self):
         self.eot_message()
