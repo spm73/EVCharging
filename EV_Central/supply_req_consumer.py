@@ -21,7 +21,7 @@ class SupplyReqConsumer:
         
     def get_request(self) -> dict[str, Any] | None:
         try:
-            raw_msg = self.consumer.poll(timeout=1.0)
+            raw_msg = self.consumer.poll(timeout=2.0)
             if not raw_msg:
                 return None
             

@@ -10,7 +10,7 @@ class SupplyErrorConsumer:
             'bootstrap.servers': f'{kafka_ip}:{kafka_port}',
             'group.id': driver_id,
             # following configs can be ommited
-            'auto.offset.reset': 'latest',
+            'auto.offset.reset': 'earliest',
             'enable.auto.commit': True,
         }
         self.consumer = Consumer(conf)
@@ -22,7 +22,7 @@ class SupplyErrorConsumer:
         
     def get_error(self) -> dict[str, Any] | None:
         try:
-            raw_msg = self.consumer.poll(timeout=1.0)
+            raw_msg = self.consumer.poll(timeout=2.0)
             if not raw_msg:
                 return None
             
