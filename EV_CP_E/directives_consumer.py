@@ -32,7 +32,7 @@ class DirectivesConsumer:
             
             msg = loads(raw_msg.value().decode('utf-8'))
             target = msg['target']
-            if target == 'all' or msg == self.cp_id:
+            if target == 'all' or target == self.cp_id:
                 return msg
             return None
         except RuntimeError:

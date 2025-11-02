@@ -34,7 +34,7 @@ def enqueue_message(message_type, data):
     #Método único para enviar mensajes a la GUI
     gui_queue.put((message_type, data))
 
-def process_queue(app, res_producer: SupplyResProducer, error_producer: SupplyErrorProducer):
+def process_queue(app, res_producer: SupplyResProducer, error_producer: SupplyErrorProducer, directives_producer: DirectivesProducer):
     global current_supply_id
     while not gui_queue.empty():
         message_type, data = gui_queue.get()
@@ -54,6 +54,7 @@ def process_queue(app, res_producer: SupplyResProducer, error_producer: SupplyEr
                 if is_cp_active:#cp_id, status
                     app.modify_cp_driverid(data['cp_id'],data['applicant_id'])#cp_id, driver_id
                     res_producer.send_response(data['applicant_id'], True, None, current_supply_id)
+                    directives_producer.start_supply(data['cp_id'], current_supply_id)
                     current_supply_id += 1
                 else:
                     res_producer.send_response(data['applicant_id'], False, 'CP is already attending someone else', None)
@@ -70,7 +71,7 @@ def process_queue(app, res_producer: SupplyResProducer, error_producer: SupplyEr
             app.delete_request_message(data['cp_id'])#cp_id
 
             
-    app.root.after(100, process_queue, app, res_producer, error_producer)
+    app.root.after(100, process_queue, app, res_producer, error_producer, directives_producer)
 
 def directives_producer_thread(producer, target: str, action: str, supply_id: int | None):
     producer._send_directive(target, action, supply_id)
@@ -139,7 +140,7 @@ def main():
     app = CentralApp(root, CPs, conexion, directives_producer)
 
         # Revisar la cola periódicamente
-    root.after(100, process_queue, app, res_producer, error_producer)
+    root.after(100, process_queue, app, res_producer, error_producer, directives_producer)
     threading.Thread(target=supply_req_consumer_thread, args=(req_consumer,), daemon=True).start()
     threading.Thread(target=supply_info_consumer_thread, args=(info_consumer, info_producer), daemon=True).start()
 

@@ -27,6 +27,7 @@ class EngineApp:
         self.pending_supply_start = False
         self.lock = threading.Lock()
         self.id_received = threading.Event()
+        self.supply_directive_event = threading.Event()
 
     def wait_for_monitor(self):
         """Espera a que el monitor se conecte antes de continuar"""
@@ -81,6 +82,7 @@ class EngineApp:
             self.pending_supply_start = True
             print(f"\n\n[CENTRAL] Supply request received (ID: {self.supply_id})")
             print("[INFO] Waiting for driver to plug the vehicle...")
+            self.supply_directive_event.set()
                 
         elif action == 'stop' and self.cp_data.status.is_active() or self.cp_data.status.is_waiting_for_supply():
             self.cp_data.status.set_stopped()
@@ -144,16 +146,23 @@ class EngineApp:
         print("[CENTRAL] Supply AUTHORIZED")
         return True
 
-    def wait_for_supply_directive(self):
-        """Espera a recibir la directiva start-supply"""
+    def wait_for_supply_directive(self, timeout=180):
         print("[INFO] Waiting for supply directive from Central...")
         
-        while True:
+        # Bloqueo eficiente: el thread se duerme hasta que se señalice el evento
+        if self.supply_directive_event.wait(timeout=timeout):
+            self.supply_directive_event.clear()  # Resetear para próximo uso
+            
             with self.lock:
                 if self.pending_supply_start:
                     self.pending_supply_start = False
                     return self.supply_id
-            #time.sleep(0.1)
+            
+            return None
+        else:
+            # Timeout
+            print(f"[ERROR] Timeout ({timeout}s) waiting for supply directive")
+            return None
 
     def execute_supply(self, supply_id):
         """Ejecuta el suministro de energía"""
@@ -241,6 +250,7 @@ class EngineApp:
                 if self.pending_supply_start:
                     supply_id = self.supply_id
                     self.pending_supply_start = False
+                    self.supply_directive_event.clear()
                     self.execute_supply(supply_id)
                     self.show_initial_menu()
                     continue
@@ -258,6 +268,7 @@ class EngineApp:
                     # Solicitar autorización manual
                     if self.request_manual_supply():
                         # Esperar directiva de la central
+                        self.supply_directive_event.clear()
                         supply_id = self.wait_for_supply_directive()
                         #supply_id = self.supply_id
                         if supply_id:

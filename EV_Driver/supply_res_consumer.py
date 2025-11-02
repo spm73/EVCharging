@@ -10,7 +10,7 @@ class SupplyResConsumer:
             'bootstrap.servers': f'{kafka_ip}:{kafka_port}',
             'group.id': driver_id,
             # following configs can be ommited
-            'auto.offset.reset': 'latest',
+            'auto.offset.reset': 'earliest',
             'enable.auto.commit': True,
         }
         self.consumer = Consumer(conf)
