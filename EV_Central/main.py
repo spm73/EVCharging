@@ -34,7 +34,8 @@ def enqueue_message(message_type, data):
     #Método único para enviar mensajes a la GUI
     gui_queue.put((message_type, data))
 
-def process_queue(app):
+def process_queue(app, res_producer: SupplyResProducer, error_producer: SupplyErrorProducer):
+    global current_supply_id
     while not gui_queue.empty():
         message_type, data = gui_queue.get()
 
@@ -48,8 +49,16 @@ def process_queue(app):
             app.register_cp(data)
 
         elif message_type == "supply_request":
-            if app.check_cp_active(data['cp_id']):#cp_id, status
-                app.modify_cp_driverid(data['cp_id'],data['applicant_id'])#cp_id, driver_id
+            try:
+                is_cp_active = app.check_cp_active(data['cp_id'])
+                if is_cp_active:#cp_id, status
+                    app.modify_cp_driverid(data['cp_id'],data['applicant_id'])#cp_id, driver_id
+                    res_producer.send_response(data['applicant_id'], True, None, current_supply_id)
+                    current_supply_id += 1
+                else:
+                    res_producer.send_response(data['applicant_id'], False, 'CP is already attending someone else', None)
+            except Exception:
+                res_producer.send_response(data['applicant_id'], False, 'CP does not exists', None)
             #Ver los mensajes del consumer
             app.add_request_message(f"{date.today()}  {datetime.now().time()}  {data['applicant_id']}    {data['cp_id']}", data['cp_id'])#cp_id
         
@@ -61,7 +70,7 @@ def process_queue(app):
             app.delete_request_message(data['cp_id'])#cp_id
 
             
-    app.root.after(100, process_queue, app)
+    app.root.after(100, process_queue, app, res_producer, error_producer)
 
 def directives_producer_thread(producer, target: str, action: str, supply_id: int | None):
     producer._send_directive(target, action, supply_id)
@@ -130,7 +139,7 @@ def main():
     app = CentralApp(root, CPs, conexion, directives_producer)
 
         # Revisar la cola periódicamente
-    root.after(100, process_queue, app)
+    root.after(100, process_queue, app, res_producer, error_producer)
     threading.Thread(target=supply_req_consumer_thread, args=(req_consumer,), daemon=True).start()
     threading.Thread(target=supply_info_consumer_thread, args=(info_consumer, info_producer), daemon=True).start()
 

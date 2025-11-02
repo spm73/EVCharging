@@ -289,21 +289,24 @@ class CentralApp:
         existing = False
         for cp in self.points:
             if cp.id == cp_id: 
-                if cp.is_active():
-                    return True
-                existing = True
+                return cp.status.is_active()
+                # if cp.is_active():
+                #     return True
+                # existing = True
         
-        if existing:
-            return False
-        else:
-            raise Exception("this CP wasn't registered")
+        # if existing:
+        #     return False
+        # else:
+        #     raise Exception("this CP wasn't registered")
+        raise Exception("this CP wasn't registered")
+        
 
 
-    def modify_cp_driverip(self, cp_id, driver_id):
+    def modify_cp_driverid(self, cp_id, driver_id):
         modified = False
         for cp in self.points:
             if cp.id == cp_id:
-                cp.driver_id == driver_id
+                cp.driver_id = driver_id
                 modified = True
                 
         if modified:
@@ -316,7 +319,7 @@ class CentralApp:
         modified = False
         for cp in self.points:
             if cp.id == cp_id:
-                cp.consumption == consumption
+                cp.consumption = consumption
                 cp.cost = cost
                 modified = True
                 

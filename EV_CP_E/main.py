@@ -40,7 +40,7 @@ class EngineApp:
         print("=" * 60)
         
         self.monitor_server.listen()
-        self.monitor_server.accept(monitor_handler, self.cp_data, self.lock)
+        self.monitor_server.accept(monitor_handler, self.cp_data, self.lock, self.id_received)
         
         self.id_received.wait(timeout=30)
         if not self.cp_data.id.get_id():
