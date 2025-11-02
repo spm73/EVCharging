@@ -118,7 +118,7 @@ def main():
     directives_producer = DirectivesProducer(config.kafka_ip, config.kafka_port)
     res_producer = SupplyResProducer(config.kafka_ip, config.kafka_port)
     error_producer = SupplyErrorProducer(config.kafka_ip, config.kafka_port)
-    conexion = sqlite3.connect("Charging_point.db")
+    conexion = sqlite3.connect("/data/Charging_point.db")
     cursor = conexion.cursor()
     cursor.execute("SELECT * FROM CP")
     CPs = []

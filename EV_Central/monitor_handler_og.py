@@ -64,7 +64,7 @@ def monitor_handler(monitor_connection: STXETXConnection, status: CPStatus):
 
         
 def register(cp_id: str, location: str) -> tuple[Literal['registered', 'error'], float | None]:
-    conexion = sqlite3.connect("Charging_point.db")
+    conexion = sqlite3.connect("/data/Charging_point.db")
     cursor = conexion.cursor()
     price = random()
     status = CPStatus()
@@ -75,7 +75,7 @@ def register(cp_id: str, location: str) -> tuple[Literal['registered', 'error'],
 
 
 def authorize(cp_id: str) -> tuple[Literal['authorized', 'denied'], float | None]:
-    conexion = sqlite3.connect("Charging_point.db")
+    conexion = sqlite3.connect("/data/Charging_point.db")
     cursor = conexion.cursor()
     cursor.execute(f"SELECT * FROM CP WHERE id = {cp_id}")
     cp_registers = cursor.fetchall()

@@ -105,7 +105,7 @@ def monitor_handler(monitor_connection: STXETXConnection, queue: Queue):
 
         
 def register(cp_id: str, location: str, queue: Queue) -> dict[str, Any]:
-    conexion = sqlite3.connect("Charging_point.db")
+    conexion = sqlite3.connect("/data/Charging_point.db")
     cursor = conexion.cursor()
     price = random()
     status = CPStatus()
@@ -132,7 +132,7 @@ def register(cp_id: str, location: str, queue: Queue) -> dict[str, Any]:
     
 
 def authorize(cp_id: str) -> dict[str, Any]:
-    conexion = sqlite3.connect("Charging_point.db")
+    conexion = sqlite3.connect("/data/Charging_point.db")
     cursor = conexion.cursor()
     cursor.execute("SELECT * FROM CP WHERE id = ?", (cp_id,))
     cp_registers = cursor.fetchall()

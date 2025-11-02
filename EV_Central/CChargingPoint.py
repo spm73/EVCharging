@@ -24,7 +24,7 @@ class CChargingPoint:
     #    self.consuption_kw = kw
     #    self.cost = self.consumption_kw * self.price
 
-    #    conexion = sqlite3.connect("Charging_point.db")
+    #    conexion = sqlite3.connect("/data/Charging_point.db")
     #    cursor = conexion.cursor()
     #    cursor.execute(f"UPDATE Charging_Point SET status=\"Supplying\", consumption={kw} WHERE id={self.id}")
     #    conexion.commit()

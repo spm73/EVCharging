@@ -321,7 +321,7 @@ class CentralApp:
 
 if __name__ == "__main__":
     root = tk.Tk()
-    conexion = sqlite3.connect("Charging_point.db")
+    conexion = sqlite3.connect("/data/Charging_point.db")
     cursor = conexion.cursor()
     cursor.execute("SELECT * FROM Charging_Point")
     CPs = []
@@ -336,7 +336,7 @@ if __name__ == "__main__":
     except Exception as e:
         raise Exception("putada gorda", e)
     finally:
-        conexion = sqlite3.connect("Charging_point.db")
+        conexion = sqlite3.connect("/data/Charging_point.db")
         cursor = conexion.cursor()
         cursor.execute("UPDATE Charging_Point SET status=\"Disconnected\", consumption=0")
         conexion.commit()
