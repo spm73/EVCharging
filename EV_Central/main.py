@@ -41,7 +41,7 @@ def process_queue(app, res_producer: SupplyResProducer, error_producer: SupplyEr
 
         if message_type == "health_status":
             #meter condicion, segun el estado que envie un mensaje o otro
-            app.modify_cp_status(data['cp_id'],data['action'])#cp_id, consumption, cost
+            app.modify_cp_status(data['cp_id'],data['action'])
 
 
         elif message_type == "register_cp":
@@ -55,6 +55,7 @@ def process_queue(app, res_producer: SupplyResProducer, error_producer: SupplyEr
                     app.modify_cp_driverid(data['cp_id'],data['applicant_id'])#cp_id, driver_id
                     res_producer.send_response(data['applicant_id'], True, None, current_supply_id)
                     directives_producer.start_supply(data['cp_id'], current_supply_id)
+                    app.register_supply(current_supply_id, data['cp_id'])
                     current_supply_id += 1
                     app.add_request_message(f"{date.today()}  {datetime.now().time()}  {data['applicant_id']}    {data['cp_id']}", data['cp_id'])#cp_id
                 else:
@@ -63,11 +64,22 @@ def process_queue(app, res_producer: SupplyResProducer, error_producer: SupplyEr
                 res_producer.send_response(data['applicant_id'], False, 'CP does not exists', None)
         
         elif message_type == "supply_info":
-            app.modify_cp_info(data['cp_id'], data['consumption'], data['price'])#cp_id, consumption, cost
+            cp_id = app.get_cp_from_supply(data['supply_id'])
+            if cp_id:
+                app.modify_cp_info(cp_id, data['consumption'], data['price'])#cp_id, consumption, cost
+            else:
+                print(f"Warning: No se encontró CP para supply_id {data['supply_id']}")
 
         elif message_type == "supply_ticket":
             #Ver los mensajes del consumer
-            app.delete_request_message(data['cp_id'])#cp_id
+            cp_id = app.get_cp_from_supply(data['supply_id'])
+            if cp_id:
+                app.delete_request_message(cp_id)
+                app.reset_cp(cp_id)
+                # Limpiar el mapeo
+                app.unregister_supply(data['supply_id'])
+            else:
+                print(f"Warning: No se encontró CP para supply_id {data['supply_id']}")
 
             
     app.root.after(100, process_queue, app, res_producer, error_producer, directives_producer)

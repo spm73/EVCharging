@@ -76,6 +76,22 @@ class CentralApp:
         # Contenedores de mensajes
         self.requests_msgs = OrderedDict()
         self.app_msgs = []
+        self.active_supplies = {}
+
+    def register_supply(self, supply_id, cp_id):
+        """Registra un nuevo suministro activo"""
+        self.active_supplies[supply_id] = cp_id
+        
+    
+    def get_cp_from_supply(self, supply_id):
+        """Obtiene el cp_id asociado a un supply_id"""
+        return self.active_supplies.get(supply_id)
+    
+    
+    def unregister_supply(self, supply_id):
+        """Elimina un suministro cuando finaliza"""
+        if supply_id in self.active_supplies:
+            del self.active_supplies[supply_id]
 
 
     def create_panel(self):
