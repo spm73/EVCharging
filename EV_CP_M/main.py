@@ -16,6 +16,7 @@ def main():
     price = None
 
     try:
+        print("Startin authorization...")
         auth_answer = central_connection.authorize(monitor_config.cp_ip)
         if auth_answer['status'] != 'authorized':
             print("Authorization went wrong, trying to register CP")
@@ -43,6 +44,7 @@ def main():
         
     try:
         engine_connection.send_price(price)
+        print("Price sended")
     except ConnectionClosedException:
         engine_connection.close_connection()    
         central_connection.close_connection()
@@ -52,6 +54,7 @@ def main():
     while running:
         try:
             engine_connection.req_health_status(cp_status)
+            print(f"{cp_status.get_status()}")
         except ConnectionClosedException:
             cp_status.set_broken_down()
             engine_connection.close_connection()

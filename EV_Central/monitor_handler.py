@@ -117,7 +117,7 @@ def register(cp_id: str, location: str, queue: Queue) -> dict[str, Any]:
         data = {
             'cp_id': cp_id
         }
-        queue.put(('register_cp'), data)
+        queue.put(('register_cp', data))
         return {
             'result': 'registered',
             'cp_id': cp_id,
