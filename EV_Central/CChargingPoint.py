@@ -49,7 +49,7 @@ class CChargingPoint:
 
 
         cursor = conn.cursor()
-        cursor.execute(f"UPDATE CP SET status=\"Stopped\" WHERE id={self.id}")
+        cursor.execute("UPDATE CP SET status=? WHERE id=?", (self.status.get_status(), self.id))
         conn.commit()
 
         
