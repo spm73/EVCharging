@@ -71,7 +71,7 @@ class STXETXConnection:
             
             stx_answer, lrc = raw_answer.split(STXETXConnection.ETX_HEADER)
             answer = stx_answer.removeprefix(STXETXConnection.STX_HEADER)
-            comprobation = bytes(ord(byte) ^ ord(byte) for byte in answer)
+            comprobation = bytes(byte ^ byte for byte in answer)
             if comprobation == lrc:
                 self.send_ack()
             else:

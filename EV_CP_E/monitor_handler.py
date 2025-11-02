@@ -10,7 +10,7 @@ CENTRAL_FALLEN_MSG = "central-fallen"
 CENTRAL_RESTORED_MSG = "central-restored"
 PRICE_MSG = "price="
 
-def monitor_handler(monitor_connection: STXETXConnection, data: EngineData, lock: threading.Lock):
+def monitor_handler(monitor_connection: STXETXConnection, data: EngineData, lock: threading.Lock, id_received: threading.Event = None):
     """
     Handler para las peticiones del monitor.
     Ahora recibe un lock para sincronización thread-safe con el resto del engine.
@@ -24,6 +24,8 @@ def monitor_handler(monitor_connection: STXETXConnection, data: EngineData, lock
             data.id.set_id(id)
             if data.status.is_stopped():
                 data.status.set_active()
+        if id_received:
+            id_received.set()
                 
     except ConnectionClosedException:
         with lock:

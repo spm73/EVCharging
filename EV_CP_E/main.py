@@ -26,6 +26,7 @@ class EngineApp:
         self.directive_thread = None
         self.pending_supply_start = False
         self.lock = threading.Lock()
+        self.id_received = threading.Event()
 
     def wait_for_monitor(self):
         """Espera a que el monitor se conecte antes de continuar"""
@@ -40,6 +41,10 @@ class EngineApp:
         
         self.monitor_server.listen()
         self.monitor_server.accept(monitor_handler, self.cp_data, self.lock)
+        
+        self.id_received.wait(timeout=30)
+        if not self.cp_data.id.get_id():
+            raise Exception("Failed to receive CP ID from Monitor")
         
         self.monitor_connected = True
         print("\n✓ Monitor connected successfully!")
@@ -100,7 +105,7 @@ class EngineApp:
     def show_initial_menu(self):
         """Muestra el menú inicial del CP"""
         print("\n" + "=" * 60)
-        print(f"CP Status: {self.cp_data.status.get_status_name()}")
+        # print(f"CP Status: {self.cp_data.status.get_status_name()}")
         print("=" * 60)
         print("OPTIONS:")
         print("  [ENTER] - Start manual supply (without driver app)")
