@@ -41,7 +41,7 @@ def monitor_handler(monitor_connection: STXETXConnection, data: EngineData, lock
             
             if petition == HEALTH_MSG:
                 with lock:
-                    monitor_connection.send_message(str(data.status.value))
+                    monitor_connection.send_message(str(data.status.get_status()))
                 
             elif petition == LOCATION_MSG:
                 monitor_connection.send_message(data.location)

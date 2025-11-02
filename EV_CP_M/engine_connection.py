@@ -64,7 +64,7 @@ class EngineConnection(STXETXConnection):
     def send_price(self, price: float):
         price_msg = EngineConnection.PRICE_MSG + str(price)
         self.send_message(price_msg)
-        _ = self.recv_message()
+        # _ = self.recv_message()
 
 # class EngineConnection:
 #     HEALTH_MSG = "req-health-status".encode()
