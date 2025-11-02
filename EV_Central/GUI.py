@@ -5,6 +5,7 @@ import time
 import threading
 from CChargingPoint import *
 import sqlite3
+from collections import OrderedDict
 
 # Estados y colores
 STATES = {
@@ -73,7 +74,7 @@ class CentralApp:
         self.app_title.pack(anchor="w")
 
         # Contenedores de mensajes
-        self.requests_msgs = {}
+        self.requests_msgs = OrderedDict()
         self.app_msgs = []
 
 
@@ -146,7 +147,7 @@ class CentralApp:
         button = card["button"]
         if button["text"] == "Power_ON":
             try:
-                self.directives_producer.resume_cp(cp.driver_id)
+                self.directives_producer.resume_cp(cp.id_driver)
             except Exception as e:
                 raise e
             try:
@@ -156,7 +157,7 @@ class CentralApp:
             button.config(text = "Power_OFF")
         elif button["text"] == "Power_OFF":
             try:
-                self.directives_producer.stop_cp(cp.driver_id)
+                self.directives_producer.stop_cp(cp.id_driver)
             except Exception as e:
                 raise e
             try:
@@ -166,7 +167,7 @@ class CentralApp:
             self.add_app_message(f"Cp {cp.id} out of order", color="#FF4C4C")
             button.config(text = "Power_ON")
         else:
-            raise Exception("There was a problem with the buttom")
+            raise Exception("There was a problem with the button")
         
         self.update_panel()
 
@@ -177,7 +178,8 @@ class CentralApp:
         label = tk.Label(self.requests_frame, text=msg, bg="#383F8F", fg="white", anchor="w")
 
         if self.requests_msgs:
-            label.pack(anchor="w", before=self.requests_msgs[0])
+            first_msg = next(iter(self.requests_msgs.values()))
+            label.pack(anchor="w", before=first_msg)
         else:
             label.pack(anchor="w", after=self.requests_subtitle)
 
@@ -187,8 +189,11 @@ class CentralApp:
     def delete_request_message(self, cp_id):
         if cp_id in self.requests_msgs:
             old_label = self.requests_msgs[cp_id]
-            del self.requests_msgs[cp_id]  # eliminar el más antiguo
+            del self.requests_msgs[cp_id]
             old_label.destroy()
+        else:
+            # Opcional: loggear que no se encontró el mensaje
+            print(f"Warning: No se encontró mensaje para CP {cp_id}")
 
 
     def add_app_message(self, msg, color="white"):
@@ -306,8 +311,9 @@ class CentralApp:
         modified = False
         for cp in self.points:
             if cp.id == cp_id:
-                cp.driver_id = driver_id
+                cp.id_driver = driver_id
                 modified = True
+                break
                 
         if modified:
             self.update_panel()
@@ -319,9 +325,10 @@ class CentralApp:
         modified = False
         for cp in self.points:
             if cp.id == cp_id:
-                cp.consumption = consumption
+                cp.consumption_kw = consumption
                 cp.cost = cost
                 modified = True
+                break
                 
         if modified:
             self.update_panel()
@@ -332,13 +339,16 @@ class CentralApp:
         modified = False
         for cp in self.points:
             if cp.id == cp_id:
-                cp.consumption = 0
+                cp.consumption_kw = 0
                 cp.cost = 0
-                cp.driver_id = None
+                cp.id_driver = None
                 modified = True
+                break
                 
-        if not modified:
-            raise Exception("this CP wasn't registered")
+        if modified:
+            self.update_panel()  # Añadir para actualizar la UI
+        else:
+            raise Exception(f"CP {cp_id} wasn't registered")
             
 
 

@@ -56,12 +56,11 @@ def process_queue(app, res_producer: SupplyResProducer, error_producer: SupplyEr
                     res_producer.send_response(data['applicant_id'], True, None, current_supply_id)
                     directives_producer.start_supply(data['cp_id'], current_supply_id)
                     current_supply_id += 1
+                    app.add_request_message(f"{date.today()}  {datetime.now().time()}  {data['applicant_id']}    {data['cp_id']}", data['cp_id'])#cp_id
                 else:
                     res_producer.send_response(data['applicant_id'], False, 'CP is already attending someone else', None)
             except Exception:
                 res_producer.send_response(data['applicant_id'], False, 'CP does not exists', None)
-            #Ver los mensajes del consumer
-            app.add_request_message(f"{date.today()}  {datetime.now().time()}  {data['applicant_id']}    {data['cp_id']}", data['cp_id'])#cp_id
         
         elif message_type == "supply_info":
             app.modify_cp_info(0,0,0)#cp_id, consumption, cost
