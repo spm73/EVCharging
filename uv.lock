@@ -14,14 +14,10 @@ version = "0.1.0"
 source = { editable = "communications" }
 dependencies = [
     { name = "confluent-kafka" },
-    { name = "sockets" },
 ]
 
 [package.metadata]
-requires-dist = [
-    { name = "confluent-kafka", specifier = ">=2.14.0" },
-    { name = "sockets", specifier = ">=1.0.0" },
-]
+requires-dist = [{ name = "confluent-kafka", specifier = ">=2.14.0" }]
 
 [[package]]
 name = "confluent-kafka"
@@ -50,12 +46,3 @@ wheels = [
 name = "evcharging"
 version = "0.1.0"
 source = { virtual = "." }
-
-[[package]]
-name = "sockets"
-version = "1.0.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/c2/a7/6bc7eeefb624e03e5a34c2c0d8eff6525487b1af0ccfd62d0f83a62a5400/sockets-1.0.0.tar.gz", hash = "sha256:0d5691402d3da39c9ef6330647d847b0bed93a4ce8b23bf1a18133e2dcbb5c8d", size = 2502, upload-time = "2018-06-21T11:26:48.682Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/cd/84/bd124c5d3c012de593c45c7f0208615c73493859bbd5389e1403e311d387/sockets-1.0.0-py3-none-any.whl", hash = "sha256:cdb78b0f37b78adadedcc55cdd73c61aacbeb0f00c4c551f1b60f1463457c90b", size = 4495, upload-time = "2018-06-21T11:26:47.181Z" },
-]
