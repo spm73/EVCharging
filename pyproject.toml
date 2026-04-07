@@ -1,0 +1,12 @@
+[project]
+name = "evcharging"
+version = "0.1.0"
+description = "Project for Distributed systems subject"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = []
+
+[tool.uv.workspace]
+members = [
+    "communications",
+]
