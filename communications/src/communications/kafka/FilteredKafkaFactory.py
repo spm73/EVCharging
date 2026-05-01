@@ -14,5 +14,5 @@ class FilteredKafkaFactory(AbstractKafkaFactory):
         super().__init__(broker_info)
         self.__filter_func = filter_func
         
-    def create_consumer(self, topic: str, group_id: str, message_class: Type[Message],) -> KafkaConsumer:
+    def create_consumer(self, topic: str, group_id: str, message_class: Type[Message]) -> KafkaConsumer:
         return KafkaConsumer(self._broker_info, topic, group_id, message_class, self.__filter_func)
