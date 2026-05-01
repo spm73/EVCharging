@@ -1,0 +1,16 @@
+from abc import ABC, abstractmethod
+
+from .KafkaBrokerInfo import KafkaBrokerInfo
+from .KafkaProducer import KafkaProducer
+from .KafkaConsumer import KafkaConsumer
+
+class AbstractKafkaFactory(ABC):
+    def __init__(self, broker_info: KafkaBrokerInfo) -> None:
+        self.__broker_info = broker_info
+        
+    def create_producer(self, topic: str) -> KafkaProducer:
+        return KafkaProducer(self.__broker_info, topic)
+    
+    @abstractmethod
+    def create_consumer(self, topic: str, group_id: str) -> KafkaConsumer:
+        pass
