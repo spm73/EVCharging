@@ -1,5 +1,5 @@
 from confluent_kafka import Consumer, KafkaError
-from typing import Callable
+from typing import Callable, Type
 from threading import Thread, Event
 
 from .Message import Message
@@ -12,6 +12,7 @@ class KafkaConsumer():
         broker_info: KafkaBrokerInfo, 
         topic: str, 
         group_id: str,
+        message_class: Type[Message],
         filter_func: Callable[[Message], bool] | None
     ) -> None:
         conf = {
@@ -19,6 +20,7 @@ class KafkaConsumer():
             'group.id': group_id
         }
         self.__topic = topic
+        self.__message_class = message_class
         self.__consumer = Consumer(conf)
         self.__consumer.subscribe([topic])
         self.__filter_func = filter_func
@@ -55,7 +57,7 @@ class KafkaConsumer():
                     print(f"{self.__class__}:{self.__topic} Error: {msg.error()}")
                 continue
 
-            message = Message.from_payload(msg.value().decode('utf-8'))
+            message = self.__message_class.from_payload(msg.value().decode('utf-8'))
             if self.__should_notify(message):
                 self.__notifier.notify(message)
         

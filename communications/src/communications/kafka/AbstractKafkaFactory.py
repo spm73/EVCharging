@@ -1,8 +1,10 @@
 from abc import ABC, abstractmethod
+from typing import Type
 
 from .KafkaBrokerInfo import KafkaBrokerInfo
 from .KafkaProducer import KafkaProducer
 from .KafkaConsumer import KafkaConsumer
+from .Message import Message
 
 class AbstractKafkaFactory(ABC):
     def __init__(self, broker_info: KafkaBrokerInfo) -> None:
@@ -12,5 +14,10 @@ class AbstractKafkaFactory(ABC):
         return KafkaProducer(self._broker_info, topic)
     
     @abstractmethod
-    def create_consumer(self, topic: str, group_id: str) -> KafkaConsumer:
+    def create_consumer(
+        self, 
+        topic: str, 
+        group_id: str, 
+        message_class: Type[Message]
+        ) -> KafkaConsumer:
         pass
