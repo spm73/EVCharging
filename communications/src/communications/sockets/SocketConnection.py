@@ -16,9 +16,7 @@ class SocketConnection:
     def close(self) -> None:
         try:
             self.__socket.send(SocketConnection.EOT)
-        except ConnectionError:
-            pass
-        except OSError:
+        except (ConnectionError, OSError):
             pass
         self.__socket.close()
         
@@ -106,6 +104,8 @@ class SocketConnection:
                 byte = None
                 while byte != SocketConnection.ETX:
                     byte = self.__socket.recv(1)
+                    if byte == b'':
+                        raise ConnectionResetError()
                     if byte != SocketConnection.ETX:
                         content += byte
 

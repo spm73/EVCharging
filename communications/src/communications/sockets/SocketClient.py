@@ -4,7 +4,7 @@ from .SocketConnection import SocketConnection
 from typing import Callable, Self
 
 class SocketClient:
-    def __init__(self, host: str, port: int, on_connect: Callable[[Self], str]=None, ssl_context: ssl.SSLContext | None = None):
+    def __init__(self, host: str, port: int, on_connect: Callable[[Self], bool]=None, ssl_context: ssl.SSLContext | None = None):
         self.__host = host
         self.__port = port
         self.__ssl_context = ssl_context

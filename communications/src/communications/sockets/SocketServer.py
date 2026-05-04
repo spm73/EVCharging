@@ -5,7 +5,8 @@ from .SocketConnection import SocketConnection
 from typing import Callable
 
 class SocketServer:
-    def __init__(self, port: int, handler: Callable[[SocketConnection], None], ssl_context: ssl.SSLContext | None = None):
+    def __init__(self, ip: str, port: int, handler: Callable[[SocketConnection], None], ssl_context: ssl.SSLContext | None = None):
+        self.__ip = ip
         self.__port = port
         self.__handler = handler
         self.__ssl_context = ssl_context
@@ -15,7 +16,7 @@ class SocketServer:
     def start(self) -> None:
         self.__server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.__server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.__server_socket.bind(('', self.__port))
+        self.__server_socket.bind((self.__ip, self.__port))
         self.__server_socket.listen()
         self.__running = True
 

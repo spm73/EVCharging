@@ -9,7 +9,7 @@ class MessageHandler:
         self.__handlers[message_type] = callback
         
     def delete(self, message_type) -> None:
-        del self.__handlers[message_type]
+        self.__handlers.pop(message_type, None)
 
     def handle(self, message) -> str | None:
         message_type = message.split('#')[0]
