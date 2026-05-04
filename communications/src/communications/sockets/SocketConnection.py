@@ -7,7 +7,7 @@ class SocketConnection:
     ETX = chr(3).encode()
     ACK = chr(6).encode()
     NACK = chr(21).encode()
-    ATTEMPS = 3
+    ATTEMPTS = 3
     
     def __init__(self, socket: socket.socket) -> None:
         self.__socket = socket
@@ -24,8 +24,8 @@ class SocketConnection:
         
     def send_handshake(self) -> bool:
         answer = None
-        attemps = 0
-        while not answer and attemps < SocketConnection.ATTEMPS:
+        attempts = 0
+        while not answer and attempts < SocketConnection.ATTEMPTS:
             try:
                 self.__socket.send(SocketConnection.ENQ)
             except ConnectionError:
@@ -36,9 +36,9 @@ class SocketConnection:
                     return True
                 
                 answer = None
-                attemps += 1
+                attempts += 1
             except TimeoutError:
-                attemps += 1
+                attempts += 1
                 continue
             except ConnectionResetError:
                 break
@@ -49,8 +49,8 @@ class SocketConnection:
         
     def receive_handshake(self) -> bool:
         message = None
-        attemps = 0
-        while not message and attemps < SocketConnection.ATTEMPS:
+        attempts = 0
+        while not message and attempts < SocketConnection.ATTEMPTS:
             try:
                 message = self.__socket.recv(1)
                 if message == SocketConnection.ENQ:
@@ -62,9 +62,9 @@ class SocketConnection:
                 
                 self.__socket.send(SocketConnection.NACK)
                 message = None
-                attemps += 1
+                attempts += 1
             except TimeoutError:
-                attemps += 1
+                attempts += 1
                 continue
             except ConnectionResetError:
                 break
