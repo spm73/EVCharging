@@ -11,9 +11,13 @@ class SocketConnection:
     
     def __init__(self, socket: socket.socket) -> None:
         self.__socket = socket
+        self.__close = False
         socket.settimeout(1)
         
     def close(self) -> None:
+        if self.__close:
+            return
+        self.__close = True
         try:
             self.__socket.send(SocketConnection.EOT)
         except (ConnectionError, OSError):
@@ -38,7 +42,7 @@ class SocketConnection:
             except TimeoutError:
                 attempts += 1
                 continue
-            except ConnectionResetError:
+            except (ConnectionResetError, OSError):
                 break
         
         print("Closing connection: Could not complete handshake")
@@ -94,7 +98,7 @@ class SocketConnection:
             except TimeoutError:
                 attempts += 1
                 continue
-            except ConnectionResetError:
+            except (ConnectionResetError, OSError):
                 self.close()
                 return None
             
@@ -122,7 +126,7 @@ class SocketConnection:
                 return content.decode()
             except TimeoutError:
                 return None
-            except ConnectionResetError:
+            except (ConnectionResetError, OSError):
                 self.close()
                 return None
 
@@ -140,7 +144,7 @@ class SocketConnection:
                 attempts += 1
             except TimeoutError:
                 attempts += 1
-            except ConnectionError:
+            except (ConnectionError, OSError):
                 self.close()
                 return False
 
