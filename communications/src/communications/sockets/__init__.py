@@ -7,5 +7,4 @@ __all__ = [
     'MessageHandler',
     'SocketClient',
     'SocketServer',
-    'SocketConnection'
 ]
