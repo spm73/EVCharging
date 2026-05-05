@@ -4,7 +4,12 @@ version = "0.1.0"
 description = "Project for Distributed systems subject"
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "communications",
+]
+
+[tool.uv.sources]
+communications = { workspace = true }
 
 [tool.uv.workspace]
 members = [
