@@ -1,0 +1,12 @@
+[project]
+name = "ev-central"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "communications"
+]
+
+[tool.uv.sources]
+communications = { workspace = true }
