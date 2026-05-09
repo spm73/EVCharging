@@ -1,0 +1,4 @@
+# messages/__init__.py
+from .SupplyRequestMessage import SupplyRequestMessage
+from .SupplyRequestNotificationMessage import SupplyRequestNotificationMessage
+from .SupplyResponseMessage import SupplyResponseMessage

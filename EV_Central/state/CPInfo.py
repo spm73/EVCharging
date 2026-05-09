@@ -22,3 +22,6 @@ class CPInfo:
     
     def get_key(self) -> bytes | None:
         return self.__key
+    
+    def is_available(self) -> bool:
+        return self.__status == CPStatus.ACTIVE
