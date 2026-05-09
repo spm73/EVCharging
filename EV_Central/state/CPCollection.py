@@ -1,9 +1,10 @@
 from threading import Timer, Lock
-from sqlalchemy import URL, create_engine, Engine, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 from os import getenv
 
 from .CPInfo import CPInfo
+from .Database import Database
 from ..models.CP import CP
 
 class CPCollection:
@@ -20,7 +21,7 @@ class CPCollection:
     def __init__(self):
         if hasattr(self, '_initialized'):
             return
-        self.__engine = CPCollection.__create_engine()
+        self.__engine = Database().get_engine()
         self.__cps: dict[str, CPInfo] = {}
         self.__lock: Lock = Lock()
         self.__load_from_db()
@@ -70,14 +71,3 @@ class CPCollection:
         self.__timer = Timer(CPCollection.INTERVAL, self.__store_in_db)
         self.__timer.start()
         
-    @staticmethod
-    def __create_engine() -> Engine:
-        url = URL.create(
-            drivername=f'{getenv('DB_CONNECTION')}+{getenv('DB_DRIVER')}',
-            username=getenv('DB_USERNAME'),
-            password=getenv('DB_PASSWORD'),
-            host=getenv('DB_HOST'),
-            port=int(getenv('DB_PORT')),
-            database=getenv('DB_NAME')
-        )
-        return create_engine(url)
