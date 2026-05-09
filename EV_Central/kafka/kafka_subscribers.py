@@ -41,6 +41,7 @@ def request_handler(request: Message) -> None:
             session.add(supply)
             session.commit()
             session.refresh(supply)
+        requested_cp.start_supply(supply.id)
         response_producer.send_message(
             SupplyResponseMessage(request.driver_id, 'accepted', None, supply.id)
         )
@@ -56,4 +57,13 @@ def resend_telemetry(telemetry: Message) -> None:
     
     factory = KafkaManager().get_factory()
     producer = factory.create_producer('supply.telemetry.users')
+    cp_collection = CPCollection()
+    cp = cp_collection.get_cp_by_supply_id(telemetry.supply_id)
+    if cp is None:
+        print("Supply not registered")
+        return
+    cp.update_supply(telemetry.consumption, telemetry.price)
+    if telemetry.is_ticket():
+        cp_collection.end_supply(cp.get_id())
+        
     producer.send_message(telemetry)

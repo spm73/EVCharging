@@ -6,6 +6,7 @@ from os import getenv
 from .CPInfo import CPInfo
 from .Database import Database
 from ..models.CP import CP
+from ..models.Supply import Supply
 
 class CPCollection:
     INTERVAL: float = 60.0
@@ -42,6 +43,32 @@ class CPCollection:
     def add_cp(self, cp_id: str) -> None:
         with self.__lock:
             self.__cps[cp_id] = CPInfo(cp_id)
+            
+    def get_cp_by_supply_id(self, supply_id: int) -> CPInfo | None:
+        with self.__lock:
+            for cp in self.__cps.values():
+                supply = cp.get_active_supply()
+                if supply and supply.id == supply_id:
+                    return cp
+        return None
+    
+    def end_supply(self, cp_id: str) -> None:
+        with self.__lock:
+            cp = self.__cps.get(cp_id)
+            if cp is None:
+                raise KeyError(f'CP ID: {cp_id} is not registered')
+            active_supply = cp.get_active_supply()
+            if active_supply is None:
+                return
+            cp.end_supply()
+        
+        with Session(Database().get_engine()) as session:
+            supply = session.get(Supply, active_supply.id)
+            if supply is not None:
+                supply.is_done = True
+                supply.consumption = active_supply.consumption
+                supply.price = active_supply.price
+                session.commit()
         
     def __remove_cp(self, cp_id: str) -> None:
         with self.__lock:
