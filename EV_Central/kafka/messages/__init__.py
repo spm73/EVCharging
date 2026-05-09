@@ -2,3 +2,5 @@
 from .SupplyRequestMessage import SupplyRequestMessage
 from .SupplyRequestNotificationMessage import SupplyRequestNotificationMessage
 from .SupplyResponseMessage import SupplyResponseMessage
+from .ActiveCPListingMessage import ActiveCPListingMessage
+from .SupplyTelemetryMessage import SupplyTelemetryMessage

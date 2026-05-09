@@ -11,7 +11,7 @@ class SupplyResponseMessage(Message):
         reason: str | None, 
         supply_id: str | None
         ) -> None:
-        super.__init__()
+        super().__init__()
         self.driver_id = driver_id
         self.status = status
         self.reason = reason

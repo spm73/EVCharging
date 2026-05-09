@@ -5,7 +5,7 @@ from communications.kafka import Message
 
 class SupplyRequestNotificationMessage(Message):
     def __init__(self, driver_id: str, message: str) -> None:
-        super.__init__()
+        super().__init__()
         self.driver_id = driver_id
         self.message = message
         

@@ -9,6 +9,7 @@ from .messages import *
 
 def request_handler(request: Message) -> None:
     if not isinstance(request, SupplyRequestMessage):
+        print("Someone put the wrong message in the wrong topic")
         return
     
     factory = KafkaManager().get_factory()
@@ -48,3 +49,11 @@ def request_handler(request: Message) -> None:
             SupplyResponseMessage(request.driver_id, 'denied', 'CP cannot attend a supply', None)
         )
     
+def resend_telemetry(telemetry: Message) -> None:
+    if not isinstance(telemetry, SupplyTelemetryMessage):
+        print("Someone put the wrong message in the wrong topic")
+        return
+    
+    factory = KafkaManager().get_factory()
+    producer = factory.create_producer('supply.telemetry.users')
+    producer.send_message(telemetry)
