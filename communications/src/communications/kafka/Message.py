@@ -6,7 +6,7 @@ class Message(ABC):
     def to_payload(self) -> str:
         pass
     
-    @staticmethod
+    @classmethod
     @abstractmethod
-    def from_payload(payload: str) -> Self:
+    def from_payload(cls, payload: str) -> Self:
         pass
