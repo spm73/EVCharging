@@ -7,11 +7,7 @@ from ..state.KafkaManager import KafkaManager
 from ..state.Database import Database
 from .messages import *
 
-def driver_request_handler(request: Message) -> None:
-    if not isinstance(request, SupplyRequestMessage):
-        print("Someone put the wrong message in the wrong topic")
-        return
-    
+def driver_request_handler(request: SupplyRequestMessage) -> None:
     factory = KafkaManager().get_factory()
     notification_producer = factory.create_producer('driver.notifications')
     response_producer = factory.create_producer('supply.response')
@@ -33,7 +29,9 @@ def driver_request_handler(request: Message) -> None:
     )
     if requested_cp.is_available():
         cp_command_producer = factory.create_producer('cp.commands')
-        DriverNotificationMessage(request.driver_id, 'Locking CP for supply...')
+        notification_producer.send_message(
+            DriverNotificationMessage(request.driver_id, 'Locking CP for supply...')
+        )
         cp_command_producer.send_message(
             CentralCommandMessage(requested_cp.get_id(), 'lock')
         )
@@ -60,11 +58,7 @@ def driver_request_handler(request: Message) -> None:
         )
         
 
-def cp_request_handler(request: Message) -> None:
-    if not isinstance(request, SupplyRequestMessage):
-        print("Someone put the wrong message in the wrong topic")
-        return
-    
+def cp_request_handler(request: SupplyRequestMessage) -> None:
     factory = KafkaManager().get_factory()
     cp = CPCollection().get_cp(request.cp_id)
     supply = None
@@ -83,11 +77,7 @@ def cp_request_handler(request: Message) -> None:
     )
     
     
-def resend_telemetry(telemetry: Message) -> None:
-    if not isinstance(telemetry, SupplyTelemetryMessage):
-        print("Someone put the wrong message in the wrong topic")
-        return
-    
+def resend_telemetry(telemetry: SupplyTelemetryMessage) -> None:
     factory = KafkaManager().get_factory()
     producer = factory.create_producer('supply.telemetry.users')
     cp_collection = CPCollection()
