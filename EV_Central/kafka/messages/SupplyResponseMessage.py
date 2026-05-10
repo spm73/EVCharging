@@ -1,5 +1,5 @@
 from json import dumps, loads
-from typing import Self
+from typing import Self, Literal
 
 from communications.kafka import Message
 
@@ -7,7 +7,7 @@ class SupplyResponseMessage(Message):
     def __init__(
         self, 
         driver_id: str, 
-        status: str, 
+        status: Literal["accepted", "denied"], 
         reason: str | None, 
         supply_id: str | None
         ) -> None:

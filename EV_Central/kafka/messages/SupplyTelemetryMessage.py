@@ -1,5 +1,5 @@
 from json import dumps, loads
-from typing import Self
+from typing import Self, Literal
 from decimal import Decimal
 
 from communications.kafka import Message
@@ -7,7 +7,7 @@ from communications.kafka import Message
 class SupplyTelemetryMessage(Message):
     def __init__(
         self, 
-        msg_type: str,
+        msg_type: Literal["ticket", "supplying"],
         supply_id: int, 
         price: Decimal, 
         consumption: int
