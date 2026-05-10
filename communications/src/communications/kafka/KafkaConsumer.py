@@ -1,19 +1,19 @@
 from confluent_kafka import Consumer, KafkaError
-from typing import Callable, Type
+from typing import Callable, Type, Generic
 from threading import Thread, Event
 
 from .Message import Message
 from .KafkaBrokerInfo import KafkaBrokerInfo
-from .KafkaNotifier import KafkaNotifier
+from .KafkaNotifier import KafkaNotifier, M
 
-class KafkaConsumer():
+class KafkaConsumer(Generic[M]):
     def __init__(
         self,
         broker_info: KafkaBrokerInfo, 
         topic: str, 
         group_id: str,
-        message_class: Type[Message],
-        filter_func: Callable[[Message], bool] | None
+        message_class: Type[M],
+        filter_func: Callable[[M], bool] | None
     ) -> None:
         conf = {
             'bootstrap.servers': broker_info.get_broker_endpoint(),
@@ -24,7 +24,7 @@ class KafkaConsumer():
         self.__consumer = Consumer(conf)
         self.__consumer.subscribe([topic])
         self.__filter_func = filter_func
-        self.__notifier = KafkaNotifier()
+        self.__notifier = KafkaNotifier[M]()
         self.__is_polling = Event()
         self.__thread = Thread(target=self.__polling_loop, daemon=True)
         self.__thread.start()
@@ -34,10 +34,10 @@ class KafkaConsumer():
         self.__thread.join()
         self.__consumer.close()
         
-    def get_notifier(self) -> KafkaNotifier:
+    def get_notifier(self) -> KafkaNotifier[M]:
         return self.__notifier
     
-    def __should_notify(self, message: Message) -> bool:
+    def __should_notify(self, message: M) -> bool:
         if self.__filter_func is not None:
             return self.__filter_func(message)
         
