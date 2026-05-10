@@ -13,10 +13,10 @@ def request_handler(request: Message) -> None:
         return
     
     factory = KafkaManager().get_factory()
-    notification_producer = factory.create_producer('supply.request.notification')
+    notification_producer = factory.create_producer('driver.notifications')
     response_producer = factory.create_producer('supply.response')
     notification_producer.send_message(
-        SupplyRequestNotificationMessage(request.driver_id, 'Checking CP existence...')
+        DriverNotificationMessage(request.driver_id, 'Checking CP existence...')
     )
     cps = CPCollection()
     requested_cp = None
@@ -29,9 +29,14 @@ def request_handler(request: Message) -> None:
         return
     
     notification_producer.send_message(
-        SupplyRequestNotificationMessage(request.driver_id, 'Checking CP availability...')
+        DriverNotificationMessage(request.driver_id, 'Checking CP availability...')
     )
     if requested_cp.is_available():
+        cp_command_producer = factory.create_producer('cp.commands')
+        DriverNotificationMessage(request.driver_id, 'Locking CP for supply...')
+        cp_command_producer.send_message(
+            CentralCommandMessage(requested_cp.get_id(), 'lock')
+        )
         supply = None
         with Session(Database().get_engine()) as session:
             supply = Supply(
@@ -41,6 +46,10 @@ def request_handler(request: Message) -> None:
             session.add(supply)
             session.commit()
             session.refresh(supply)
+        start_supply_producer = factory.create_producer('cp.start-supply')
+        start_supply_producer.send_message(
+            StartSupplyMessage(supply.id)
+        )
         requested_cp.start_supply(supply.id)
         response_producer.send_message(
             SupplyResponseMessage(request.driver_id, 'accepted', None, supply.id)
