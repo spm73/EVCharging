@@ -1,17 +1,19 @@
-from typing import Callable
+from typing import Callable, TypeVar, Generic
 
 from .Message import Message
 
-class KafkaNotifier:
-    def __init__(self):
-        self.__subscribers: list[Callable[[Message], None]] = []
+M = TypeVar('M', bound=Message)
 
-    def add_subscriber(self, subscriber: Callable[[Message], None]) -> None:
+class KafkaNotifier(Generic[M]):
+    def __init__(self):
+        self.__subscribers: list[Callable[[M], None]] = []
+
+    def add_subscriber(self, subscriber: Callable[[M], None]) -> None:
         self.__subscribers.append(subscriber)
 
-    def remove_subscriber(self, subscriber: Callable[[Message], None]) -> None:
+    def remove_subscriber(self, subscriber: Callable[[M], None]) -> None:
         self.__subscribers.remove(subscriber)
 
-    def notify(self, message: Message) -> None:
+    def notify(self, message: M) -> None:
         for subscriber_action in self.__subscribers:
             subscriber_action(message)
