@@ -3,7 +3,7 @@ from typing import Type
 
 from .KafkaBrokerInfo import KafkaBrokerInfo
 from .KafkaProducer import KafkaProducer
-from .KafkaConsumer import KafkaConsumer
+from .KafkaConsumer import KafkaConsumer, M
 from .Message import Message
 
 class AbstractKafkaFactory(ABC):
@@ -18,6 +18,6 @@ class AbstractKafkaFactory(ABC):
         self, 
         topic: str, 
         group_id: str, 
-        message_class: Type[Message]
-        ) -> KafkaConsumer:
+        message_class: Type[M]
+        ) -> KafkaConsumer[M]:
         pass
