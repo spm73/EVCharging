@@ -7,7 +7,7 @@ from ..state.KafkaManager import KafkaManager
 from ..state.Database import Database
 from .messages import *
 
-def request_handler(request: Message) -> None:
+def driver_request_handler(request: Message) -> None:
     if not isinstance(request, SupplyRequestMessage):
         print("Someone put the wrong message in the wrong topic")
         return
@@ -58,6 +58,30 @@ def request_handler(request: Message) -> None:
         response_producer.send_message(
             SupplyResponseMessage(request.driver_id, 'denied', 'CP cannot attend a supply', None)
         )
+        
+
+def cp_request_handler(request: Message) -> None:
+    if not isinstance(request, SupplyRequestMessage):
+        print("Someone put the wrong message in the wrong topic")
+        return
+    
+    factory = KafkaManager().get_factory()
+    cp = CPCollection().get_cp(request.cp_id)
+    supply = None
+    with Session(Database().get_engine()) as session:
+        supply = Supply(
+            cp_id=request.cp_id,
+            driver_id=None
+        )
+        session.add(supply)
+        session.commit()
+        session.refresh(supply)
+    cp.start_supply(supply.id)
+    start_supply_producer = factory.create_producer('cp.start-supply')
+    start_supply_producer.send_message(
+        StartSupplyMessage(supply.id)
+    )
+    
     
 def resend_telemetry(telemetry: Message) -> None:
     if not isinstance(telemetry, SupplyTelemetryMessage):
