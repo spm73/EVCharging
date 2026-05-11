@@ -29,8 +29,11 @@ class CPInfo:
     def is_available(self) -> bool:
         return self.__status == CPStatus.ACTIVE
     
-    def start_supply(self, supply_id: int) -> None:
-        self.__active_supply = ActiveSupply(supply_id)
+    def is_supplying(self) -> bool:
+        return self.__active_supply is not None
+    
+    def start_supply(self, supply_id: int, driver_id: str | None) -> None:
+        self.__active_supply = ActiveSupply(supply_id, driver_id)
     
     def update_supply(self, consumption: int, price: Decimal) -> None:
         if self.__active_supply is not None:

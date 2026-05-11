@@ -40,9 +40,10 @@ class CPCollection:
             raise KeyError(f'CP ID: {cp_id} is not registered')
         return cp
         
-    def add_cp(self, cp_id: str) -> None:
+    def add_cp(self, cp_id: str) -> CPInfo:
         with self.__lock:
             self.__cps[cp_id] = CPInfo(cp_id)
+        return self.__cps[cp_id]
             
     def get_cp_by_supply_id(self, supply_id: int) -> CPInfo | None:
         with self.__lock:

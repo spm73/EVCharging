@@ -48,7 +48,7 @@ def driver_request_handler(request: SupplyRequestMessage) -> None:
         start_supply_producer.send_message(
             StartSupplyMessage(supply.id)
         )
-        requested_cp.start_supply(supply.id)
+        requested_cp.start_supply(supply.id, request.driver_id)
         response_producer.send_message(
             SupplyResponseMessage(request.driver_id, 'accepted', None, supply.id)
         )
@@ -70,7 +70,7 @@ def cp_request_handler(request: SupplyRequestMessage) -> None:
         session.add(supply)
         session.commit()
         session.refresh(supply)
-    cp.start_supply(supply.id)
+    cp.start_supply(supply.id, request.driver_id)
     start_supply_producer = factory.create_producer('cp.start-supply')
     start_supply_producer.send_message(
         StartSupplyMessage(supply.id)
