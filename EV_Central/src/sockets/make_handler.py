@@ -7,7 +7,7 @@ from ..state.CPCollection import CPCollection
 from ..state.CPInfo import CPInfo
 from ..models.CPStatus import CPStatus
 from ..state.KafkaManager import KafkaManager
-from ..kafka.messages.DriverNotificationMessage import DriverNotificationMessage
+from ..kafka.messages.SupplyRequestNotificationMessage import DriverNotificationMessage
 
 def make_handler() -> MessageHandler:
     cp: CPInfo | None = None
@@ -44,9 +44,9 @@ def make_handler() -> MessageHandler:
             cp.change_status(status)
             if status == CPStatus.BROKEN_DOWN and \
                 cp.is_supplying():
-                    producer = KafkaManager().get_factory().create_producer('driver.notifications')
+                    producer = KafkaManager().get_factory().create_producer('supply.errors')
                     producer.send_message(
-                        DriverNotificationMessage(
+                        SupplyRequestNotificationMessage(
                             cp.get_active_supply().driver_id,
                             'The CP has suffered a failure, your supply will resume once the problem is solved'
                         )

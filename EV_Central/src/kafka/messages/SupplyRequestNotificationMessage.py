@@ -3,7 +3,7 @@ from typing import Self
 
 from communications.kafka import Message
 
-class DriverNotificationMessage(Message):
+class SupplyRequestNotificationMessage(Message):
     def __init__(self, driver_id: str, message: str) -> None:
         super().__init__()
         self.driver_id = driver_id

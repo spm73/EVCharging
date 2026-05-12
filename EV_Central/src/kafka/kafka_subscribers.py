@@ -12,7 +12,7 @@ def driver_request_handler(request: SupplyRequestMessage) -> None:
     notification_producer = factory.create_producer('driver.notifications')
     response_producer = factory.create_producer('supply.response')
     notification_producer.send_message(
-        DriverNotificationMessage(request.driver_id, 'Checking CP existence...')
+        SupplyRequestNotificationMessage(request.driver_id, 'Checking CP existence...')
     )
     cps = CPCollection()
     requested_cp = None
@@ -25,12 +25,12 @@ def driver_request_handler(request: SupplyRequestMessage) -> None:
         return
     
     notification_producer.send_message(
-        DriverNotificationMessage(request.driver_id, 'Checking CP availability...')
+        SupplyRequestNotificationMessage(request.driver_id, 'Checking CP availability...')
     )
     if requested_cp.is_available():
         cp_command_producer = factory.create_producer('cp.commands')
         notification_producer.send_message(
-            DriverNotificationMessage(request.driver_id, 'Locking CP for supply...')
+            SupplyRequestNotificationMessage(request.driver_id, 'Locking CP for supply...')
         )
         cp_command_producer.send_message(
             CentralCommandMessage(requested_cp.get_id(), 'lock')

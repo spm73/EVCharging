@@ -1,6 +1,6 @@
 # messages/__init__.py
 from .SupplyRequestMessage import SupplyRequestMessage
-from .DriverNotificationMessage import DriverNotificationMessage
+from .SupplyRequestNotificationMessage import SupplyRequestNotificationMessage
 from .SupplyResponseMessage import SupplyResponseMessage
 from .ActiveCPListingMessage import ActiveCPListingMessage
 from .SupplyTelemetryMessage import SupplyTelemetryMessage
