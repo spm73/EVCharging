@@ -37,6 +37,8 @@ class SocketServer:
 
     def __handle_client(self, connection: SocketConnection) -> None:
         try:
+            if not connection.receive_handshake():
+                return
             self.__handler(connection)
         finally:
             connection.close()
