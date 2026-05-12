@@ -1,17 +1,11 @@
 [project]
-name = "evcharging"
+name = "ev-driver"
 version = "0.1.0"
-description = "Project for Distributed systems subject"
+description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "communications",
-]
-
-[tool.uv.workspace]
-members = [
-    "communications",
-    "EV_Driver",
 ]
 
 [tool.uv.sources]

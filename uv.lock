@@ -5,6 +5,7 @@ requires-python = ">=3.12"
 [manifest]
 members = [
     "communications",
+    "ev-driver",
     "evcharging",
 ]
 
@@ -41,6 +42,17 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/33/6a/df467787418c24e063ed0c19e96aedf05c26eabc32d8adc75235d45d830b/confluent_kafka-2.14.0-cp314-cp314-manylinux_2_28_x86_64.whl", hash = "sha256:eb17528ec7b177ec5e38214852f3dadb5d77172e0fb25c7c992c0cbc3dcfbaa2", size = 3995845, upload-time = "2026-04-02T11:28:34.538Z" },
     { url = "https://files.pythonhosted.org/packages/f0/0a/c5ce2a48ece0ae2dd050ab28d4cd81b9efc610276a4e72f622582f5371d3/confluent_kafka-2.14.0-cp314-cp314-win_amd64.whl", hash = "sha256:578afb532ded604cb98174a14a88847367191bcbe4f52a1661f5238dc5cf75dd", size = 4290326, upload-time = "2026-04-02T11:28:36.679Z" },
 ]
+
+[[package]]
+name = "ev-driver"
+version = "0.1.0"
+source = { virtual = "EV_Driver" }
+dependencies = [
+    { name = "communications" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "communications", editable = "communications" }]
 
 [[package]]
 name = "evcharging"
