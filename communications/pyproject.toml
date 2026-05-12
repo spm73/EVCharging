@@ -1,6 +1,6 @@
 [project]
 name = "communications"
-version = "0.1.0"
+version = "0.2.0"
 description = "Library for managing the communications via sockets or Kafka of the app"
 readme = "README.md"
 authors = []

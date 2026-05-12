@@ -18,6 +18,8 @@ class SocketClient:
                 sock = self.__ssl_context.wrap_socket(sock, server_hostname=self.__host)
             sock.connect((self.__host, self.__port))
             self.__connection = SocketConnection(sock)
+            if not self.__connection.send_handshake():
+                return False
             if self.__on_connect:
                 if not self.__on_connect(self):
                     self.__connection.close()
