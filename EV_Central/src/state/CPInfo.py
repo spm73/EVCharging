@@ -7,6 +7,7 @@ from .ActiveSupply import ActiveSupply
 class CPInfo:
     def __init__(self, id: str) -> None:
         self.__id = id
+        self.__temperature = 0.0
         self.__status = CPStatus.DISCONNECTED
         self.__key = None
         self.__active_supply: ActiveSupply | None = None
@@ -19,6 +20,12 @@ class CPInfo:
         
     def get_status(self) -> CPStatus:
         return self.__status
+    
+    def get_temp(self) -> float:
+        return self.__temperature
+    
+    def set_temperature(self, temperature: float) -> None:
+        self.__temperature = temperature
     
     def assign_key(self) -> None:
         self.__key = Fernet.generate_key()
