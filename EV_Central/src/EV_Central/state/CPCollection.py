@@ -5,8 +5,11 @@ from os import getenv
 
 from .CPInfo import CPInfo
 from .Database import Database
+from .KafkaManager import KafkaManager
 from ..models.CP import CP
 from ..models.Supply import Supply
+from ..models.CPStatus import CPStatus
+from ..kafka.messages import ActiveCPListingMessage
 
 class CPCollection:
     INTERVAL: float = 60.0
@@ -42,7 +45,7 @@ class CPCollection:
         
     def add_cp(self, cp_id: str) -> CPInfo:
         with self.__lock:
-            self.__cps[cp_id] = CPInfo(cp_id)
+            self.__cps[cp_id] = CPInfo(cp_id, self.__new_active_cp_callback)
         return self.__cps[cp_id]
             
     def get_cp_by_supply_id(self, supply_id: int) -> CPInfo | None:
@@ -99,3 +102,7 @@ class CPCollection:
         self.__timer = Timer(CPCollection.INTERVAL, self.__store_in_db)
         self.__timer.start()
         
+    def __new_active_cp_callback(self) -> None:
+        active_cps_ids = [id for id, cp in self.__cps.items() if cp.get_status() == CPStatus.ACTIVE]
+        producer = KafkaManager().get_factory().create_producer('cp.active.listing')
+        producer.send_message(ActiveCPListingMessage(active_cps_ids))
