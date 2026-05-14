@@ -2,7 +2,7 @@ from json import dumps, loads
 from communications.kafka import Message
 from typing import Self
 
-class SupplyRequestNotificationMessage(Message):
+class SupplyErrorMessage(Message):
     def __init__(self, driver_id: str, error_msg: str) -> None:
         super().__init__()
         self.driver_id = driver_id

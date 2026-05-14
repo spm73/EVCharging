@@ -6,3 +6,4 @@ from .ActiveCPListingMessage import ActiveCPListingMessage
 from .SupplyTelemetryMessage import SupplyTelemetryMessage
 from .CentralCommandMessage import CentralCommandMessage
 from .StartSupplyMessage import StartSupplyMessage
+from .SupplyErrorMessage import SupplyErrorMessage

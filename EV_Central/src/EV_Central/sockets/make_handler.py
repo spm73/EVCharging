@@ -7,7 +7,7 @@ from ..state.CPCollection import CPCollection
 from ..state.CPInfo import CPInfo
 from ..models.CPStatus import CPStatus
 from ..state.KafkaManager import KafkaManager
-from ..kafka.messages import SupplyRequestNotificationMessage, ActiveCPListingMessage
+from ..kafka.messages import SupplyErrorMessage, ActiveCPListingMessage
 
 def make_handler() -> MessageHandler:
     cp: CPInfo | None = None
@@ -47,7 +47,7 @@ def make_handler() -> MessageHandler:
                 cp.is_supplying():
                     producer = KafkaManager().get_factory().create_producer('supply.errors')
                     producer.send_message(
-                        SupplyRequestNotificationMessage(
+                        SupplyErrorMessage(
                             cp.get_active_supply().driver_id,
                             'The CP has suffered a failure, your supply will resume once the problem is solved'
                         )
