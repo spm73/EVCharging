@@ -42,6 +42,9 @@ class CPCollection:
         if cp is None:
             raise KeyError(f'CP ID: {cp_id} is not registered')
         return cp
+    
+    def get_active_cps_ids(self) -> list[str]:
+        return [id for id, cp in self.__cps.items() if cp.get_status() == CPStatus.ACTIVE]
         
     def add_cp(self, cp_id: str) -> CPInfo:
         with self.__lock:
@@ -101,8 +104,3 @@ class CPCollection:
         
         self.__timer = Timer(CPCollection.INTERVAL, self.__store_in_db)
         self.__timer.start()
-        
-    def __new_active_cp_callback(self) -> None:
-        active_cps_ids = [id for id, cp in self.__cps.items() if cp.get_status() == CPStatus.ACTIVE]
-        producer = KafkaManager().get_factory().create_producer('cp.active.listing')
-        producer.send_message(ActiveCPListingMessage(active_cps_ids))

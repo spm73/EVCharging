@@ -1,28 +1,22 @@
 from cryptography.fernet import Fernet
 from decimal import Decimal
-from typing import Callable
 
 from ..models.CPStatus import CPStatus
 from .ActiveSupply import ActiveSupply
 
 class CPInfo:
-    def __init__(self, id: str, active_change_callback: Callable[[], None]) -> None:
+    def __init__(self, id: str) -> None:
         self.__id = id
         self.__temperature = 0.0
         self.__status = CPStatus.DISCONNECTED
         self.__key = None
         self.__active_supply: ActiveSupply | None = None
-        self.__active_change_callback = active_change_callback
         
     def get_id(self) -> str:
         return self.__id
         
     def change_status(self, status: CPStatus) -> None:
-        old = self.__status
         self.__status = status
-        
-        if old != status and (old == CPStatus.ACTIVE or status == CPStatus.ACTIVE):
-            self.__active_change_callback()
         
     def get_status(self) -> CPStatus:
         return self.__status
