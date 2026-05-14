@@ -5,12 +5,16 @@ from ..models.Supply import Supply
 from ..state.CPCollection import CPCollection
 from ..state.KafkaManager import KafkaManager
 from ..state.Database import Database
+from ..audit.audit import audit
 from .messages import *
 
 def driver_request_handler(request: SupplyRequestMessage) -> None:
     factory = KafkaManager().get_factory()
     notification_producer = factory.create_producer('driver.notifications')
     response_producer = factory.create_producer('supply.response')
+    
+    audit(request.ip, 'SUPPLY REQUEST', f"Driver {request.driver_id} requests supply in CP {request.cp_id}")
+    
     notification_producer.send_message(
         SupplyRequestNotificationMessage(request.driver_id, 'Checking CP existence...')
     )
@@ -19,6 +23,7 @@ def driver_request_handler(request: SupplyRequestMessage) -> None:
     try:
         requested_cp = cps.get_cp(request.cp_id)
     except KeyError as e:
+        audit(request.ip, 'SUPPLY DENIED', f"CP {request.cp_id} not found")
         response_producer.send_message(
             SupplyResponseMessage(request.driver_id, 'denied', str(e), None)
         )
@@ -52,15 +57,18 @@ def driver_request_handler(request: SupplyRequestMessage) -> None:
         response_producer.send_message(
             SupplyResponseMessage(request.driver_id, 'accepted', None, supply.id)
         )
+        audit(request.ip, 'SUPPLY ACCEPTED', f"Supply {supply.id} started for Driver {request.driver_id} on CP {request.cp_id}")
     else:
         response_producer.send_message(
             SupplyResponseMessage(request.driver_id, 'denied', 'CP cannot attend a supply', None)
         )
+        audit(request.ip, 'SUPPLY DENIED', f" CP {request.cp_id} is not available")
         
 
 def cp_request_handler(request: SupplyRequestMessage) -> None:
     factory = KafkaManager().get_factory()
     cp = CPCollection().get_cp(request.cp_id)
+    audit(request.ip, 'SUPPLY REQUEST', f"CP {request.cp_id} requests a supply")
     supply = None
     with Session(Database().get_engine()) as session:
         supply = Supply(
