@@ -37,8 +37,14 @@ def driver_request_handler(request: SupplyRequestMessage) -> None:
         notification_producer.send_message(
             SupplyRequestNotificationMessage(request.driver_id, 'Locking CP for supply...')
         )
+        # cp_command_producer.send_message(
+        #     CentralCommandMessage(requested_cp.get_id(), 'lock')
+        # )
         cp_command_producer.send_message(
-            CentralCommandMessage(requested_cp.get_id(), 'lock')
+            EncryptedMessage(
+                requested_cp.get_id(),
+                CentralCommandMessage(requested_cp.get_id(), 'lock')
+            )
         )
         supply = None
         with Session(Database().get_engine()) as session:
@@ -50,8 +56,14 @@ def driver_request_handler(request: SupplyRequestMessage) -> None:
             session.commit()
             session.refresh(supply)
         start_supply_producer = factory.create_producer('cp.start-supply')
+        # start_supply_producer.send_message(
+        #     StartSupplyMessage(supply.id)
+        # )
         start_supply_producer.send_message(
-            StartSupplyMessage(supply.id)
+            EncryptedMessage(
+                requested_cp.get_id(),
+                StartSupplyMessage(supply.id)
+            )
         )
         requested_cp.start_supply(supply.id, request.driver_id)
         response_producer.send_message(
@@ -80,8 +92,14 @@ def cp_request_handler(request: SupplyRequestMessage) -> None:
         session.refresh(supply)
     cp.start_supply(supply.id, request.driver_id)
     start_supply_producer = factory.create_producer('cp.start-supply')
+    # start_supply_producer.send_message(
+    #     StartSupplyMessage(supply.id)
+    # )
     start_supply_producer.send_message(
-        StartSupplyMessage(supply.id)
+        EncryptedMessage(
+            request.cp_id,
+            StartSupplyMessage(supply.id)
+        )
     )
     audit(request.ip, 'SUPPLY ACCEPTED', f"Supply {supply.id} started on CP {request.cp_id}")
     

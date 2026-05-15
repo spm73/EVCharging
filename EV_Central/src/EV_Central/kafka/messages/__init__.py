@@ -7,3 +7,4 @@ from .SupplyTelemetryMessage import SupplyTelemetryMessage
 from .CentralCommandMessage import CentralCommandMessage
 from .StartSupplyMessage import StartSupplyMessage
 from .SupplyErrorMessage import SupplyErrorMessage
+from .EncryptedMessage import EncryptedMessage
