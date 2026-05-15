@@ -83,6 +83,7 @@ def cp_request_handler(request: SupplyRequestMessage) -> None:
     start_supply_producer.send_message(
         StartSupplyMessage(supply.id)
     )
+    audit(request.ip, 'SUPPLY ACCEPTED', f"Supply {supply.id} started on CP {request.cp_id}")
     
     
 def resend_telemetry(telemetry: SupplyTelemetryMessage) -> None:
