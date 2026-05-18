@@ -2,22 +2,13 @@ from fastapi import APIRouter
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 
+from ..models.Supply import Supply
 from ..state.Database import Database
 from ..state.CPCollection import CPCollection
-from ..models.Driver import Driver
-from ..models.Supply import Supply
 
-router = APIRouter(prefix="/api/drivers")
+router = APIRouter(prefix='/api/transactions')
 
 @router.get("/")
-def get_drivers():
-    with Session(Database().get_engine()) as session:
-        drivers = session.scalars(select(Driver)).all()
-        return [{"id": d.id, "active_supply": next(
-            ({"id": s.id, "cp_id": s.cp_id} for s in d.supplies if not s.is_done), None
-        )} for d in drivers]
-
-@router.get("/transactions")
 def get_transactions(cp_id: str | None = None):
     cps = CPCollection()
     result = []

@@ -1,15 +1,12 @@
 from threading import Timer, Lock
 from sqlalchemy import select
 from sqlalchemy.orm import Session
-from os import getenv
 
 from .CPInfo import CPInfo
 from .Database import Database
-from .KafkaManager import KafkaManager
 from ..models.CP import CP
 from ..models.Supply import Supply
 from ..models.CPStatus import CPStatus
-from ..kafka.messages import ActiveCPListingMessage
 
 class CPCollection:
     INTERVAL: float = 60.0
@@ -48,7 +45,7 @@ class CPCollection:
         
     def add_cp(self, cp_id: str) -> CPInfo:
         with self.__lock:
-            self.__cps[cp_id] = CPInfo(cp_id, self.__new_active_cp_callback)
+            self.__cps[cp_id] = CPInfo(cp_id)
         return self.__cps[cp_id]
             
     def get_cp_by_supply_id(self, supply_id: int) -> CPInfo | None:
