@@ -22,13 +22,14 @@ def get_cps(status: str | None = None):
             cp_status = cp_info.get_status()
             if status and cp_status != CPStatus(status):
                 continue
+            active_supply = cp_info.get_active_supply().__dict__
             result.append({
                 "id": cp.id,
                 "location": cp.location,
                 "price": float(cp.price),
                 "status": cp_status.value,
                 "temperature": cp_info.get_temp(),
-                "active_supply": cp_info.get_active_supply().__dict__ if cp_info.get_active_supply() else None
+                "active_supply": active_supply if active_supply else None
             })
         return result
 
