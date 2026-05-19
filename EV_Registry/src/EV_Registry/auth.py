@@ -5,7 +5,7 @@ from base64 import b64decode
 from jwt import encode
 from datetime import datetime, timezone
 
-CERTIFICATE_PATH = "/certs/ca.crt"
+CA_CERTIFICATE_PATH = "/certs/ca.crt"
 JWT_ALGORITHM = "HS256"
 
 def verify_certificate(cert_b64: str, expected_cp_id: str) -> bool:
@@ -15,7 +15,7 @@ def verify_certificate(cert_b64: str, expected_cp_id: str) -> bool:
         cert = load_pem_x509_certificate(cert_pem)
 
         # Cargar tu CA
-        with open(CERTIFICATE_PATH, "rb") as f:
+        with open(CA_CERTIFICATE_PATH, "rb") as f:
             ca_cert = load_pem_x509_certificate(f.read())
 
         # Verificar que el certificado está firmado por tu CA
