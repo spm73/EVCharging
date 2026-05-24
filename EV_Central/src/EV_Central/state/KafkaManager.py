@@ -1,5 +1,5 @@
 from threading import Lock
-from communications.kafka import AbstractKafkaFactory, SimpleKafkaFactory, KafkaBrokerInfo
+from communications.kafka import KafkaFactory, KafkaBrokerInfo
 
 class KafkaManager:
     _instance = None
@@ -14,9 +14,9 @@ class KafkaManager:
     def __init__(self, broker_info: KafkaBrokerInfo) -> None:
         if hasattr(self, '_initialized'):
             return
-        self.__factory = SimpleKafkaFactory(broker_info)
+        self.__factory = KafkaFactory(broker_info)
         self._initialized = True
     
-    def get_factory(self) -> AbstractKafkaFactory:
+    def get_factory(self) -> KafkaFactory:
         return self.__factory
     
