@@ -7,7 +7,7 @@ from ..state.CPCollection import CPCollection
 from ..state.CPInfo import CPInfo
 from ..models.CPStatus import CPStatus
 from ..state.KafkaManager import KafkaManager
-from ..kafka.messages.DriverNotificationMessage import DriverNotificationMessage
+from ..kafka.messages import SupplyErrorMessage, ActiveCPListingMessage
 
 def make_handler() -> MessageHandler:
     cp: CPInfo | None = None
@@ -40,17 +40,23 @@ def make_handler() -> MessageHandler:
         
         _, status_str = message.split('#')
         try:
-            status = CPStatus(status_str)
-            cp.change_status(status)
-            if status == CPStatus.BROKEN_DOWN and \
+            new_status = CPStatus(status_str)
+            old_status = cp.get_status()
+            cp.change_status(new_status)
+            if new_status == CPStatus.BROKEN_DOWN and \
                 cp.is_supplying():
-                    producer = KafkaManager().get_factory().create_producer('driver.notifications')
+                    producer = KafkaManager().get_factory().create_producer('supply.errors')
                     producer.send_message(
-                        DriverNotificationMessage(
+                        SupplyErrorMessage(
                             cp.get_active_supply().driver_id,
                             'The CP has suffered a failure, your supply will resume once the problem is solved'
                         )
                     )
+            elif new_status != old_status and (new_status == CPStatus.ACTIVE or old_status == CPStatus.ACTIVE):
+                producer = KafkaManager().get_factory().create_producer('cp.active.listing')
+                producer.send_message(
+                    ActiveCPListingMessage(CPCollection().get_active_cps_ids())
+                )
             return "STATUS#copy"
         except ValueError:
             return "STATUS#invalid"

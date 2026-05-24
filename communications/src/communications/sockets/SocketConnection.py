@@ -158,3 +158,6 @@ class SocketConnection:
         print("Closing connection: Could not receive message")
         self.close()
         return None
+    
+    def get_peer_ip(self) -> str:
+        self.__socket.getpeername()[0]

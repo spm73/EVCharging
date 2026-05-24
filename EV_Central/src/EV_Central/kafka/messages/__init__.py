@@ -1,8 +1,10 @@
 # messages/__init__.py
 from .SupplyRequestMessage import SupplyRequestMessage
-from .DriverNotificationMessage import DriverNotificationMessage
+from .SupplyRequestNotificationMessage import SupplyRequestNotificationMessage
 from .SupplyResponseMessage import SupplyResponseMessage
 from .ActiveCPListingMessage import ActiveCPListingMessage
 from .SupplyTelemetryMessage import SupplyTelemetryMessage
 from .CentralCommandMessage import CentralCommandMessage
 from .StartSupplyMessage import StartSupplyMessage
+from .SupplyErrorMessage import SupplyErrorMessage
+from .EncryptedMessage import EncryptedMessage

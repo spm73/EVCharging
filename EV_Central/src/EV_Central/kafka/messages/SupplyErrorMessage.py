@@ -1,23 +1,22 @@
 from json import dumps, loads
+from communications.kafka import Message
 from typing import Self
 
-from communications.kafka import Message
-
-class DriverNotificationMessage(Message):
-    def __init__(self, driver_id: str, message: str) -> None:
+class SupplyErrorMessage(Message):
+    def __init__(self, driver_id: str, error_msg: str) -> None:
         super().__init__()
         self.driver_id = driver_id
-        self.message = message
+        self.error_msg = error_msg
         
     def to_payload(self) -> str:
         return dumps({
             "to": self.driver_id,
-            "message": self.message
+            "error_msg": self.error_msg
         })
         
     @classmethod
     def from_payload(cls, payload: str) -> Self:
         json_dict = loads(payload)
         driver_id = json_dict['to']
-        message = json_dict['message']
-        return cls(driver_id, message)
+        error_msg = json_dict['error_msg']
+        return cls(driver_id, error_msg)

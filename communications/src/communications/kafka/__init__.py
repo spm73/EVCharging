@@ -1,13 +1,9 @@
-from .AbstractKafkaFactory import AbstractKafkaFactory
+from .KafkaFactory import KafkaFactory
 from .Message import Message
-from.FilteredKafkaFactory import FilteredKafkaFactory
-from .SimpleKafkaFactory import SimpleKafkaFactory
 from .KafkaBrokerInfo import KafkaBrokerInfo
 
 __all__ = [
-    'AbstractKafkaFactory',
+    'KafkaFactory',
     'Message',
-    'FilteredKafkaFactory',
-    'SimpleKafkaFactory',
     'KafkaBrokerInfo'
 ]

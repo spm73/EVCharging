@@ -1,12 +1,12 @@
 from threading import Timer, Lock
 from sqlalchemy import select
 from sqlalchemy.orm import Session
-from os import getenv
 
 from .CPInfo import CPInfo
 from .Database import Database
 from ..models.CP import CP
 from ..models.Supply import Supply
+from ..models.CPStatus import CPStatus
 
 class CPCollection:
     INTERVAL: float = 60.0
@@ -39,6 +39,9 @@ class CPCollection:
         if cp is None:
             raise KeyError(f'CP ID: {cp_id} is not registered')
         return cp
+    
+    def get_active_cps_ids(self) -> list[str]:
+        return [id for id, cp in self.__cps.items() if cp.get_status() == CPStatus.ACTIVE]
         
     def add_cp(self, cp_id: str) -> CPInfo:
         with self.__lock:
@@ -98,4 +101,3 @@ class CPCollection:
         
         self.__timer = Timer(CPCollection.INTERVAL, self.__store_in_db)
         self.__timer.start()
-        

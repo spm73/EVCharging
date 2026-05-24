@@ -6,7 +6,7 @@ from communications.kafka import Message
 class CentralCommandMessage(Message):
     def __init__(
         self, 
-        target: str | Literal["all"], 
+        target: str, 
         action: Literal["stop", "resume", "lock"]
     ) -> None:
         super().__init__()
