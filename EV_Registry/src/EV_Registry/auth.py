@@ -8,6 +8,13 @@ from datetime import datetime, timezone
 CA_CERTIFICATE_PATH = "/certs/ca.crt"
 JWT_ALGORITHM = "HS256"
 
+def get_secret_key() -> str:
+    with open('/run/secrets/jwt_secret.key', 'r') as file:
+        return file.read().strip()
+
+
+JWT_SECRET = get_secret_key()
+
 def verify_certificate(cert_b64: str, expected_cp_id: str) -> bool:
     try:
         # Decodificar el certificado de base64 a PEM
@@ -43,4 +50,4 @@ def generate_jwt(cp_id: str) -> str:
         "iat": datetime.now(timezone.utc) # issued at
         # Sin expiración fija, o puedes añadir "exp" si quieres que caduque
     }
-    return encode(payload, "central_key", algorithm=JWT_ALGORITHM)
+    return encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
