@@ -160,4 +160,4 @@ class SocketConnection:
         return None
     
     def get_peer_ip(self) -> str:
-        self.__socket.getpeername()[0]
+        return self.__socket.getpeername()[0]
