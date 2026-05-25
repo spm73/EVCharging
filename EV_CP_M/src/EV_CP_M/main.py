@@ -1,5 +1,8 @@
-def main():
-    print("Hello from ev-cp-m!")
+from .ui import MonitorApp
+
+
+def main() -> None:
+    MonitorApp().run()
 
 
 if __name__ == "__main__":

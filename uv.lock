@@ -319,12 +319,14 @@ name = "ev-cp-m"
 version = "0.1.0"
 source = { virtual = "EV_CP_M" }
 dependencies = [
+    { name = "communications" },
     { name = "requests" },
     { name = "textual" },
 ]
 
 [package.metadata]
 requires-dist = [
+    { name = "communications", editable = "communications" },
     { name = "requests", specifier = ">=2.34.2" },
     { name = "textual", specifier = ">=8.2.7" },
 ]
