@@ -1,6 +1,6 @@
 import threading
 import time
-from os import getenv
+from os import getenv, path, makedirs, remove
 from typing import TYPE_CHECKING
 
 from .engine_client import EngineClient
@@ -11,6 +11,7 @@ if TYPE_CHECKING:
     from .ui import MonitorApp
 
 POLLING_INTERVAL = 1.0
+JWT_FILE_PATH = "data/jwt.token"
 
 class MonitorEngine:
     def __init__(self, app: "MonitorApp") -> None:
@@ -37,6 +38,14 @@ class MonitorEngine:
         self.__engine_status: str | None = None
         self.__engine_connected  = False
         self.__central_connected = False
+        
+        if path.exists(JWT_FILE_PATH):
+            try:
+                with open(JWT_FILE_PATH, 'r') as f:
+                    self.__jwt = f.read().strip()
+                self.__app.log_event("[green]✓ JWT loaded from disk.[/]")
+            except Exception as e:
+                self.__app.log_event(f"[red]✗ Error loading saved JWT: {e}[/]")
 
     # ── API pública (llamada desde la UI) ───────────────────────────────────
 
@@ -54,6 +63,9 @@ class MonitorEngine:
         self.__app.log_event("[yellow]→ Registering in EV_Registry…[/]")
         try:
             self.__jwt = registry_register(self.__cp_id, self.__location)
+            makedirs(path.dirname(JWT_FILE_PATH), exist_ok=True)
+            with open(JWT_FILE_PATH, "w") as f:
+                f.write(self.__jwt)
             self.__app.log_event("[green]✓ Registration successful.[/]")
             return True
         except Exception as e:
@@ -110,6 +122,9 @@ class MonitorEngine:
 
         try:
             registry_unregister(self.__cp_id)
+            if path.exists(JWT_FILE_PATH):
+                remove(JWT_FILE_PATH)
+            self.__jwt = None
             self.__app.log_event("[green]✓ Unregistration successful.[/]")
         except Exception as e:
             self.__app.log_event(f"[red]✗ Unregistration failed: {e}[/]")
