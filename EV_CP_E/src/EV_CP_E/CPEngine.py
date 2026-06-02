@@ -7,28 +7,45 @@ from typing import TYPE_CHECKING
 from .Event import Event
 from .EventType import EventType
 from .SupplyData import SupplyData
+from .kafka.messages.EncryptedMessage import EncryptedMessage
+from .kafka.messages.SupplyTelemetryMessage import SupplyTelemetryMessage
+from .telemetry_thread import TelemetryThread
+from .states.WaitingForKeyState import WaitingForKeyState
 
 if TYPE_CHECKING:
     from .State import State
 
 
 class CPEngine:
+    """
+    Contexto principal de la máquina de estados (Singleton).
+    Centraliza la configuración, la clave simétrica y la cola de eventos.
+    """
+    _instance = None
 
-    def __init__(
-        self,
-        cp_id: str,
-        price_per_kwh: float,
-        checkpoint_path: str = "checkpoint.json",
-    ) -> None:
-        self.cp_id           = cp_id
-        self.price_per_kwh   = price_per_kwh
+    def __new__(cls, *args, **kwargs):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
 
-        # --- Estado de la máquina ---
-        self.pending_stop    = False
+    def __init__(self, cp_id: str = None, price_per_kwh: float = None):
+        if getattr(self, '_initialized', False):
+            return
+        self._initialized = True
+        
+        self.cp_id = cp_id
+        self.price_per_kwh = price_per_kwh
+        
+        self.__current_state: 'State' = WaitingForKeyState()
+        
+        self.__event_queue: queue.Queue[Event] = queue.Queue()
         self.fault_simulated = False        # Flag: el usuario ha activado el KO
 
         # --- Datos del suministro en curso ---
         self.current_supply: SupplyData | None = None
+
+        # --- Estado de la máquina ---
+        self.pending_stop    = False
 
         # --- Clave de cifrado (recibida del Monitor, nunca persiste en disco) ---
         self.__cipher_key: bytes | None = None
@@ -41,9 +58,6 @@ class CPEngine:
         self.__telemetry_thread: threading.Thread | None = None
         self.__telemetry_stop   = threading.Event()
 
-        # --- Checkpoint ---
-        self.__checkpoint_path = Path(checkpoint_path)
-
         # --- Estado inicial: siempre arranca esperando la clave ---
         # La importación aquí evita la circularidad en tiempo de ejecución
         from .states.WaitingForKeyState import WaitingForKeyState
@@ -55,16 +69,15 @@ class CPEngine:
     # -------------------------------------------------------------------------
 
     def transition_to(self, new_state: 'State') -> None:
-        print(f"[CPEngine] {self.__current_state} → {new_state}")
+        print(f"[CPEngine] {self.__current_state} -> {new_state}")
         self.__current_state.on_exit(self)
         self.__current_state = new_state
         self.__current_state.on_enter(self)
-        self.save_checkpoint()
 
     def handle_next_event(self) -> None:
         """Saca el siguiente evento de la cola (bloqueante) y lo procesa."""
         event = self.__event_queue.get(block=True)
-        print(f"[CPEngine] Procesando {event}")
+        print(f"[CPEngine] Processing {event}")
         self.__current_state.handle(event, self)
 
     def put_event(self, event: Event) -> None:
@@ -82,6 +95,8 @@ class CPEngine:
     def set_cipher_key(self, key: bytes) -> None:
         with self.__cipher_key_lock:
             self.__cipher_key = key
+            
+        EncryptedMessage.set_cipher_key(key)
 
     def get_cipher_key(self) -> bytes | None:
         with self.__cipher_key_lock:
@@ -90,50 +105,35 @@ class CPEngine:
     def clear_cipher_key(self) -> None:
         with self.__cipher_key_lock:
             self.__cipher_key = None
+            
+        EncryptedMessage.set_cipher_key(None)
 
     # -------------------------------------------------------------------------
-    # Checkpoint (T3)
+    # Extracción de datos para el Checkpoint
     # -------------------------------------------------------------------------
 
-    def save_checkpoint(self) -> None:
-        """Persiste el estado mínimo necesario para recuperarse de una caída."""
-        data = {
+    def get_checkpoint_data(self) -> dict:
+        """Devuelve el estado actual para que el TelemetryThread lo persista."""
+        return {
             'state':        str(self.__current_state),
-           'pending_stop':  self.pending_stop,
+            'pending_stop':  self.pending_stop,
             'supply':       self.current_supply.to_dict() if self.current_supply else None,
         }
-        try:
-            self.__checkpoint_path.write_text(json.dumps(data, indent=2))
-        except OSError as e:
-            print(f"[CPEngine] Error guardando checkpoint: {e}")
 
-    def load_checkpoint(self) -> bool:
+    def restore_from_checkpoint(self, data: dict) -> bool:
         """
-        Carga el checkpoint si existe.
-        Devuelve True si había datos de un suministro incompleto pendiente de reportar.
-        La clave NO se restaura (seguridad): siempre hay que esperar al Monitor.
+        Restaura el estado interno a partir de datos del CheckpointManager.
+        Devuelve True si había un suministro incompleto pendiente de reportar.
         """
-        if not self.__checkpoint_path.exists():
-            return False
-
-        try:
-            data = json.loads(self.__checkpoint_path.read_text())
-            self.pending_stop = data.get('pending_stop', False)
-            supply_data       = data.get('supply')
-            if supply_data:
-                self.current_supply = SupplyData.from_dict(supply_data)
-                print(f"[CPEngine] Checkpoint restaurado: suministro pendiente de {self.current_supply.driver_id}")
-                return True
-        except (OSError, json.JSONDecodeError, KeyError) as e:
-            print(f"[CPEngine] Error leyendo checkpoint: {e}")
-
+        self.pending_stop = data.get('pending_stop', False)
+        supply_data       = data.get('supply')
+        
+        if supply_data:
+            self.current_supply = SupplyData.from_dict(supply_data)
+            print(f"[CPEngine] Checkpoint restored: pending supply from {self.current_supply.driver_id}")
+            return True
+            
         return False
-
-    def clear_checkpoint(self) -> None:
-        try:
-            self.__checkpoint_path.unlink(missing_ok=True)
-        except OSError as e:
-            print(f"[CPEngine] Error borrando checkpoint: {e}")
 
     def has_pending_supply(self) -> bool:
         """True si hay un suministro incompleto restaurado del checkpoint."""
@@ -143,22 +143,50 @@ class CPEngine:
     # Fachadas de infraestructura (T4-T6 las implementarán)
     # -------------------------------------------------------------------------
 
+    def set_kafka_factory(self, factory) -> None:
+        self.kafka_factory = factory
+
     def send_telemetry(self) -> None:
         """Envía los datos de telemetría del suministro en curso por Kafka (cifrado)."""
-        raise NotImplementedError
+        if not self.current_supply or not getattr(self, 'kafka_factory', None):
+            return
+            
+        key = self.get_cipher_key()
+        if not key:
+            return
+            
+        msg = SupplyTelemetryMessage(
+            cp_id=self.cp_id,
+            kwh_consumed=self.current_supply.kwh_consumed,
+            price_per_kwh=self.price_per_kwh,
+            driver_id=self.current_supply.driver_id
+        )
+        
+        enc_msg = EncryptedMessage(self.cp_id, msg)
+        
+        if not getattr(self, '_CPEngine__telemetry_producer', None):
+            self.__telemetry_producer = self.kafka_factory.create_producer('cp.telemetry')
+            
+        self.__telemetry_producer.send_message(enc_msg)
 
     def send_final_ticket(self) -> None:
         """Envía el ticket final del suministro a Central por Kafka."""
-        raise NotImplementedError
+        self.send_telemetry()
 
     def send_status_update(self, status: str) -> None:
         """Notifica a Central el nuevo estado del CP por Kafka."""
-        raise NotImplementedError
+        pass
 
     def start_telemetry(self) -> None:
         """Arranca el hilo de telemetría. Llamado desde SupplyingState.on_enter()."""
-        raise NotImplementedError
+        if getattr(self, '_CPEngine__telemetry_thread', None) and self.__telemetry_thread.is_alive():
+            return
+        self.__telemetry_thread = TelemetryThread()
+        self.__telemetry_thread.start()
 
     def stop_telemetry(self) -> None:
         """Para el hilo de telemetría. Llamado desde SupplyingState.on_exit()."""
-        raise NotImplementedError
+        if getattr(self, '_CPEngine__telemetry_thread', None):
+            self.__telemetry_thread.stop()
+            self.__telemetry_thread.join(timeout=2.0)
+            self.__telemetry_thread = None
