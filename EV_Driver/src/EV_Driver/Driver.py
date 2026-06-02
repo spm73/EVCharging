@@ -60,7 +60,7 @@ class Driver:
         while True:
             TerminalHandler.printCP(self.cp_list)
     # ----- Esperamos los eventos que tengan la intención KEYBOARD_INPUT, UPDATE_CPS o KAFKA_ERROR
-            event = esperar_eventos(Intention.KAFKA_ERROR, Intention.UPDATE_CPS, Intention.KEYBOARD_INPUT)
+            event = wait_for_events(Intention.KAFKA_ERROR, Intention.UPDATE_CPS, Intention.KEYBOARD_INPUT)
             match event.intention:
                 case Intention.KEYBOARD_INPUT:
                     command = str(event.data).strip().lower()
@@ -108,15 +108,88 @@ class Driver:
                     continue
                     
                 case Intention.KAFKA_ERROR:
-                    print(f"\n[!] ERROR DE SISTEMA: {event.data}")
-                    print("Refrescando menú en 3 segundos...")
+                    print(f"\n[!] System Error: {event.data}")
+                    print("The menu will be displayed...")
                     time.sleep(3)
                     continue
         
 # ----- Finalize
         self.terminalHandler.stop_listening()
         self.cp_listing_consumer.stop_polling()
-        self.supply_error_consumer.stop_polling()
+
+
+    def central_connection_phase(self, driver_ip: str):
+
+        method_result = False
+# ----- Producer del mensaje supply request
+        if not self.cp_list:
+            print("No CPs Available")
+            print("Restarting, sorry for the inconvenience")
+            return False
+        
+        print(f"Trying connection with the cp \"{self.cp_list[0]}\" ")
+
+        self.supply_request_producer.send_message(SupplyRequestMessage(self.driver_id, self.cp_list[0], driver_ip))
+        print("Message sent, wait a few seconds...")
+        
+# ----- Iniciar loops de consumers
+        self.supply_response_consumer.start_polling()
+        self.supply_request_notifications_consumer.start_polling()
+
+        while True:
+            event = wait_for_events(Intention.KAFKA_ERROR, Intention.ACCEPTED_RESPONSE, Intention.DENIED_RESPONSE, Intention.NOTIFICATIONS)
+            match event.intention:
+                case Intention.KAFKA_ERROR:
+                    print(f"\n[!] System Error: {event.data}")
+                    print("The menu will be displayed...")
+                    time.sleep(3)
+                    continue
+                
+                case Intention.ACCEPTED_RESPONSE:
+                    print(f"Driver successfully connected (supply Id = {event.data})")
+                    self.supply_id = event.data
+                    method_result = True
+                    break
+
+                case Intention.DENIED_RESPONSE:
+                    print(f"REFUSED CONNECTION: {event.data}")
+                    self.cp_list.pop(0)
+                    break
+
+                case Intention.NOTIFICATIONS:
+                    print(f"Central - {event.data}")
+                    continue
+        
+# ----- Finalize
+        self.supply_response_consumer.stop_polling()
+        self.supply_request_notifications_consumer.stop_polling()
+        return method_result
+                
+        
+    def supplying_phase(self):
+        self.supply_telemetry_consumer.start_polling()
+
+        while True:
+            event = wait_for_events(Intention.KAFKA_ERROR, Intention.TELEMETRY_INFO, Intention.TELEMETRY_TICKET)
+            match event.intention:
+                case Intention.KAFKA_ERROR:
+                    print(f"\n[!] System Error: {event.data}")
+                    print("The menu will be displayed...")
+                    time.sleep(3)
+                    continue
+                
+                case Intention.TELEMETRY_INFO:
+                    TerminalHandler.printSupplyingInfo(event.data.price, event.data.consumption)
+                    continue
+
+                case Intention.TELEMETRY_TICKET:
+                    TerminalHandler.printSupplyingTicket(event.data.price, event.data.consumption)
+                    self.supply_id = None
+                    break
+        
+# ----- Finalize
+        self.supply_telemetry_consumer.stop_polling()
+
 
 
         

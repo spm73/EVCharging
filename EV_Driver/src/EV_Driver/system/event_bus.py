@@ -5,7 +5,7 @@ from events import *
 
 EVENT_QUEUE = queue.Queue()
 
-def esperar_eventos(*intenciones_deseadas: Intention) -> SystemEvent:
+def wait_for_events(*intenciones_deseadas: Intention) -> SystemEvent:
     """
     Busca en la cola hasta encontrar un evento que coincida con las intenciones dadas.
     Si saca un evento que no coincide, lo devuelve al final y hace una pequeña pausa.

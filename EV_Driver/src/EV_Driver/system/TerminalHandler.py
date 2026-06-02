@@ -2,6 +2,7 @@ import os
 import queue
 from threading import Thread, Event
 from .events import *
+from decimal import Decimal
 
 
 class TerminalHandler:
@@ -39,10 +40,20 @@ class TerminalHandler:
         # 'nt' es Windows, el resto (Linux/Mac) usan 'clear'
         os.system('cls' if os.name == 'nt' else 'clear')
 
+    @staticmethod
+    def printSupplyingInfo(price: Decimal, consumption: int):
+        TerminalHandler.clean()
+        print("Supplying Data:")
+        print(f"Current consumption: {price} kWh | Current cost: {consumption}€")
+
+    @staticmethod
+    def printSupplyingTicket(price: Decimal, consumption: int):
+        TerminalHandler.clean()
+        print(f"================================\n\t\t\tCHARGING SUMMARY\n================================\n\tEnergy Consumed : {consumption} kWh\n\tTotal Price     : {price}€\n================================\nThank you for using our CP!")
 
     @staticmethod
     def printCP(cp_list: list) -> None:
-        TerminalHandler.clean();
+        TerminalHandler.clean()
         if not cp_list: 
             print("loading Charging Points from central...\nThis may take a few seconds")
             return
