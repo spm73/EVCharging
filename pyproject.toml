@@ -12,5 +12,4 @@ members = [
     "EV_Central",
     "EV_Registry",
     "EV_CP_M",
-    "EV_CP_E",
 ]
