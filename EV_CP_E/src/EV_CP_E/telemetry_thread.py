@@ -17,11 +17,12 @@ class TelemetryThread(threading.Thread):
                 break
             
             engine = CPEngine()
-            if engine.current_supply:
-                engine.current_supply.kwh_accumulated += 1
-                
-                # amount_accumulated = kwh_accumulated * price_per_kwh
-                engine.current_supply.amount_accumulated = Decimal(str(engine.current_supply.kwh_accumulated)) * engine.price_per_kwh
+            with engine.supply_lock:
+                if engine.current_supply:
+                    engine.current_supply.kwh_accumulated += 1
+                    
+                    # amount_accumulated = kwh_accumulated * price_per_kwh
+                    engine.current_supply.amount_accumulated = Decimal(str(engine.current_supply.kwh_accumulated)) * engine.price_per_kwh
             
             engine.send_telemetry()
             

@@ -19,6 +19,9 @@ class BrokenState(State):
             context.current_supply = None
             CheckpointManager().clear()
 
+    def on_exit(self, context: 'CPEngine') -> None:
+        context.fault_simulated = False
+
     def handle(self, event: 'Event', context: 'CPEngine') -> None:
         if event.event_type == EventType.FAULT_RESOLVED:
             context.transition_to(IdleState.IdleState())

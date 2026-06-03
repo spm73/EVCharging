@@ -32,15 +32,16 @@ class CPEngine:
             cls._instance = super().__new__(cls)
         return cls._instance
 
-    def __init__(self, cp_id: str = None, price_per_kwh: float = None):
+    def __init__(self, cp_id: str = None):
         if getattr(self, '_initialized', False):
             return
         self._initialized = True
         
         self.cp_id = cp_id
-        self.price_per_kwh = price_per_kwh
         
-        self.__current_state: 'State' = WaitingForConfigState()
+        # --- Atributos de Sincronización y Control ---
+        self.supply_lock = threading.Lock()
+        self._is_shutting_down = False
         
         self.__event_queue: queue.Queue[Event] = queue.Queue()
         self.fault_simulated = False        # Flag: el usuario ha activado el KO
@@ -50,24 +51,24 @@ class CPEngine:
 
         # --- Estado de la máquina ---
         self.pending_stop    = False
+        self.just_restarted  = True
 
-        # --- Clave de cifrado (recibida del Monitor, nunca persiste en disco) ---
         self.__cipher_key: bytes | None = None
         self.__cipher_key_lock          = threading.Lock()
-
-        # --- Cola interna de eventos (thread-safe) ---
-        self.__event_queue: queue.Queue[Event] = queue.Queue()
 
         # --- Hilo de telemetría (creado/destruido dinámicamente) ---
         self.__telemetry_thread: threading.Thread | None = None
         self.__telemetry_stop   = threading.Event()
 
-        # --- Estado inicial: siempre arranca esperando la clave ---
         self.__current_state: 'State' = WaitingForConfigState()
         
-        # Consumidores de Kafka (se inician dinámicamente)
+        self.kafka_factory = None
+        
+        # Consumidores y productores de Kafka (se inician dinámicamente)
         self.__start_supply_consumer = None
         self.__commands_consumer = None
+        self.__telemetry_producer = None
+        self.__request_producer = None
         
         self.__current_state.on_enter(self)
         
@@ -82,6 +83,9 @@ class CPEngine:
         self.__current_state.on_exit(self)
         self.__current_state = new_state
         self.__current_state.on_enter(self)
+        
+        from .CheckpointManager import CheckpointManager
+        CheckpointManager().save(self.get_checkpoint_data())
 
     def handle_next_event(self) -> bool:
         """Saca el siguiente evento de la cola (bloqueante) y lo procesa.
@@ -97,6 +101,11 @@ class CPEngine:
 
     def put_event(self, event: Event) -> None:
         """Punto de entrada universal para todos los hilos productores."""
+        if event.event_type == EventType.SHUTDOWN:
+            if self._is_shutting_down:
+                return
+            self._is_shutting_down = True
+            
         self.__event_queue.put(event)
 
     @property
@@ -145,7 +154,7 @@ class CPEngine:
         
         if supply_data:
             self.current_supply = SupplyData.from_dict(supply_data)
-            print(f"[CPEngine] Checkpoint restored: pending supply from {self.current_supply.driver_id}")
+            print(f"[CPEngine] Checkpoint restored: pending supply from {self.current_supply.supply_id}")
             return True
             
         return False
@@ -178,7 +187,7 @@ class CPEngine:
             
         enc_msg = EncryptedMessage(self.cp_id, msg)
         
-        if not getattr(self, '_CPEngine__telemetry_producer', None):
+        if not self.__telemetry_producer:
             self.__telemetry_producer = self.kafka_factory.create_producer('supply.telemetry.cp')
             
         self.__telemetry_producer.send_message(enc_msg)
@@ -197,7 +206,7 @@ class CPEngine:
         msg = SupplyRequestMessage(driver_id=self.cp_id, cp_id=self.cp_id, ip=engine_ip)
         enc_msg = EncryptedMessage(self.cp_id, msg)
         
-        if not getattr(self, '_CPEngine__request_producer', None):
+        if not self.__request_producer:
             self.__request_producer = self.kafka_factory.create_producer('supply.request.cps')
             
         self.__request_producer.send_message(enc_msg)
@@ -205,28 +214,30 @@ class CPEngine:
 
     def send_telemetry(self) -> None:
         """Envía los datos de telemetría del suministro en curso por Kafka (cifrado)."""
-        if not self.current_supply:
-            return
-            
-        msg = SupplyTelemetryMessage(
-            msg_type="supplying",
-            supply_id=self.current_supply.supply_id,
-            price=self.current_supply.amount_accumulated,
-            consumption=self.current_supply.kwh_accumulated
-        )
+        with self.supply_lock:
+            if not self.current_supply:
+                return
+                
+            msg = SupplyTelemetryMessage(
+                msg_type="supplying",
+                supply_id=self.current_supply.supply_id,
+                price=self.current_supply.amount_accumulated,
+                consumption=self.current_supply.kwh_accumulated
+            )
         self.__send_telemetry_message(msg)
 
     def send_final_ticket(self) -> None:
         """Envía el ticket final del suministro a Central por Kafka."""
-        if not self.current_supply:
-            return
-            
-        msg = SupplyTelemetryMessage(
-            msg_type="ticket",
-            supply_id=self.current_supply.supply_id,
-            price=self.current_supply.amount_accumulated,
-            consumption=self.current_supply.kwh_accumulated
-        )
+        with self.supply_lock:
+            if not self.current_supply:
+                return
+                
+            msg = SupplyTelemetryMessage(
+                msg_type="ticket",
+                supply_id=self.current_supply.supply_id,
+                price=self.current_supply.amount_accumulated,
+                consumption=self.current_supply.kwh_accumulated
+            )
         self.__send_telemetry_message(msg)
 
     def send_status_update(self, status: str) -> None:
@@ -235,14 +246,14 @@ class CPEngine:
 
     def start_telemetry(self) -> None:
         """Arranca el hilo de telemetría. Llamado desde SupplyingState.on_enter()."""
-        if getattr(self, '_CPEngine__telemetry_thread', None) and self.__telemetry_thread.is_alive():
+        if self.__telemetry_thread and self.__telemetry_thread.is_alive():
             return
         self.__telemetry_thread = TelemetryThread()
         self.__telemetry_thread.start()
 
     def stop_telemetry(self) -> None:
         """Para el hilo de telemetría. Llamado desde SupplyingState.on_exit()."""
-        if getattr(self, '_CPEngine__telemetry_thread', None):
+        if self.__telemetry_thread:
             self.__telemetry_thread.stop()
             self.__telemetry_thread.join(timeout=2.0)
             self.__telemetry_thread = None
@@ -262,7 +273,7 @@ class CPEngine:
                 message_class=EncryptedMessage,
                 filter_func=cp_id_filter
             )
-            self.__start_supply_consumer.get_notifier().register(handle_encrypted_start)
+            self.__start_supply_consumer.get_notifier().add_subscriber(handle_encrypted_start)
             self.__start_supply_consumer.start_polling()
 
         if not self.__commands_consumer:
@@ -272,7 +283,7 @@ class CPEngine:
                 message_class=EncryptedMessage,
                 filter_func=cp_id_filter
             )
-            self.__commands_consumer.get_notifier().register(handle_encrypted_command)
+            self.__commands_consumer.get_notifier().add_subscriber(handle_encrypted_command)
             self.__commands_consumer.start_polling()
 
     def stop_kafka_consumers(self) -> None:

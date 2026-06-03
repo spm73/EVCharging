@@ -15,6 +15,7 @@ class WaitingForConfigState(State):
 
     def on_enter(self, context: 'CPEngine') -> None:
         context.clear_cipher_key()
+        context.stop_kafka_consumers()
 
     def handle(self, event: 'Event', context: 'CPEngine') -> None:
         if event.event_type == EventType.KEY_RECEIVED:

@@ -15,11 +15,17 @@ class IdleState(State):
     """
 
     def on_enter(self, context: 'CPEngine') -> None:
-        checkpoint_data = CheckpointManager().load()
-        if checkpoint_data:
-            has_pending = context.restore_from_checkpoint(checkpoint_data)
-            if has_pending:
-                context.transition_to(BrokenState.BrokenState())
+        if context.just_restarted:
+            checkpoint_data = CheckpointManager().load()
+            if checkpoint_data:
+                has_pending = context.restore_from_checkpoint(checkpoint_data)
+                if has_pending:
+                    # Nos hemos levantado de una caída con un suministro a medias.
+                    # Como ya estamos en IdleState, lo terminamos aquí.
+                    context.send_final_ticket()
+                    context.current_supply = None
+                    CheckpointManager().clear()
+            context.just_restarted = False
 
     def handle(self, event: 'Event', context: 'CPEngine') -> None:
         if event.event_type == EventType.SUPPLY_STARTED:
@@ -27,7 +33,7 @@ class IdleState(State):
             context.request_supply()
             
         elif event.event_type == EventType.SERVICE_AUTHORIZED:
-            context.current_supply = SupplyData(context.cp_id, event.payload)
+            context.current_supply = SupplyData(supply_id=int(event.payload))
             context.transition_to(SupplyingState.SupplyingState())
             
         elif event.event_type == EventType.STOP_ORDER:
