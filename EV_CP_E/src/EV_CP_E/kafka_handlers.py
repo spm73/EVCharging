@@ -16,14 +16,10 @@ def handle_central_command(message: CentralCommandMessage) -> None:
     elif message.action == "resume":
         CPEngine().put_event(Event(EventType.RESUME_ORDER))
 
-def handle_encrypted_message(enc_message: EncryptedMessage) -> None:
-    """
-    Decapsulates the encrypted message and dispatches it to the 
-    corresponding handler based on its subtype.
-    """
-    inner_msg = enc_message.message
+
+def handle_encrypted_start(message: EncryptedMessage) -> None:
+    handle_start_supply(message.message)
     
-    if isinstance(inner_msg, StartSupplyMessage):
-        handle_start_supply(inner_msg)
-    elif isinstance(inner_msg, CentralCommandMessage):
-        handle_central_command(inner_msg)
+
+def handle_encrypted_command(message: EncryptedMessage) -> None:
+    handle_central_command(message.message)

@@ -6,7 +6,6 @@ import threading
 from .CPEngine import CPEngine
 from .Event import Event
 from .EventType import EventType
-from .kafka_handlers import handle_encrypted_message
 from .monitor_handler import socket_handler
 
 from communications.kafka.KafkaBrokerInfo import KafkaBrokerInfo
@@ -14,6 +13,7 @@ from communications.kafka.KafkaFactory import KafkaFactory
 from communications.kafka.messages.EncryptedMessage import EncryptedMessage
 from communications.sockets.SocketServer import SocketServer
 from .CheckpointManager import CheckpointManager
+from .ui import EngineApp
 
 
 def main():
@@ -79,7 +79,6 @@ def main():
     engine_thread.start()
 
     # 6. Interfaz UI (Textual) bloqueante en el hilo principal
-    from .ui import EngineApp
     try:
         EngineApp().run()
     except Exception as e:

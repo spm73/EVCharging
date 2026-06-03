@@ -1,4 +1,5 @@
 import json
+import os
 import queue
 import threading
 from decimal import Decimal
@@ -13,7 +14,7 @@ from .kafka.messages.SupplyTelemetryMessage import SupplyTelemetryMessage
 from .kafka.messages.SupplyRequestMessage import SupplyRequestMessage
 from .telemetry_thread import TelemetryThread
 from .states.WaitingForConfigState import WaitingForConfigState
-from .kafka_handlers import handle_encrypted_message
+from .kafka_handlers import handle_encrypted_start, handle_encrypted_command
 
 if TYPE_CHECKING:
     from .State import State
@@ -192,7 +193,6 @@ class CPEngine:
             return
             
         # Usamos el cp_id como driver_id y la variable de entorno ENGINE_IP como IP
-        import os
         engine_ip = os.getenv("ENGINE_IP", "0.0.0.0")
         msg = SupplyRequestMessage(driver_id=self.cp_id, cp_id=self.cp_id, ip=engine_ip)
         enc_msg = EncryptedMessage(self.cp_id, msg)
@@ -262,7 +262,7 @@ class CPEngine:
                 message_class=EncryptedMessage,
                 filter_func=cp_id_filter
             )
-            self.__start_supply_consumer.get_notifier().register(handle_encrypted_message)
+            self.__start_supply_consumer.get_notifier().register(handle_encrypted_start)
             self.__start_supply_consumer.start_polling()
 
         if not self.__commands_consumer:
@@ -272,7 +272,7 @@ class CPEngine:
                 message_class=EncryptedMessage,
                 filter_func=cp_id_filter
             )
-            self.__commands_consumer.get_notifier().register(handle_encrypted_message)
+            self.__commands_consumer.get_notifier().register(handle_encrypted_command)
             self.__commands_consumer.start_polling()
 
     def stop_kafka_consumers(self) -> None:
