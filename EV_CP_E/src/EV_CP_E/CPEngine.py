@@ -10,6 +10,7 @@ from .EventType import EventType
 from .SupplyData import SupplyData
 from .kafka.messages.EncryptedMessage import EncryptedMessage
 from .kafka.messages.SupplyTelemetryMessage import SupplyTelemetryMessage
+from .kafka.messages.SupplyRequestMessage import SupplyRequestMessage
 from .telemetry_thread import TelemetryThread
 from .states.WaitingForConfigState import WaitingForConfigState
 from .kafka_handlers import handle_encrypted_message
@@ -180,6 +181,27 @@ class CPEngine:
             self.__telemetry_producer = self.kafka_factory.create_producer('supply.telemetry.cp')
             
         self.__telemetry_producer.send_message(enc_msg)
+
+    def request_supply(self) -> None:
+        """Envia petición de carga al tópico supply.request.cps usando el cp_id."""
+        if not getattr(self, 'kafka_factory', None) or not self.cp_id:
+            return
+            
+        key = self.get_cipher_key()
+        if not key:
+            return
+            
+        # Usamos el cp_id como driver_id y la variable de entorno ENGINE_IP como IP
+        import os
+        engine_ip = os.getenv("ENGINE_IP", "0.0.0.0")
+        msg = SupplyRequestMessage(driver_id=self.cp_id, cp_id=self.cp_id, ip=engine_ip)
+        enc_msg = EncryptedMessage(self.cp_id, msg)
+        
+        if not getattr(self, '_CPEngine__request_producer', None):
+            self.__request_producer = self.kafka_factory.create_producer('supply.request.cps')
+            
+        self.__request_producer.send_message(enc_msg)
+        print(f"[CPEngine] Petición de suministro enviada a Central (Driver: {self.cp_id}, IP: {engine_ip})")
 
     def send_telemetry(self) -> None:
         """Envía los datos de telemetría del suministro en curso por Kafka (cifrado)."""

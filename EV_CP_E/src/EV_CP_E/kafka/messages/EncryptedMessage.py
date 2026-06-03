@@ -6,12 +6,14 @@ from json import dumps, loads
 from .SupplyTelemetryMessage import SupplyTelemetryMessage
 from .CentralCommandMessage import CentralCommandMessage
 from .StartSupplyMessage import StartSupplyMessage
+from .SupplyRequestMessage import SupplyRequestMessage
 
 class EncryptedMessage(Message):
     _CLASS_TRANSLATOR: dict[str, Type[Message]] = {
         'SupplyTelemetryMessage': SupplyTelemetryMessage,
         'CentralCommandMessage': CentralCommandMessage,
         'StartSupplyMessage': StartSupplyMessage,
+        'SupplyRequestMessage': SupplyRequestMessage,
     }
     
     # En el Engine, la clave simétrica se actualizará de forma estática 

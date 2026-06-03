@@ -57,22 +57,38 @@ def main():
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
 
-    # 5. Bucle de eventos principal
-    print("[Main] Entrando en el bucle de eventos principal...")
-    while engine.handle_next_event():
-        pass
+    # 5. Bucle de eventos principal (en un hilo)
+    def run_engine_loop():
+        print("[Main] Entrando en el bucle de eventos principal...")
+        while engine.handle_next_event():
+            pass
 
-    # --- FASE DE APAGADO (Graceful Shutdown) ---
-    print("[Main] Cerrando SocketServer...")
-    server.stop()
+        # --- FASE DE APAGADO (Graceful Shutdown) ---
+        print("[Main] Cerrando SocketServer...")
+        server.stop()
 
-    print("[Main] Cerrando consumidores de Kafka...")
-    engine.stop_kafka_consumers()
+        print("[Main] Cerrando consumidores de Kafka...")
+        engine.stop_kafka_consumers()
 
-    print("[Main] Guardando estado (Checkpoint)...")
-    CheckpointManager().save(engine.get_checkpoint_data())
-    
-    print("[Main] Apagado completado.")
+        print("[Main] Guardando estado (Checkpoint)...")
+        CheckpointManager().save(engine.get_checkpoint_data())
+        
+        print("[Main] Apagado completado.")
+
+    engine_thread = threading.Thread(target=run_engine_loop)
+    engine_thread.start()
+
+    # 6. Interfaz UI (Textual) bloqueante en el hilo principal
+    from .ui import EngineApp
+    try:
+        EngineApp().run()
+    except Exception as e:
+        print(f"[Main] Error en UI: {e}")
+
+    # Cuando la UI termina (por la tecla 'q' o Ctrl+C)
+    print("\n[Main] UI cerrada. Iniciando apagado...")
+    engine.put_event(Event(EventType.SHUTDOWN))
+    engine_thread.join()
     sys.exit(0)
 
 

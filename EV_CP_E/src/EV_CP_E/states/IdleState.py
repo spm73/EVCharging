@@ -22,7 +22,11 @@ class IdleState(State):
                 context.transition_to(BrokenState.BrokenState())
 
     def handle(self, event: 'Event', context: 'CPEngine') -> None:
-        if event.event_type == EventType.SERVICE_AUTHORIZED:
+        if event.event_type == EventType.SUPPLY_STARTED:
+            print("[IdleState] Simulación física de lectura de tarjeta. Solicitando suministro a Central...")
+            context.request_supply()
+            
+        elif event.event_type == EventType.SERVICE_AUTHORIZED:
             context.current_supply = SupplyData(context.cp_id, event.payload)
             context.transition_to(SupplyingState.SupplyingState())
             
