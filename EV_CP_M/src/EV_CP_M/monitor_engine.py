@@ -2,6 +2,7 @@ import threading
 import time
 from os import getenv, path, makedirs, remove
 from typing import TYPE_CHECKING
+from decimal import Decimal
 
 from .engine_client import EngineClient
 from .central_client import CentralClient
@@ -23,9 +24,11 @@ class MonitorEngine:
         eng_port = int(getenv("ENGINE_PORT"))
         cen_host = getenv("CENTRAL_HOST")
         cen_port = int(getenv("CENTRAL_PORT"))
+        price = Decimal(getenv("PRICE_PER_KWH", "0.0"))
 
         self.__cp_id    = cp_id
         self.__location = cp_loc
+        self.__price    = price
         self.__jwt: str | None = None
 
         self.__engine  = EngineClient(eng_host, eng_port)
@@ -62,7 +65,7 @@ class MonitorEngine:
         """Register in EV_Registry and obtain JWT."""
         self.__app.log_event("[yellow]→ Registering in EV_Registry…[/]")
         try:
-            self.__jwt = registry_register(self.__cp_id, self.__location)
+            self.__jwt = registry_register(self.__cp_id, self.__location, self.__price)
             makedirs(path.dirname(JWT_FILE_PATH), exist_ok=True)
             with open(JWT_FILE_PATH, "w") as f:
                 f.write(self.__jwt)
@@ -92,13 +95,13 @@ class MonitorEngine:
             self.__central_connected = False
             return False
 
-        self.__app.log_event("[green]✓ Authentication successful. Sending key to engine…[/]")
+        self.__app.log_event("[green]✓ Authentication successful. Sending config to engine…[/]")
 
-        if not self.__engine.send_key(cp_key):
-            self.__app.log_event("[red]✗ Could not send key to engine.[/]")
+        if not self.__engine.send_config(self.__cp_id, cp_key, self.__price):
+            self.__app.log_event("[red]✗ Could not send config to engine.[/]")
             return False
 
-        self.__app.log_event("[green]✓ Key delivered to engine.[/]")
+        self.__app.log_event("[green]✓ Config delivered to engine.[/]")
 
         if not self.__running:
             self.__start_polling()
@@ -209,8 +212,8 @@ class MonitorEngine:
         self.__central_connected = True
         self.__app.log_event("[green]✓ Reconnected and re-authenticated with Central.[/]")
 
-        if not self.__engine.send_key(cp_key):
-            self.__app.log_event("[red]✗ Could not resend key to engine.[/]")
+        if not self.__engine.send_config(self.__cp_id, cp_key, self.__price):
+            self.__app.log_event("[red]✗ Could not resend config to engine.[/]")
 
     def __try_report_broken(self) -> None:
         """Report BROKEN_DOWN to Central if connected."""

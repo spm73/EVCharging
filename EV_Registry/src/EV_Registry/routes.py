@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
+from decimal import Decimal
 
 from auth import verify_certificate, generate_jwt
 from models import CP, CPStatus
@@ -10,6 +11,7 @@ class CPRegisterRequest(BaseModel):
     cp_id: str
     location: str
     certificate: str
+    price: Decimal
 
 router = APIRouter(prefix='/registry')
 
@@ -28,7 +30,7 @@ async def create_cp(request: CPRegisterRequest, db: Session  = Depends(get_db)):
         id=request.cp_id,
         location=request.location,
         status=CPStatus.DISCONNECTED,
-        price=0.0,
+        price=request.price,
         temperature=0.0
     )
     db.add(cp)

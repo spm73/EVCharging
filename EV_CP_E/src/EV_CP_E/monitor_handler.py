@@ -1,16 +1,23 @@
 from communications.sockets import SocketConnection, MessageHandler
+from decimal import Decimal
+
 from .Event import Event
 from .EventType import EventType
 from .CPEngine import CPEngine
 
 
-def on_key(msg: str) -> str:
+def on_config(msg: str) -> str:
     parts = msg.split('#')
-    if len(parts) >= 2:
-        key_str = parts[1]
+    if len(parts) >= 4:
+        cp_id_str = parts[1]
+        key_str = parts[2]
+        price_str = parts[3]
+        CPEngine().set_cp_id(cp_id_str)
         CPEngine().set_cipher_key(key_str.encode())
+        CPEngine().set_price_per_kwh(Decimal(price_str))
+        
         CPEngine().put_event(Event(EventType.KEY_RECEIVED))
-        return "KEY#copy"
+        return "CONFIG#copy"
     return "NACK"
 
 def on_status(msg: str) -> str:
@@ -37,7 +44,7 @@ def on_out_of_service(msg: str) -> str:
 
 def create_monitor_msg_handler() -> MessageHandler:
     handler = MessageHandler(default=lambda x: "NACK")
-    handler.register("KEY", on_key)
+    handler.register("CONFIG", on_config)
     handler.register("STATUS", on_status)
     handler.register("OUT_OF_SERVICE", on_out_of_service)
     return handler

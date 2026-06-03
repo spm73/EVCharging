@@ -1,6 +1,7 @@
 import json
 import queue
 import threading
+from decimal import Decimal
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -61,6 +62,8 @@ class CPEngine:
         # --- Estado inicial: siempre arranca esperando la clave ---
         self.__current_state: 'State' = WaitingForKeyState()
         self.__current_state.on_enter(self)
+        
+        self.price_per_kwh: Decimal = Decimal('0.0')
 
     # -------------------------------------------------------------------------
     # Máquina de estados
@@ -143,6 +146,12 @@ class CPEngine:
 
     def set_kafka_factory(self, factory) -> None:
         self.kafka_factory = factory
+
+    def set_price_per_kwh(self, price: Decimal) -> None:
+        self.price_per_kwh = price
+
+    def set_cp_id(self, cp_id: str) -> None:
+        self.cp_id = cp_id
 
     def __send_telemetry_message(self, msg: SupplyTelemetryMessage) -> None:
         """Lógica común para empaquetar, cifrar y enviar un mensaje al tópico cp.telemetry."""
