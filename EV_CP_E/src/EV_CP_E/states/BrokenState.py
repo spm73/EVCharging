@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 from ..State import State
 from ..EventType import EventType
 from ..CheckpointManager import CheckpointManager
-from . import IdleState, WaitingForKeyState
+from . import IdleState, WaitingForConfigState
 
 if TYPE_CHECKING:
     from ..CPEngine import CPEngine
@@ -24,4 +24,4 @@ class BrokenState(State):
             context.transition_to(IdleState.IdleState())
             
         elif event.event_type == EventType.MONITOR_DISCONNECTED:
-            context.transition_to(WaitingForKeyState.WaitingForKeyState())
+            context.transition_to(WaitingForConfigState.WaitingForConfigState())

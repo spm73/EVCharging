@@ -7,10 +7,10 @@ if TYPE_CHECKING:
     from ..CPEngine import CPEngine
     from ..Event import Event
 
-class WaitingForKeyState(State):
+class WaitingForConfigState(State):
     """
-    Initial and recovery state.
-    The Engine cannot do anything until the Monitor connects and sends the KEY.
+    Initial state. The CP is not usable until the Monitor connects
+    and sends the configuration (ID, encryption key, and price).
     """
 
     def on_enter(self, context: 'CPEngine') -> None:
@@ -18,6 +18,8 @@ class WaitingForKeyState(State):
 
     def handle(self, event: 'Event', context: 'CPEngine') -> None:
         if event.event_type == EventType.KEY_RECEIVED:
+            print("[WaitingForConfigState] Clave, precio e ID recibidos del Monitor.")
+            context.start_kafka_consumers()
             context.transition_to(IdleState.IdleState())
         elif event.event_type == EventType.MONITOR_DISCONNECTED:
             pass # Ignore, already waiting

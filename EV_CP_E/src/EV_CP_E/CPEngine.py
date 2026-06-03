@@ -11,7 +11,8 @@ from .SupplyData import SupplyData
 from .kafka.messages.EncryptedMessage import EncryptedMessage
 from .kafka.messages.SupplyTelemetryMessage import SupplyTelemetryMessage
 from .telemetry_thread import TelemetryThread
-from .states.WaitingForKeyState import WaitingForKeyState
+from .states.WaitingForConfigState import WaitingForConfigState
+from .kafka_handlers import handle_encrypted_message
 
 if TYPE_CHECKING:
     from .State import State
@@ -37,7 +38,7 @@ class CPEngine:
         self.cp_id = cp_id
         self.price_per_kwh = price_per_kwh
         
-        self.__current_state: 'State' = WaitingForKeyState()
+        self.__current_state: 'State' = WaitingForConfigState()
         
         self.__event_queue: queue.Queue[Event] = queue.Queue()
         self.fault_simulated = False        # Flag: el usuario ha activado el KO
@@ -60,7 +61,12 @@ class CPEngine:
         self.__telemetry_stop   = threading.Event()
 
         # --- Estado inicial: siempre arranca esperando la clave ---
-        self.__current_state: 'State' = WaitingForKeyState()
+        self.__current_state: 'State' = WaitingForConfigState()
+        
+        # Consumidores de Kafka (se inician dinámicamente)
+        self.__start_supply_consumer = None
+        self.__commands_consumer = None
+        
         self.__current_state.on_enter(self)
         
         self.price_per_kwh: Decimal = Decimal('0.0')
@@ -75,11 +81,17 @@ class CPEngine:
         self.__current_state = new_state
         self.__current_state.on_enter(self)
 
-    def handle_next_event(self) -> None:
-        """Saca el siguiente evento de la cola (bloqueante) y lo procesa."""
+    def handle_next_event(self) -> bool:
+        """Saca el siguiente evento de la cola (bloqueante) y lo procesa.
+        Devuelve False si el evento es SHUTDOWN, True en caso contrario."""
         event = self.__event_queue.get(block=True)
+        if event.event_type == EventType.SHUTDOWN:
+            print("[CPEngine] SHUTDOWN event received. Stopping event loop.")
+            return False
+            
         print(f"[CPEngine] Processing {event}")
         self.__current_state.handle(event, self)
+        return True
 
     def put_event(self, event: Event) -> None:
         """Punto de entrada universal para todos los hilos productores."""
@@ -154,7 +166,7 @@ class CPEngine:
         self.cp_id = cp_id
 
     def __send_telemetry_message(self, msg: SupplyTelemetryMessage) -> None:
-        """Lógica común para empaquetar, cifrar y enviar un mensaje al tópico cp.telemetry."""
+        """Lógica común para empaquetar, cifrar y enviar un mensaje al tópico supply.telemetry.cp."""
         if not getattr(self, 'kafka_factory', None):
             return
             
@@ -165,7 +177,7 @@ class CPEngine:
         enc_msg = EncryptedMessage(self.cp_id, msg)
         
         if not getattr(self, '_CPEngine__telemetry_producer', None):
-            self.__telemetry_producer = self.kafka_factory.create_producer('cp.telemetry')
+            self.__telemetry_producer = self.kafka_factory.create_producer('supply.telemetry.cp')
             
         self.__telemetry_producer.send_message(enc_msg)
 
@@ -212,3 +224,41 @@ class CPEngine:
             self.__telemetry_thread.stop()
             self.__telemetry_thread.join(timeout=2.0)
             self.__telemetry_thread = None
+
+    def start_kafka_consumers(self) -> None:
+        """Inicia los consumidores de Kafka una vez que tenemos el cp_id."""
+        if not self.kafka_factory or not self.cp_id:
+            return
+
+        def cp_id_filter(msg: EncryptedMessage) -> bool:
+            return self.cp_id is not None and msg.cp_id == self.cp_id
+
+        if not self.__start_supply_consumer:
+            self.__start_supply_consumer = self.kafka_factory.create_consumer(
+                topic="cp.start-supply",
+                group_id=self.cp_id, 
+                message_class=EncryptedMessage,
+                filter_func=cp_id_filter
+            )
+            self.__start_supply_consumer.get_notifier().register(handle_encrypted_message)
+            self.__start_supply_consumer.start_polling()
+
+        if not self.__commands_consumer:
+            self.__commands_consumer = self.kafka_factory.create_consumer(
+                topic="cp.commands",
+                group_id=self.cp_id, 
+                message_class=EncryptedMessage,
+                filter_func=cp_id_filter
+            )
+            self.__commands_consumer.get_notifier().register(handle_encrypted_message)
+            self.__commands_consumer.start_polling()
+
+    def stop_kafka_consumers(self) -> None:
+        """Detiene los consumidores de Kafka."""
+        if self.__start_supply_consumer:
+            self.__start_supply_consumer.stop_polling()
+            self.__start_supply_consumer = None
+            
+        if self.__commands_consumer:
+            self.__commands_consumer.stop_polling()
+            self.__commands_consumer = None

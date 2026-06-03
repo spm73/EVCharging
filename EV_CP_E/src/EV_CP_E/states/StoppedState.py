@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 from ..State import State
 from ..EventType import EventType
-from . import IdleState, BrokenState, WaitingForKeyState
+from . import IdleState, BrokenState, WaitingForConfigState
 
 if TYPE_CHECKING:
     from ..CPEngine import CPEngine
@@ -20,4 +20,4 @@ class StoppedState(State):
             context.transition_to(BrokenState.BrokenState())
             
         elif event.event_type == EventType.MONITOR_DISCONNECTED:
-            context.transition_to(WaitingForKeyState.WaitingForKeyState())
+            context.transition_to(WaitingForConfigState.WaitingForConfigState())
