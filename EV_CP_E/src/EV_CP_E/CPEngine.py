@@ -59,8 +59,6 @@ class CPEngine:
         self.__telemetry_stop   = threading.Event()
 
         # --- Estado inicial: siempre arranca esperando la clave ---
-        # La importación aquí evita la circularidad en tiempo de ejecución
-        from .states.WaitingForKeyState import WaitingForKeyState
         self.__current_state: 'State' = WaitingForKeyState()
         self.__current_state.on_enter(self)
 
@@ -146,22 +144,15 @@ class CPEngine:
     def set_kafka_factory(self, factory) -> None:
         self.kafka_factory = factory
 
-    def send_telemetry(self) -> None:
-        """Envía los datos de telemetría del suministro en curso por Kafka (cifrado)."""
-        if not self.current_supply or not getattr(self, 'kafka_factory', None):
+    def __send_telemetry_message(self, msg: SupplyTelemetryMessage) -> None:
+        """Lógica común para empaquetar, cifrar y enviar un mensaje al tópico cp.telemetry."""
+        if not getattr(self, 'kafka_factory', None):
             return
             
         key = self.get_cipher_key()
         if not key:
             return
             
-        msg = SupplyTelemetryMessage(
-            cp_id=self.cp_id,
-            kwh_consumed=self.current_supply.kwh_consumed,
-            price_per_kwh=self.price_per_kwh,
-            driver_id=self.current_supply.driver_id
-        )
-        
         enc_msg = EncryptedMessage(self.cp_id, msg)
         
         if not getattr(self, '_CPEngine__telemetry_producer', None):
@@ -169,9 +160,31 @@ class CPEngine:
             
         self.__telemetry_producer.send_message(enc_msg)
 
+    def send_telemetry(self) -> None:
+        """Envía los datos de telemetría del suministro en curso por Kafka (cifrado)."""
+        if not self.current_supply:
+            return
+            
+        msg = SupplyTelemetryMessage(
+            msg_type="supplying",
+            supply_id=self.current_supply.supply_id,
+            price=self.current_supply.amount_accumulated,
+            consumption=self.current_supply.kwh_accumulated
+        )
+        self.__send_telemetry_message(msg)
+
     def send_final_ticket(self) -> None:
         """Envía el ticket final del suministro a Central por Kafka."""
-        self.send_telemetry()
+        if not self.current_supply:
+            return
+            
+        msg = SupplyTelemetryMessage(
+            msg_type="ticket",
+            supply_id=self.current_supply.supply_id,
+            price=self.current_supply.amount_accumulated,
+            consumption=self.current_supply.kwh_accumulated
+        )
+        self.__send_telemetry_message(msg)
 
     def send_status_update(self, status: str) -> None:
         """Notifica a Central el nuevo estado del CP por Kafka."""
