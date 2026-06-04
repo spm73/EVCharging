@@ -1,0 +1,14 @@
+[project]
+name = "ev-w"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "ev-central",
+    "requests>=2.34.2",
+]
+
+
+[tool.uv.sources]
+ev-central = { workspace = true }
