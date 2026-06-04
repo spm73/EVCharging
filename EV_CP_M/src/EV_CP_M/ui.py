@@ -3,7 +3,7 @@ from textual.containers import Horizontal, Vertical
 from textual.widgets import Button, Footer, Header, Label, Log, Static
 from textual.reactive import reactive
 
-from .monitor_engine import MonitorEngine
+from EV_CP_M.monitor_engine import MonitorEngine
 
 
 ENGINE_STATES = {

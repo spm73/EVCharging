@@ -1,13 +1,13 @@
 from typing import TYPE_CHECKING
-from ..State import State
-from ..EventType import EventType
-from ..CheckpointManager import CheckpointManager
-from ..SupplyData import SupplyData
-from . import BrokenState, SupplyingState, StoppedState, WaitingForConfigState
+from EV_CP_E.State import State
+from EV_CP_E.EventType import EventType
+from EV_CP_E.CheckpointManager import CheckpointManager
+from EV_CP_E.SupplyData import SupplyData
+from EV_CP_E.states import BrokenState, SupplyingState, StoppedState, WaitingForConfigState
 
 if TYPE_CHECKING:
-    from ..CPEngine import CPEngine
-    from ..Event import Event
+    from EV_CP_E.CPEngine import CPEngine
+    from EV_CP_E.Event import Event
 
 class IdleState(State):
     """

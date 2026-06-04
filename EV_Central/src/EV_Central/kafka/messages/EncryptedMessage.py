@@ -3,8 +3,8 @@ from typing import Self, Type
 from cryptography.fernet import Fernet
 from json import dumps, loads
 
-from . import *
-from ...state.CPCollection import CPCollection
+from EV_Central.kafka.messages import *
+from EV_Central.state.CPCollection import CPCollection
 
 class EncryptedMessage(Message):
     _CLASS_TRANSLATOR: dict[str, Type[Message]] = {

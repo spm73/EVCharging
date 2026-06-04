@@ -4,12 +4,12 @@ from os import getenv, path, makedirs, remove
 from typing import TYPE_CHECKING
 from decimal import Decimal
 
-from .engine_client import EngineClient
-from .central_client import CentralClient
-from .api_consumer import register as registry_register, unregister as registry_unregister
+from EV_CP_M.engine_client import EngineClient
+from EV_CP_M.central_client import CentralClient
+from EV_CP_M.api_consumer import register as registry_register, unregister as registry_unregister
 
 if TYPE_CHECKING:
-    from .ui import MonitorApp
+    from EV_CP_M.ui import MonitorApp
 
 POLLING_INTERVAL = 1.0
 JWT_FILE_PATH = "data/jwt.token"

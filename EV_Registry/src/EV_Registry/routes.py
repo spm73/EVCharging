@@ -3,9 +3,9 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from decimal import Decimal
 
-from auth import verify_certificate, generate_jwt
-from models import CP, CPStatus
-from database import get_db
+from EV_Registry.auth import verify_certificate, generate_jwt
+from EV_Registry.models import CP, CPStatus
+from EV_Registry.database import get_db
 
 class CPRegisterRequest(BaseModel):
     cp_id: str

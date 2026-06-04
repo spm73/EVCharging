@@ -6,16 +6,16 @@ from decimal import Decimal
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from .Event import Event
-from .EventType import EventType
-from .SupplyData import SupplyData
-from .kafka.messages.EncryptedMessage import EncryptedMessage
-from .kafka.messages.SupplyTelemetryMessage import SupplyTelemetryMessage
-from .kafka.messages.SupplyRequestMessage import SupplyRequestMessage
-from .states.WaitingForConfigState import WaitingForConfigState
+from EV_CP_E.Event import Event
+from EV_CP_E.EventType import EventType
+from EV_CP_E.SupplyData import SupplyData
+from EV_CP_E.kafka.messages.EncryptedMessage import EncryptedMessage
+from EV_CP_E.kafka.messages.SupplyTelemetryMessage import SupplyTelemetryMessage
+from EV_CP_E.kafka.messages.SupplyRequestMessage import SupplyRequestMessage
+from EV_CP_E.states.WaitingForConfigState import WaitingForConfigState
 
 if TYPE_CHECKING:
-    from .State import State
+    from EV_CP_E.State import State
 
 
 class CPEngine:
@@ -85,7 +85,7 @@ class CPEngine:
         self.__current_state = new_state
         self.__current_state.on_enter(self)
         
-        from .CheckpointManager import CheckpointManager
+        from EV_CP_E.CheckpointManager import CheckpointManager
         CheckpointManager().save(self.get_checkpoint_data())
 
     def handle_next_event(self) -> bool:
@@ -247,7 +247,7 @@ class CPEngine:
 
     def start_telemetry(self) -> None:
         """Arranca el hilo de telemetría. Llamado desde SupplyingState.on_enter()."""
-        from .telemetry_thread import TelemetryThread
+        from EV_CP_E.telemetry_thread import TelemetryThread
         if self.__telemetry_thread and self.__telemetry_thread.is_alive():
             return
         self.__telemetry_thread = TelemetryThread()
@@ -280,7 +280,7 @@ class CPEngine:
         if not self.kafka_factory or not self.cp_id:
             return
 
-        from .kafka_handlers import handle_encrypted_start, handle_encrypted_command
+        from EV_CP_E.kafka_handlers import handle_encrypted_start, handle_encrypted_command
 
         def cp_id_filter(msg: EncryptedMessage) -> bool:
             return self.cp_id is not None and msg.cp_id == self.cp_id

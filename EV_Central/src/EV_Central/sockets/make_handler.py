@@ -2,12 +2,12 @@ from jwt import decode, InvalidTokenError
 from os import getenv
 from communications.sockets import MessageHandler
 
-from ..state.RegistryKey import RegistryKey
-from ..state.CPCollection import CPCollection
-from ..state.CPInfo import CPInfo
-from ..models.CPStatus import CPStatus
-from ..state.KafkaManager import KafkaManager
-from ..kafka.messages import SupplyErrorMessage, ActiveCPListingMessage
+from EV_Central.state.RegistryKey import RegistryKey
+from EV_Central.state.CPCollection import CPCollection
+from EV_Central.state.CPInfo import CPInfo
+from EV_Central.models.CPStatus import CPStatus
+from EV_Central.state.KafkaManager import KafkaManager
+from EV_Central.kafka.messages import SupplyErrorMessage, ActiveCPListingMessage
 
 def make_handler() -> MessageHandler:
     cp: CPInfo | None = None

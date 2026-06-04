@@ -1,9 +1,9 @@
-from .Event import Event
-from .EventType import EventType
-from .kafka.messages.EncryptedMessage import EncryptedMessage
-from .kafka.messages.CentralCommandMessage import CentralCommandMessage
-from .kafka.messages.StartSupplyMessage import StartSupplyMessage
-from .CPEngine import CPEngine
+from EV_CP_E.Event import Event
+from EV_CP_E.EventType import EventType
+from EV_CP_E.kafka.messages.EncryptedMessage import EncryptedMessage
+from EV_CP_E.kafka.messages.CentralCommandMessage import CentralCommandMessage
+from EV_CP_E.kafka.messages.StartSupplyMessage import StartSupplyMessage
+from EV_CP_E.CPEngine import CPEngine
 
 def handle_start_supply(message: StartSupplyMessage) -> None:
     """Handler for the cp.start-supply topic."""

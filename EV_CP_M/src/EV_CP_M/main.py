@@ -1,4 +1,4 @@
-from .ui import MonitorApp
+from EV_CP_M.ui import MonitorApp
 
 
 def main() -> None:

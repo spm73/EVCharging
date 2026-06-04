@@ -1,9 +1,9 @@
 from communications.sockets import SocketConnection, MessageHandler
 from decimal import Decimal
 
-from .Event import Event
-from .EventType import EventType
-from .CPEngine import CPEngine
+from EV_CP_E.Event import Event
+from EV_CP_E.EventType import EventType
+from EV_CP_E.CPEngine import CPEngine
 
 
 def on_config(msg: str) -> str:

@@ -2,8 +2,8 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .CPEngine import CPEngine
-    from .Event import Event
+    from EV_CP_E.CPEngine import CPEngine
+    from EV_CP_E.Event import Event
 
 
 class State(ABC):

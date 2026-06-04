@@ -2,11 +2,11 @@ from threading import Timer, Lock
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from .CPInfo import CPInfo
-from .Database import Database
-from ..models.CP import CP
-from ..models.Supply import Supply
-from ..models.CPStatus import CPStatus
+from EV_Central.state.CPInfo import CPInfo
+from EV_Central.state.Database import Database
+from EV_Central.models.CP import CP
+from EV_Central.models.Supply import Supply
+from EV_Central.models.CPStatus import CPStatus
 
 class CPCollection:
     INTERVAL: float = 60.0

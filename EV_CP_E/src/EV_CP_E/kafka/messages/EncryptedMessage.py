@@ -3,10 +3,10 @@ from typing import Self, Type
 from cryptography.fernet import Fernet
 from json import dumps, loads
 
-from .SupplyTelemetryMessage import SupplyTelemetryMessage
-from .CentralCommandMessage import CentralCommandMessage
-from .StartSupplyMessage import StartSupplyMessage
-from .SupplyRequestMessage import SupplyRequestMessage
+from EV_CP_E.kafka.messages.SupplyTelemetryMessage import SupplyTelemetryMessage
+from EV_CP_E.kafka.messages.CentralCommandMessage import CentralCommandMessage
+from EV_CP_E.kafka.messages.StartSupplyMessage import StartSupplyMessage
+from EV_CP_E.kafka.messages.SupplyRequestMessage import SupplyRequestMessage
 
 class EncryptedMessage(Message):
     _CLASS_TRANSLATOR: dict[str, Type[Message]] = {

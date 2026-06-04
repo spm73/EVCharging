@@ -2,12 +2,12 @@ from fastapi import APIRouter, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 
-from ..state.CPCollection import CPCollection
-from ..state.KafkaManager import KafkaManager
-from ..state.Database import Database
-from ..models.CP import CP
-from ..models.CPStatus import CPStatus
-from ..kafka.messages import CentralCommandMessage
+from EV_Central.state.CPCollection import CPCollection
+from EV_Central.state.KafkaManager import KafkaManager
+from EV_Central.state.Database import Database
+from EV_Central.models.CP import CP
+from EV_Central.models.CPStatus import CPStatus
+from EV_Central.kafka.messages import CentralCommandMessage
 
 router = APIRouter(prefix="/api/cps")
 

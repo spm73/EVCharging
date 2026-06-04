@@ -1,12 +1,12 @@
 from communications.kafka import Message
 from sqlalchemy.orm import Session
 
-from ..models.Supply import Supply
-from ..state.CPCollection import CPCollection
-from ..state.KafkaManager import KafkaManager
-from ..state.Database import Database
-from ..audit.audit import audit
-from .messages import *
+from EV_Central.models.Supply import Supply
+from EV_Central.state.CPCollection import CPCollection
+from EV_Central.state.KafkaManager import KafkaManager
+from EV_Central.state.Database import Database
+from EV_Central.audit.audit import audit
+from EV_Central.kafka.messages import *
 
 def driver_request_handler(request: SupplyRequestMessage) -> None:
     factory = KafkaManager().get_factory()

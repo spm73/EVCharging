@@ -2,10 +2,10 @@ import threading
 import uvicorn
 from fastapi import FastAPI
 
-from .api.cps import router as cp_router
-from .api.events import router as event_router
-from .api.drivers import router as driver_router
-from .api.transactions import router as transaction_router
+from EV_Central.api.cps import router as cp_router
+from EV_Central.api.events import router as event_router
+from EV_Central.api.drivers import router as driver_router
+from EV_Central.api.transactions import router as transaction_router
 
 app = FastAPI()
 app.include_router(cp_router)

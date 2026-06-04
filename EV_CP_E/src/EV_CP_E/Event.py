@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Any
 
-from .EventType import EventType
+from EV_CP_E.EventType import EventType
 
 
 @dataclass

@@ -8,9 +8,9 @@ from textual.widgets import Button, Header, Label, RichLog
 from textual.reactive import reactive
 from textual.screen import Screen
 
-from .CPEngine import CPEngine
-from .Event import Event
-from .EventType import EventType
+from EV_CP_E.CPEngine import CPEngine
+from EV_CP_E.Event import Event
+from EV_CP_E.EventType import EventType
 
 class StdoutRedirector(StringIO):
     def __init__(self, log_widget: RichLog, original_stdout: TextIO):

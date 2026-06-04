@@ -1,7 +1,7 @@
 import threading
 from decimal import Decimal
-from .CPEngine import CPEngine
-from .CheckpointManager import CheckpointManager
+from EV_CP_E.CPEngine import CPEngine
+from EV_CP_E.CheckpointManager import CheckpointManager
 
 class TelemetryThread(threading.Thread):
     def __init__(self):

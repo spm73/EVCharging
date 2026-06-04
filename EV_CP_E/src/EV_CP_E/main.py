@@ -3,17 +3,17 @@ import signal
 import sys
 import threading
 
-from .CPEngine import CPEngine
-from .Event import Event
-from .EventType import EventType
-from .monitor_handler import socket_handler
+from EV_CP_E.CPEngine import CPEngine
+from EV_CP_E.Event import Event
+from EV_CP_E.EventType import EventType
+from EV_CP_E.monitor_handler import socket_handler
 
 from communications.kafka.KafkaBrokerInfo import KafkaBrokerInfo
 from communications.kafka.KafkaFactory import KafkaFactory
-from .kafka.messages.EncryptedMessage import EncryptedMessage
+from EV_CP_E.kafka.messages.EncryptedMessage import EncryptedMessage
 from communications.sockets.SocketServer import SocketServer
-from .CheckpointManager import CheckpointManager
-from .ui import EngineApp
+from EV_CP_E.CheckpointManager import CheckpointManager
+from EV_CP_E.ui import EngineApp
 
 
 def main():

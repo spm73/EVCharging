@@ -2,8 +2,8 @@ from fastapi import APIRouter
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 
-from ..state.Database import Database
-from ..models.Event import Event
+from EV_Central.state.Database import Database
+from EV_Central.models.Event import Event
 
 router = APIRouter(prefix="/api/events")
 

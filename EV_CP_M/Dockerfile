@@ -1,20 +1,25 @@
 FROM python:3.12-slim
 
-# Install uv
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 WORKDIR /app
 
-# Copy workspace config files needed for uv to resolve the workspace
+ENV UV_COMPILE_BYTECODE=1
+ENV UV_LINK_MODE=copy
+
 COPY pyproject.toml uv.lock ./
+COPY certificates/cp.crt certificates/cp.key certificates/ca.crt /certs/
 
-# Copy only the packages EV_CP_M depends on
-COPY communications/ communications/
-COPY EV_CP_M/ EV_CP_M/
+COPY EV_Central/pyproject.toml ./EV_Central/
+COPY EV_Registry/pyproject.toml ./EV_Registry/
+COPY EV_CP_E/pyproject.toml ./EV_CP_E/
 
-# Install only EV_CP_M and its dependencies (no dev deps, no other workspace members)
-RUN uv sync --package ev-cp-m --no-dev
+COPY communications/ ./communications/
 
-WORKDIR /app/EV_CP_M
+COPY EV_CP_M/ ./EV_CP_M/
 
-CMD ["uv", "run", "--package", "ev-cp-m", "python", "-m", "src.EV_CP_M.main"]
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --package EV_CP_M --no-dev --frozen
+WORKDIR /app/EV_CP_M/src
+
+CMD ["uv", "run", "--package", "EV_CP_M", "python", "-m", "EV_CP_M.main"]

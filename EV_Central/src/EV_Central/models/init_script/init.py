@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine, URL
 from os import getenv
 
-from ..Base import Base
+from EV_Central.models.Base import Base
 
 def get_connection_url() -> URL:
     return URL.create(
