@@ -24,9 +24,9 @@ def on_status(msg: str) -> str:
     engine = CPEngine()
     state_name = str(engine.current_state)
     
-    if "WaitingForKey" in state_name:
+    if "WaitingForConfig" in state_name:
         status = "Disconnected"
-    elif engine.fault_simulated or "Broken" in state_name:
+    elif getattr(engine, 'fault_simulated', False) or "Broken" in state_name:
         status = "Broken Down"
     elif "Supplying" in state_name:
         status = "Supplying"
