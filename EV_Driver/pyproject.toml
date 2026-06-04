@@ -5,5 +5,8 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "communications"
+    "communications",
 ]
+
+[tool.uv.sources]
+communications = { workspace = true }

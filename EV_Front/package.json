@@ -1,0 +1,11 @@
+{
+  "name": "ev_front",
+  "version": "1.0.0",
+  "main": "src/EV_Front/server.js",
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "scripts": {
+    "start": "node src/EV_Front/server.js"
+  }
+}
