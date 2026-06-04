@@ -202,8 +202,7 @@ class CPEngine:
         if not key:
             return
             
-        # Usamos el cp_id como driver_id y la variable de entorno ENGINE_IP como IP
-        engine_ip = os.getenv("ENGINE_IP", "0.0.0.0")
+        engine_ip = os.getenv("ENGINE_HOST", "0.0.0.0")
         msg = SupplyRequestMessage(driver_id=self.cp_id, cp_id=self.cp_id, ip=engine_ip)
         enc_msg = EncryptedMessage(self.cp_id, msg)
         

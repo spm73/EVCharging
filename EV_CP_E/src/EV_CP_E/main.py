@@ -18,9 +18,9 @@ from EV_CP_E.ui import EngineApp
 
 def main():
     # Configuración de entorno (Docker Compose pasará estas variables)
-    engine_ip = os.getenv("ENGINE_IP", "0.0.0.0")
+    engine_ip = os.getenv("ENGINE_HOST", "0.0.0.0")
     engine_port = int(os.getenv("ENGINE_PORT", "9000"))
-    kafka_ip = os.getenv("KAFKA_BROKER_IP", "127.0.0.1")
+    kafka_ip = os.getenv("KAFKA_BROKER_HOST", "127.0.0.1")
     kafka_port = int(os.getenv("KAFKA_BROKER_PORT", "9092"))
     
     print("=========================================")
