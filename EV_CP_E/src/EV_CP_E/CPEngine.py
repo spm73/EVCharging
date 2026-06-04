@@ -50,6 +50,9 @@ class CPEngine:
         # --- Estado de la máquina ---
         self.pending_stop    = False
         self.just_restarted  = True
+        
+        self.authorization_pending = False
+        self.__authorization_timer = None
 
         self.__cipher_key: bytes | None = None
         self.__cipher_key_lock          = threading.Lock()
@@ -256,6 +259,21 @@ class CPEngine:
             self.__telemetry_thread.stop()
             self.__telemetry_thread.join(timeout=2.0)
             self.__telemetry_thread = None
+
+    def start_authorization_timer(self) -> None:
+        """Inicia el temporizador de 5s para enchufar el vehículo tras autorización."""
+        self.cancel_authorization_timer()
+        def timeout():
+            self.put_event(Event(EventType.AUTHORIZATION_TIMEOUT))
+            
+        self.__authorization_timer = threading.Timer(5.0, timeout)
+        self.__authorization_timer.start()
+
+    def cancel_authorization_timer(self) -> None:
+        """Cancela el temporizador de autorización si está corriendo."""
+        if self.__authorization_timer:
+            self.__authorization_timer.cancel()
+            self.__authorization_timer = None
 
     def start_kafka_consumers(self) -> None:
         """Inicia los consumidores de Kafka una vez que tenemos el cp_id."""

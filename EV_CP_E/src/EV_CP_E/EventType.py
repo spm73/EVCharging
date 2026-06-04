@@ -16,6 +16,8 @@ class EventType(Enum):
     SUPPLY_ENDED         = auto()  # El usuario simula que desenchufa el vehículo
     FAULT_SIMULATED      = auto()  # El usuario activa el KO del Engine
     FAULT_RESOLVED       = auto()  # El usuario resuelve el KO del Engine
+    VEHICLE_PLUGGED      = auto()  # El conductor empieza la carga tras recibir autorización
+    AUTHORIZATION_TIMEOUT= auto()  # Pasan 5 segundos sin que el usuario pulse Start Supply
 
     # Del sistema (apagado)
     SHUTDOWN             = auto()  # Cierre ordenado del Engine (SIGINT)

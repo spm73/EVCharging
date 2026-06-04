@@ -34,7 +34,20 @@ class IdleState(State):
             
         elif event.event_type == EventType.SERVICE_AUTHORIZED:
             context.current_supply = SupplyData(supply_id=int(event.payload))
-            context.transition_to(SupplyingState.SupplyingState())
+            context.authorization_pending = True
+            context.start_authorization_timer()
+            
+        elif event.event_type == EventType.VEHICLE_PLUGGED:
+            if context.authorization_pending:
+                context.cancel_authorization_timer()
+                context.authorization_pending = False
+                context.transition_to(SupplyingState.SupplyingState())
+                
+        elif event.event_type == EventType.AUTHORIZATION_TIMEOUT:
+            if context.authorization_pending:
+                print("[IdleState] Timeout: El usuario no enchufó el vehículo a tiempo.")
+                context.authorization_pending = False
+                context.current_supply = None
             
         elif event.event_type == EventType.STOP_ORDER:
             context.transition_to(StoppedState.StoppedState())
