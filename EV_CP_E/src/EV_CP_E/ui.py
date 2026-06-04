@@ -55,7 +55,7 @@ class EngineApp(App):
         text-align: center;
         text-style: bold;
         border: heavy $success;
-        background: $surface-light;
+        background: $surface-lighten-1;
         color: $text;
     }
     """
@@ -118,3 +118,6 @@ class EngineApp(App):
             engine.put_event(Event(EventType.FAULT_SIMULATED))
         elif event.button.id == "btn-resolve":
             engine.put_event(Event(EventType.FAULT_RESOLVED))
+            
+if __name__ == "__main__":
+    EngineApp().run()

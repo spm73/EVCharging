@@ -12,9 +12,7 @@ from .SupplyData import SupplyData
 from .kafka.messages.EncryptedMessage import EncryptedMessage
 from .kafka.messages.SupplyTelemetryMessage import SupplyTelemetryMessage
 from .kafka.messages.SupplyRequestMessage import SupplyRequestMessage
-from .telemetry_thread import TelemetryThread
 from .states.WaitingForConfigState import WaitingForConfigState
-from .kafka_handlers import handle_encrypted_start, handle_encrypted_command
 
 if TYPE_CHECKING:
     from .State import State
@@ -246,6 +244,7 @@ class CPEngine:
 
     def start_telemetry(self) -> None:
         """Arranca el hilo de telemetría. Llamado desde SupplyingState.on_enter()."""
+        from .telemetry_thread import TelemetryThread
         if self.__telemetry_thread and self.__telemetry_thread.is_alive():
             return
         self.__telemetry_thread = TelemetryThread()
@@ -262,6 +261,8 @@ class CPEngine:
         """Inicia los consumidores de Kafka una vez que tenemos el cp_id."""
         if not self.kafka_factory or not self.cp_id:
             return
+
+        from .kafka_handlers import handle_encrypted_start, handle_encrypted_command
 
         def cp_id_filter(msg: EncryptedMessage) -> bool:
             return self.cp_id is not None and msg.cp_id == self.cp_id

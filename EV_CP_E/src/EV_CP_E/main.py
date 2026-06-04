@@ -10,7 +10,7 @@ from .monitor_handler import socket_handler
 
 from communications.kafka.KafkaBrokerInfo import KafkaBrokerInfo
 from communications.kafka.KafkaFactory import KafkaFactory
-from communications.kafka.messages.EncryptedMessage import EncryptedMessage
+from .kafka.messages.EncryptedMessage import EncryptedMessage
 from communications.sockets.SocketServer import SocketServer
 from .CheckpointManager import CheckpointManager
 from .ui import EngineApp
