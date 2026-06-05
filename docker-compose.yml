@@ -90,6 +90,8 @@ services:
     container_name: cp1_engine
     env_file:
       - EV_CP_E/.env
+    volumes:
+      - ./data/cp1_engine:/app/EV_CP_E/src/data
 
   cp1_monitor:
     build:
@@ -101,6 +103,7 @@ services:
       - EV_CP_M/.env
     volumes:
       - ./certificates/certs_cp1:/app/EV_CP_M/src/certs:ro
+      - ./data/cp1_monitor:/app/EV_CP_M/src/data
     stdin_open: true
     tty: true
 

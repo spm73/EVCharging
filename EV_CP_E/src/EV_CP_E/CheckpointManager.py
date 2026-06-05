@@ -14,11 +14,12 @@ class CheckpointManager:
             cls._instance._initialized = False
         return cls._instance
 
-    def __init__(self, checkpoint_path: str = "checkpoint.json"):
+    def __init__(self, checkpoint_path: str = "data/checkpoint.json"):
         if getattr(self, '_initialized', False):
             return
         self._initialized = True
         self.checkpoint_path = Path(checkpoint_path)
+        self.checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
 
     def save(self, data: dict) -> None:
         """Guarda un diccionario en disco."""
