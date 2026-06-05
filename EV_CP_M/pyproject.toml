@@ -1,0 +1,14 @@
+[project]
+name = "ev-cp-m"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "communications",
+    "requests>=2.34.2",
+    "textual>=8.2.7",
+]
+
+[tool.uv.sources]
+communications = { workspace = true }

@@ -1,12 +1,12 @@
 from communications.kafka import Message
 from sqlalchemy.orm import Session
 
-from ..models.Supply import Supply
-from ..state.CPCollection import CPCollection
-from ..state.KafkaManager import KafkaManager
-from ..state.Database import Database
-from ..audit.audit import audit
-from .messages import *
+from EV_Central.models.Supply import Supply
+from EV_Central.state.CPCollection import CPCollection
+from EV_Central.state.KafkaManager import KafkaManager
+from EV_Central.state.Database import Database
+from EV_Central.audit.audit import audit
+from EV_Central.kafka.messages import *
 
 def driver_request_handler(request: SupplyRequestMessage) -> None:
     factory = KafkaManager().get_factory()
@@ -107,13 +107,26 @@ def cp_request_handler(request: SupplyRequestMessage) -> None:
 def resend_telemetry(telemetry: SupplyTelemetryMessage) -> None:
     factory = KafkaManager().get_factory()
     producer = factory.create_producer('supply.telemetry.users')
+    
+    with Session(Database().get_engine()) as session:
+        supply = session.get(Supply, telemetry.supply_id)
+        if supply is None or supply.is_done:
+            print(f"Supply {telemetry.supply_id} not registered or already done")
+            return
+            
+        supply.consumption = telemetry.consumption
+        supply.price = telemetry.price
+        
+        if telemetry.is_ticket():
+            supply.is_done = True
+            
+        session.commit()
+
     cp_collection = CPCollection()
     cp = cp_collection.get_cp_by_supply_id(telemetry.supply_id)
-    if cp is None:
-        print("Supply not registered")
-        return
-    cp.update_supply(telemetry.consumption, telemetry.price)
-    if telemetry.is_ticket():
-        cp_collection.end_supply(cp.get_id())
+    if cp is not None:
+        cp.update_supply(telemetry.consumption, telemetry.price)
+        if telemetry.is_ticket():
+            cp.end_supply()
         
     producer.send_message(telemetry)

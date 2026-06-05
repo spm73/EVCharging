@@ -3,7 +3,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql import func
 from datetime import datetime
 
-from .Base import Base
+from EV_Central.models.Base import Base
 
 class Event(Base):
     __tablename__ = 'EVENT'

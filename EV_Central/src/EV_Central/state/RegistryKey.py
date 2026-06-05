@@ -13,7 +13,7 @@ class RegistryKey:
     def __init__(self) -> None:
         if hasattr(self, '_initialized'):
             return
-        self.__key = self.__read_secret_key('registry_key')
+        self.__key = self.__read_secret_key('jwt_secret.key')
         self._initialized = True
     
     def get_key(self) -> str:

@@ -1,7 +1,7 @@
 from communications.sockets import SocketConnection
 
-from .make_handler import make_handler
-from ..audit.audit import audit
+from EV_Central.sockets.make_handler import make_handler
+from EV_Central.audit.audit import audit
 
 def handle_monitor(connection: SocketConnection) -> None:
     handler = make_handler()

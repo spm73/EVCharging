@@ -2,10 +2,10 @@ from fastapi import APIRouter
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 
-from ..state.Database import Database
-from ..state.CPCollection import CPCollection
-from ..models.Driver import Driver
-from ..models.Supply import Supply
+from EV_Central.state.Database import Database
+from EV_Central.state.CPCollection import CPCollection
+from EV_Central.models.Driver import Driver
+from EV_Central.models.Supply import Supply
 
 router = APIRouter(prefix="/api/drivers")
 

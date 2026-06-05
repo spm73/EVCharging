@@ -1,8 +1,8 @@
 from cryptography.fernet import Fernet
 from decimal import Decimal
 
-from ..models.CPStatus import CPStatus
-from .ActiveSupply import ActiveSupply
+from EV_Central.models.CPStatus import CPStatus
+from EV_Central.state.ActiveSupply import ActiveSupply
 
 class CPInfo:
     def __init__(self, id: str) -> None:

@@ -2,7 +2,7 @@ from sqlalchemy import ForeignKey, Numeric, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from decimal import Decimal
 
-from .Base import Base
+from EV_Central.models.Base import Base
 
 class Supply(Base):
     __tablename__ = 'SUPPLY'

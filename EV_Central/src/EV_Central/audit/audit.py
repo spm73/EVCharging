@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
-from ..state.Database import Database
-from ..models.Event import Event
+from EV_Central.state.Database import Database
+from EV_Central.models.Event import Event
 
 def audit(ip: str, action: str, description: str | None = None) -> None:
     """

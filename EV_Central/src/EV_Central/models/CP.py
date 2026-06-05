@@ -2,8 +2,8 @@ from sqlalchemy import String, Numeric, Enum, Float
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from decimal import Decimal
 
-from .Base import Base
-from .CPStatus import CPStatus
+from EV_Central.models.Base import Base
+from EV_Central.models.CPStatus import CPStatus
 
 class CP(Base):
     __tablename__ = 'CP'
