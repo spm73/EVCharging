@@ -3,8 +3,16 @@ from uvicorn import run
 from os import getenv
 
 from EV_Registry.routes import router
+from EV_Registry.models import Base
+from EV_Registry.database import engine
 
 def main():
+    print("[Main] Initializing registry database tables...")
+    try:
+        Base.metadata.create_all(bind=engine)
+    except Exception as e:
+        print(f"[Error] Failed to create tables: {e}")
+
     app = FastAPI()
     app.include_router(router)
     

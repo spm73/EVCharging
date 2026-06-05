@@ -5,6 +5,9 @@ import threading
 import uvicorn
 from fastapi import FastAPI
 
+from EV_Central.models.Base import Base
+from EV_Central.state.Database import Database
+
 from EV_Central.api.cps import router as cp_router
 from EV_Central.api.events import router as event_router
 from EV_Central.api.drivers import router as driver_router
@@ -36,6 +39,12 @@ def main():
     print("=========================================")
     print(" Starting EV_Central")
     print("=========================================\n")
+
+    print("[Main] Initializing database tables...")
+    try:
+        Base.metadata.create_all(bind=Database().get_engine())
+    except Exception as e:
+        print(f"[Error] Failed to create tables: {e}")
 
     # 1. Kafka Manager and Consumers Configuration
     kafka_host = os.getenv("KAFKA_BROKER_HOST", "127.0.0.1")
