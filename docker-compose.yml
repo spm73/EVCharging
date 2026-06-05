@@ -107,6 +107,42 @@ services:
     stdin_open: true
     tty: true
 
+      driver:
+    build:
+      context: .
+      dockerfile: EV_Driver/Dockerfile
+    env_file:
+      - ./EV_Driver/.env
+    # Reinicio automático por si arranca antes de que tu amigo encienda Kafka
+    restart: on-failure
+
+  # ==========================================
+  # 2. EL CLIMA (EV_Weather / EV_W)
+  # ==========================================
+  weather:
+    build:
+      context: .
+      dockerfile: EV_Weather/Dockerfile
+    env_file:
+      - ./EV_Weather/.env
+    # ¡SÚPER IMPORTANTE! Estas dos líneas permiten que la terminal 
+    # se quede abierta para que puedas usar el menú interactivo con el teclado
+    stdin_open: true 
+    tty: true
+
+  # ==========================================
+  # 3. EL FRONTEND (EV_Front)
+  # ==========================================
+  front:
+    build:
+      context: ./EV_Front
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./EV_Front/.env
+    restart: always
+
 volumes: 
   mariadb-data:
   kafka-data:
