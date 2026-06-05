@@ -80,21 +80,21 @@ services:
       - source: jwt_key
         target: jwt_secret.key
 
-  cp1_engine:
+  ev_engine:
     build:
       context: .
       dockerfile: EV_CP_E/Dockerfile
-    container_name: cp1_engine
+    container_name: ev_engine
     env_file:
       - EV_CP_E/.env
     volumes:
       - cp1_engine_data:/app/EV_CP_E/src/data
 
-  cp1_monitor:
+  ev_monitor:
     build:
       context: .
       dockerfile: EV_CP_M/Dockerfile
-    container_name: cp1_monitor
+    container_name: ev_monitor
     env_file:
       - EV_CP_M/.env
     volumes:

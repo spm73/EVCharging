@@ -9,14 +9,26 @@ WORKDIR /app
 
 # 4. Copiamos los archivos de configuración del proyecto y el lockfile
 # (Al estar en un workspace, copiamos desde la raíz)
-COPY pyproject.toml uv.lock ./
 
 # 5. Instalamos las dependencias súper rápido y sin basura de desarrollo
+
+COPY pyproject.toml uv.lock ./
+COPY EV_Central/pyproject.toml ./EV_Central/
+COPY EV_Registry/pyproject.toml ./EV_Registry/
+COPY EV_CP_M/pyproject.toml ./EV_CP_M/
+COPY EV_CP_E/pyproject.toml ./EV_CP_E/
+COPY EV_Driver/pyproject.toml ./EV_Driver/
+COPY EV_W/pyproject.toml ./EV_W/
+COPY EV_Front/pyproject.toml ./EV_Front/
+COPY communications/pyproject.toml ./communications/
+
+COPY . .
+
 RUN uv sync --frozen --no-dev
 
 # 6. Copiamos todo tu código (main.py, la clase Driver, etc.)
-COPY . .
 
 # 7. El comando que se ejecutará cuando el contenedor arranque
 # Fíjate que no le pasamos argumentos, porque los cogerá del .env de Docker
 CMD ["uv", "run", "main.py"]
+
