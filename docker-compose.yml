@@ -122,7 +122,7 @@ services:
   weather:
     build:
       context: .
-      dockerfile: EV_Weather/Dockerfile
+      dockerfile: EV_W/Dockerfile
     env_file:
       - ./EV_Weather/.env
     # ¡SÚPER IMPORTANTE! Estas dos líneas permiten que la terminal 
