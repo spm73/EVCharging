@@ -8,7 +8,7 @@ ENV UV_COMPILE_BYTECODE=1
 ENV UV_LINK_MODE=copy
 
 COPY pyproject.toml uv.lock ./
-COPY certificates/cp.crt certificates/cp.key certificates/ca.crt /certs/
+COPY certificates/ca.crt ./EV_CP_M/src/certs/
 
 COPY EV_Central/pyproject.toml ./EV_Central/
 COPY EV_Registry/pyproject.toml ./EV_Registry/
