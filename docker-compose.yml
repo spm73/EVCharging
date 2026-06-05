@@ -103,7 +103,7 @@ services:
     stdin_open: true
     tty: true
 
-  driver:
+  ev_driver:
     build:
       context: .
       dockerfile: EV_Driver/Dockerfile
@@ -115,7 +115,7 @@ services:
   # ==========================================
   # 2. EL CLIMA (EV_Weather / EV_W)
   # ==========================================
-  weather:
+  ev_weather:
     build:
       context: .
       dockerfile: EV_W/Dockerfile
@@ -129,7 +129,7 @@ services:
   # ==========================================
   # 3. EL FRONTEND (EV_Front)
   # ==========================================
-  front:
+  ev_front:
     build:
       context: ./EV_Front
       dockerfile: Dockerfile
