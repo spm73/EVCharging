@@ -91,7 +91,7 @@ services:
     env_file:
       - EV_CP_E/.env
     volumes:
-      - ./data/cp1_engine:/app/EV_CP_E/src/data
+      - cp1_engine_data:/app/EV_CP_E/src/data
 
   cp1_monitor:
     build:
@@ -103,13 +103,15 @@ services:
       - EV_CP_M/.env
     volumes:
       - ./certificates/certs_cp1:/app/EV_CP_M/src/certs:ro
-      - ./data/cp1_monitor:/app/EV_CP_M/src/data
+      - cp1_monitor_data:/app/EV_CP_M/src/data
     stdin_open: true
     tty: true
 
 volumes: 
   mariadb-data:
   kafka-data:
+  cp1_engine_data:
+  cp1_monitor_data:
 
 secrets:
   jwt_key:
