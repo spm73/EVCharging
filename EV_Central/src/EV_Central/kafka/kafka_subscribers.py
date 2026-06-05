@@ -107,13 +107,26 @@ def cp_request_handler(request: SupplyRequestMessage) -> None:
 def resend_telemetry(telemetry: SupplyTelemetryMessage) -> None:
     factory = KafkaManager().get_factory()
     producer = factory.create_producer('supply.telemetry.users')
+    
+    with Session(Database().get_engine()) as session:
+        supply = session.get(Supply, telemetry.supply_id)
+        if supply is None or supply.is_done:
+            print(f"Supply {telemetry.supply_id} not registered or already done")
+            return
+            
+        supply.consumption = telemetry.consumption
+        supply.price = telemetry.price
+        
+        if telemetry.is_ticket():
+            supply.is_done = True
+            
+        session.commit()
+
     cp_collection = CPCollection()
     cp = cp_collection.get_cp_by_supply_id(telemetry.supply_id)
-    if cp is None:
-        print("Supply not registered")
-        return
-    cp.update_supply(telemetry.consumption, telemetry.price)
-    if telemetry.is_ticket():
-        cp_collection.end_supply(cp.get_id())
+    if cp is not None:
+        cp.update_supply(telemetry.consumption, telemetry.price)
+        if telemetry.is_ticket():
+            cp.end_supply()
         
     producer.send_message(telemetry)

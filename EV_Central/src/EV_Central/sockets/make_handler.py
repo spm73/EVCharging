@@ -13,6 +13,7 @@ def make_handler() -> MessageHandler:
     cp: CPInfo | None = None
     
     def handle_auth(message: str) -> str:
+        nonlocal cp
         _, cp_id, jwt_token = message.split('#')
         
         key = RegistryKey().get_key()
