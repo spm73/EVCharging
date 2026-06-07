@@ -1,0 +1,78 @@
+services:
+  ev_engine_1:
+    build:
+      context: ../..
+      dockerfile: EV_CP_E/Dockerfile
+    container_name: ev_engine_1
+    ports:
+      - "9000:9000"
+    env_file:
+      - ../../EV_CP_E/.env
+    volumes:
+      - cp1_engine_data:/data
+
+  ev_monitor_1:
+    build:
+      context: ../..
+      dockerfile: EV_CP_M/Dockerfile
+    container_name: ev_monitor_1
+    env_file:
+      - ../../EV_CP_M/.env
+    environment:
+      - TERM=xterm-256color
+      - CP_ID=CP-001
+      - ENGINE_PORT=9000
+    volumes:
+      - ../../certificates/certs_cp1/cp.crt:/certs/cp.crt:ro
+      - ../../certificates/certs_cp1/cp.key:/certs/cp.key:ro
+      - cp1_monitor_data:/data
+    stdin_open: true
+    tty: true
+
+  ev_engine_2:
+    build:
+      context: ../..
+      dockerfile: EV_CP_E/Dockerfile
+    container_name: ev_engine_2
+    ports:
+      - "9001:9000"
+    env_file:
+      - ../../EV_CP_E/.env
+    volumes:
+      - cp2_engine_data:/data
+
+  ev_monitor_2:
+    build:
+      context: ../..
+      dockerfile: EV_CP_M/Dockerfile
+    container_name: ev_monitor_2
+    env_file:
+      - ../../EV_CP_M/.env
+    environment:
+      - TERM=xterm-256color
+      - CP_ID=CP-002
+      - ENGINE_PORT=9001
+    volumes:
+      - ../../certificates/certs_cp2/cp.crt:/certs/cp.crt:ro
+      - ../../certificates/certs_cp2/cp.key:/certs/cp.key:ro
+      - cp2_monitor_data:/data
+    stdin_open: true
+    tty: true
+
+  ev_weather:
+    build:
+      context: ../..
+      dockerfile: EV_W/Dockerfile
+    container_name: ev_weather
+    env_file:
+      - ../../EV_W/.env
+    environment:
+      - TERM=xterm-256color
+    stdin_open: true
+    tty: true
+
+volumes:
+  cp1_engine_data:
+  cp1_monitor_data:
+  cp2_engine_data:
+  cp2_monitor_data:

@@ -1,0 +1,45 @@
+services:
+  ev_registry:
+    build:
+      context: ../..
+      dockerfile: EV_Registry/Dockerfile
+    container_name: ev_registry_container
+    ports:
+      - "8000:8000"
+    env_file:
+      - ../../EV_Registry/.env
+    secrets:
+      - source: jwt_key
+        target: jwt_secret.key
+
+  ev_driver_1:
+    build:
+      context: ../..
+      dockerfile: EV_Driver/Dockerfile
+    container_name: ev_driver_1
+    env_file:
+      - ../../EV_Driver/.env
+    environment:
+      - TERM=xterm-256color
+      - DRIVER_ID=DRV-1
+    restart: on-failure
+    stdin_open: true
+    tty: true
+
+  ev_driver_2:
+    build:
+      context: ../..
+      dockerfile: EV_Driver/Dockerfile
+    container_name: ev_driver_2
+    env_file:
+      - ../../EV_Driver/.env
+    environment:
+      - TERM=xterm-256color
+      - DRIVER_ID=DRV-2
+    restart: on-failure
+    stdin_open: true
+    tty: true
+
+secrets:
+  jwt_key:
+    file: ../../certificates/jwt_secret.key
