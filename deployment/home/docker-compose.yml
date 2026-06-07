@@ -9,7 +9,9 @@ services:
       MARIADB_ROOT_PASSWORD: "@pr0bar_SD"
     volumes:
       - mariadb-data:/var/lib/mysql
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ../../init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - central_net
   
   kafka-broker:
     image: apache/kafka:latest
@@ -31,6 +33,8 @@ services:
       KAFKA_NUM_PARTITIONS: 3
     volumes:
       - kafka-data:/var/lib/kafka/data
+    networks:
+      - central_net
   
   init-kafka:
     image: apache/kafka:latest
@@ -52,64 +56,80 @@ services:
       /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka-broker:9092 --create --if-not-exists --topic cp.start-supply;
       /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka-broker:9092 --create --if-not-exists --topic supply.errors;
       "
+    networks:
+      - central_net
 
   ev_registry:
     build:
-      context: .
+      context: ../..
       dockerfile: EV_Registry/Dockerfile
     container_name: ev_registry_container
     ports:
       - "8000:8000"
     env_file:
-      - EV_Registry/.env
+      - ../../EV_Registry/.env
     secrets:
       - source: jwt_key
         target: jwt_secret.key
+    networks:
+      - user_net
   
   ev_central:
     build:
-      context: .
+      context: ../..
       dockerfile: EV_Central/Dockerfile
     container_name: ev_central_container
     ports:
       - "8001:8000"
       - "7000:7000"
     env_file:
-      - EV_Central/.env
+      - ../../EV_Central/.env
     secrets:
       - source: jwt_key
         target: jwt_secret.key
+    networks:
+      - central_net
 
-  cp1_engine:
+  ev_engine:
     build:
-      context: .
+      context: ../..
       dockerfile: EV_CP_E/Dockerfile
-    container_name: cp1_engine
+    container_name: ev_engine
+    ports:
+      - "9000:9000"
     env_file:
-      - EV_CP_E/.env
+      - ../../EV_CP_E/.env
     volumes:
-      - cp1_engine_data:/app/EV_CP_E/src/data
+      - cp1_engine_data:/data
+    networks:
+      - edge_net
 
-  cp1_monitor:
+  ev_monitor:
     build:
-      context: .
+      context: ../..
       dockerfile: EV_CP_M/Dockerfile
-    container_name: cp1_monitor
+    container_name: ev_monitor
     env_file:
-      - EV_CP_M/.env
+      - ../../EV_CP_M/.env
+    environment:
+      - TERM=xterm-256color
     volumes:
-      - ./certificates/certs_cp1:/app/EV_CP_M/src/certs:ro
-      - cp1_monitor_data:/app/EV_CP_M/src/data
+      - ../../certificates/certs_cp1/cp.crt:/certs/cp.crt:ro
+      - ../../certificates/certs_cp1/cp.key:/certs/cp.key:ro
+      - cp1_monitor_data:/data
     stdin_open: true
     tty: true
+    networks:
+      - edge_net
 
   ev_driver:
     build:
-      context: .
+      context: ../..
       dockerfile: EV_Driver/Dockerfile
     env_file:
-      - ./EV_Driver/.env
-    # Reinicio automático por si arranca antes de que tu amigo encienda Kafka
+      - ../../EV_Driver/.env
+    environment:
+      - TERM=xterm-256color
     restart: on-failure
     command: >
       sh -c "uv run --package ev-driver python -m EV_Driver.main 
@@ -118,33 +138,41 @@ services:
       --broker-port $$BROKER_PORT 
       --id $$ID 
       --file $$FILE"
+    networks:
+      - user_net
 
   # ==========================================
   # 2. EL CLIMA (EV_Weather / EV_W)
   # ==========================================
   ev_w:
     build:
-      context: .
+      context: ../..
       dockerfile: EV_W/Dockerfile
     env_file:
-      - ./EV_W/.env
+      - ../../EV_W/.env
+    environment:
+      - TERM=xterm-256color
     # ¡SÚPER IMPORTANTE! Estas dos líneas permiten que la terminal 
     # se quede abierta para que puedas usar el menú interactivo con el teclado
     stdin_open: true 
     tty: true
+    networks:
+      - edge_net
 
   # ==========================================
   # 3. EL FRONTEND (EV_Front)
   # ==========================================
-  front:
+  ev_front:
     build:
-      context: ./EV_Front
+      context: ../../EV_Front
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
     env_file:
-      - ./EV_Front/.env
+      - ../../EV_Front/.env
     restart: always
+    networks:
+      - central_net
 
 volumes: 
   mariadb-data:
@@ -154,4 +182,12 @@ volumes:
 
 secrets:
   jwt_key:
-    file: ./certificates/jwt_secret.key
+    file: ../../certificates/jwt_secret.key
+
+networks:
+  central_net:
+    driver: bridge
+  edge_net:
+    driver: bridge
+  user_net:
+    driver: bridge

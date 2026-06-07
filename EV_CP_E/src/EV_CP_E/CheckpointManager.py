@@ -14,7 +14,7 @@ class CheckpointManager:
             cls._instance._initialized = False
         return cls._instance
 
-    def __init__(self, checkpoint_path: str = "data/checkpoint.json"):
+    def __init__(self, checkpoint_path: str = "/data/checkpoint.json"):
         if getattr(self, '_initialized', False):
             return
         self._initialized = True

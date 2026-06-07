@@ -6,6 +6,9 @@ from EV_Registry.routes import router
 from EV_Registry.models import Base
 from EV_Registry.database import engine
 
+app = FastAPI()
+app.include_router(router)
+
 def main():
     print("[Main] Initializing registry database tables...")
     try:
@@ -13,9 +16,6 @@ def main():
     except Exception as e:
         print(f"[Error] Failed to create tables: {e}")
 
-    app = FastAPI()
-    app.include_router(router)
-    
     run(
         "EV_Registry.main:app",
         host="0.0.0.0",

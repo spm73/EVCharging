@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from EV_CP_M.ui import MonitorApp
 
 POLLING_INTERVAL = 1.0
-JWT_FILE_PATH = "data/jwt.token"
+JWT_FILE_PATH = "/data/jwt.token"
 
 class MonitorEngine:
     def __init__(self, app: "MonitorApp") -> None:

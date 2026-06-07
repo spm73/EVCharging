@@ -12,5 +12,8 @@ members = [
     "EV_Central",
     "EV_Registry",
     "EV_CP_M",
+    "EV_CP_E",
     "EV_Driver",
+    "EV_W",
+    "EV_Front",
 ]
