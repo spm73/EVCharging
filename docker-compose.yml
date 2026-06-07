@@ -103,7 +103,7 @@ services:
     stdin_open: true
     tty: true
 
-  driver:
+  ev_driver:
     build:
       context: .
       dockerfile: EV_Driver/Dockerfile
@@ -111,6 +111,13 @@ services:
       - ./EV_Driver/.env
     # Reinicio automático por si arranca antes de que tu amigo encienda Kafka
     restart: on-failure
+    command: >
+      sh -c "uv run --package ev-driver python -m EV_Driver.main 
+      --ip $$IP 
+      --broker-ip $$BROKER_IP 
+      --broker-port $$BROKER_PORT 
+      --id $$ID 
+      --file $$FILE"
 
   # ==========================================
   # 2. EL CLIMA (EV_Weather / EV_W)

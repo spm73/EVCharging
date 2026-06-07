@@ -4,5 +4,4 @@ from .SupplyRequestNotificationMessage import SupplyRequestNotificationMessage
 from .SupplyResponseMessage import SupplyResponseMessage
 from .ActiveCPListingMessage import ActiveCPListingMessage
 from .SupplyTelemetryMessage import SupplyTelemetryMessage
-from .StartSupplyMessage import StartSupplyMessage
 from .SupplyErrorMessage import SupplyErrorMessage

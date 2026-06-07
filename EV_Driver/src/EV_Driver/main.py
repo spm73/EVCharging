@@ -3,7 +3,7 @@ import time
 import argparse
 
 
-from system.event_bus import EVENT_QUEUE
+from .system.event_bus import EVENT_QUEUE
 
 # 2. Importamos configuración de Kafka y tu clase Driver
 from communications.kafka import KafkaBrokerInfo

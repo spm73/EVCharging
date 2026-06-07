@@ -1,22 +1,33 @@
-# 1. Usamos una imagen oficial de Python ligera como base
 FROM python:3.12-slim
 
-# 2. Instalamos 'uv' copiándolo mágicamente desde su imagen oficial (la forma más rápida)
+# Instalamos uv
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-# 3. Creamos una carpeta dentro del contenedor donde vivirá tu código
 WORKDIR /app
 
-# 4. Copiamos los archivos de configuración del proyecto y el lockfile
-# (Al estar en un workspace, copiamos desde la raíz)
+# Optimizaciones de uv para Docker
+ENV UV_COMPILE_BYTECODE=1
+ENV UV_LINK_MODE=copy
+
+# 1. Copiamos la lista de la compra global
 COPY pyproject.toml uv.lock ./
 
-# 5. Instalamos las dependencias súper rápido y sin basura de desarrollo
-RUN uv sync --frozen --no-dev
+# 2. Copiamos el archivo de configuración exclusivo de tu módulo
+COPY EV_Driver/pyproject.toml ./EV_Driver/
 
-# 6. Copiamos todo tu código (main.py, la clase Driver, etc.)
-COPY . .
+# 3. Copiamos el módulo de comunicaciones entero (como hace tu compañero)
+COPY communications/ ./communications/
 
-# 7. El comando que se ejecutará cuando el contenedor arranque
-# Fíjate que no le pasamos argumentos, porque los cogerá del .env de Docker
-CMD ["uv", "run", "main.py"]
+# 4. Instalamos dependencias usando la caché mágica.
+# Al usar --package ev-driver, uv prepara tu módulo y detecta 'communications'
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --package ev-driver --no-dev --frozen
+
+# 5. Copiamos el resto de tu código fuente
+COPY EV_Driver/ ./EV_Driver/
+
+# 6. Nos metemos en la carpeta src (tal y como hace él)
+WORKDIR /app/EV_Driver/src
+
+# 7. Arrancamos tu programa como un módulo nativo de Python
+CMD ["uv", "run", "--package", "ev-driver", "python", "-m", "EV_Driver.main"]

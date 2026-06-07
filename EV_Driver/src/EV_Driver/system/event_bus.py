@@ -1,7 +1,7 @@
 import queue
 import time
 
-from events import *
+from .events import *
 
 EVENT_QUEUE = queue.Queue()
 
