@@ -122,7 +122,7 @@ services:
   # ==========================================
   # 2. EL CLIMA (EV_Weather / EV_W)
   # ==========================================
-  weather:
+  ev_w:
     build:
       context: .
       dockerfile: EV_W/Dockerfile
