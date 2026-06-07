@@ -4,17 +4,17 @@ from os import getenv
 from decimal import Decimal
 
 # Certificados del CP (el monitor los tiene en disco)
-CLIENT_CERT = ("certs/cp.crt", "certs/cp.key")  # (cert, clave privada)
+CLIENT_CERT = ("/certs/cp.crt", "/certs/cp.key")  # (cert, clave privada)
 
 # CA que firmó el certificado del servidor del Registry
-CA_CERT = "certs/ca.crt"
+CA_CERT = "/certs/ca.crt"
 
 def register(cp_id: str, location: str, price: Decimal) -> str:
     registry_host = getenv('REGISTRY_HOST')
     registry_port = int(getenv('REGISTRY_PORT'))
     registry_url = f"https://{registry_host}:{registry_port}"
     
-    with open("certs/cp.crt") as f:
+    with open("/certs/cp.crt") as f:
         certificate_pem = b64encode(f.read())
 
     response = requests.post(

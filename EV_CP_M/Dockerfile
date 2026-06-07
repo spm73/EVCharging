@@ -23,7 +23,7 @@ COPY EV_CP_M/ ./EV_CP_M/
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --package EV_CP_M --no-dev --frozen
 
-COPY certificates/ca.crt ./EV_CP_M/src/certs/
+COPY certificates/ca.crt /certs/
 
 WORKDIR /app/EV_CP_M/src
 
