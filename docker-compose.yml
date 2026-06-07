@@ -4,7 +4,7 @@ services:
     container_name: db
     restart: always
     ports:
-      - "13306:3306"
+      - "3306:3306"
     environment:
       MARIADB_ROOT_PASSWORD: "@pr0bar_SD"
     volumes:
@@ -85,6 +85,8 @@ services:
       context: .
       dockerfile: EV_CP_E/Dockerfile
     container_name: ev_engine
+    ports:
+      - "9000:9000"
     env_file:
       - EV_CP_E/.env
     volumes:
@@ -97,6 +99,8 @@ services:
     container_name: ev_monitor
     env_file:
       - EV_CP_M/.env
+    environment:
+      - TERM=xterm-256color
     volumes:
       - ./certificates/certs_cp1:/app/EV_CP_M/src/certs:ro
       - cp1_monitor_data:/app/EV_CP_M/src/data
@@ -109,6 +113,8 @@ services:
       dockerfile: EV_Driver/Dockerfile
     env_file:
       - ./EV_Driver/.env
+    environment:
+      - TERM=xterm-256color
     # Reinicio automático por si arranca antes de que tu amigo encienda Kafka
     restart: on-failure
 
@@ -121,6 +127,8 @@ services:
       dockerfile: EV_W/Dockerfile
     env_file:
       - ./EV_W/.env
+    environment:
+      - TERM=xterm-256color
     # ¡SÚPER IMPORTANTE! Estas dos líneas permiten que la terminal 
     # se quede abierta para que puedas usar el menú interactivo con el teclado
     stdin_open: true 
