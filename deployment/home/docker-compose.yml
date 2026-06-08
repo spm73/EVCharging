@@ -73,6 +73,8 @@ services:
         target: jwt_secret.key
     networks:
       - user_net
+    depends_on:
+      - maraidb
   
   ev_central:
     build:
@@ -89,6 +91,8 @@ services:
         target: jwt_secret.key
     networks:
       - central_net
+    depends_on:
+      - mariadb
 
   ev_engine:
     build:
