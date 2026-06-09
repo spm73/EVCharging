@@ -137,11 +137,11 @@ services:
     restart: on-failure
     command: >
       sh -c "uv run --package ev-driver python -m EV_Driver.main 
-      --ip $$IP 
+      --ip $$DRIVER_IP 
       --broker-ip $$BROKER_IP 
       --broker-port $$BROKER_PORT 
-      --id $$ID 
-      --file $$FILE"
+      --id $$DRIVER_ID 
+      --file $$CP_FILE"
     networks:
       - user_net
 
