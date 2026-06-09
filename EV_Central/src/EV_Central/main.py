@@ -58,19 +58,13 @@ def main():
     consumers = []
     
     try:
-        consumers.append(factory.create_consumer("driver.requests", group_id, SupplyRequestMessage, None))
+        consumers.append(factory.create_consumer("supply.request.users", group_id, SupplyRequestMessage, None))
         consumers[-1].get_notifier().add_subscriber(driver_request_handler)
         
-        consumers.append(factory.create_consumer("cp.requests", group_id, SupplyRequestMessage, None))
-        consumers[-1].get_notifier().add_subscriber(cp_request_handler)
-        
-        consumers.append(factory.create_consumer("cp.requests.encrypted", group_id, EncryptedMessage, None))
+        consumers.append(factory.create_consumer("supply.request.cps", group_id, EncryptedMessage, None))
         consumers[-1].get_notifier().add_subscriber(cp_encrypted_request_handler)
         
-        consumers.append(factory.create_consumer("supply.telemetry", group_id, SupplyTelemetryMessage, None))
-        consumers[-1].get_notifier().add_subscriber(resend_telemetry)
-        
-        consumers.append(factory.create_consumer("supply.telemetry.encrypted", group_id, EncryptedMessage, None))
+        consumers.append(factory.create_consumer("supply.telemetry.cp", group_id, EncryptedMessage, None))
         consumers[-1].get_notifier().add_subscriber(resend_encrypted_telemetry)
 
         print("[Main] Starting Kafka Consumers...")

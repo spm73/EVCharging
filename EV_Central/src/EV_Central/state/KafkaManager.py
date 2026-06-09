@@ -11,11 +11,12 @@ class KafkaManager:
                 cls._instance = super().__new__(cls)
         return cls._instance
     
-    def __init__(self, broker_info: KafkaBrokerInfo) -> None:
+    def __init__(self, broker_info: KafkaBrokerInfo | None = None) -> None:
         if hasattr(self, '_initialized'):
             return
-        self.__factory = KafkaFactory(broker_info)
-        self._initialized = True
+        if broker_info is not None:
+            self.__factory = KafkaFactory(broker_info)
+            self._initialized = True
     
     def get_factory(self) -> KafkaFactory:
         return self.__factory
