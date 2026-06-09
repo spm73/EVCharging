@@ -14,8 +14,8 @@ def register(cp_id: str, location: str, price: Decimal) -> str:
     registry_port = int(getenv('REGISTRY_PORT'))
     registry_url = f"https://{registry_host}:{registry_port}"
     
-    with open("/certs/cp.crt") as f:
-        certificate_pem = b64encode(f.read())
+    with open("/certs/cp.crt", "rb") as f:
+        certificate_pem = b64encode(f.read()).decode("utf-8")
 
     response = requests.post(
         f"{registry_url}/registry/cp",

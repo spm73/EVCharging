@@ -2,6 +2,7 @@ from textual.app import App, ComposeResult
 from textual.containers import Horizontal, Vertical
 from textual.widgets import Button, Footer, Header, Label, Log, Static
 from textual.reactive import reactive
+from textual import work
 
 from EV_CP_M.monitor_engine import MonitorEngine
 
@@ -88,7 +89,7 @@ class MonitorApp(App):
     def __init__(self) -> None:
         super().__init__()
         self.__engine = MonitorEngine(self)
-        self.__registered = False
+        self.__registered = self.__engine.is_registered()
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
@@ -96,7 +97,8 @@ class MonitorApp(App):
         with Horizontal(id="main-layout"):
             with Vertical(id="left-panel"):
                 yield Label("REGISTRATION", classes="section-title")
-                yield Button("Connect & Register",  id="btn-register",   variant="primary")
+                yield Button("Connect Engine",      id="btn-connect",    variant="primary")
+                yield Button("Register CP",         id="btn-register",   variant="primary", disabled=self.__registered)
                 yield Button("Unregister",          id="btn-unregister", variant="error",   disabled=True)
 
                 yield Label("CENTRAL", classes="section-title")
@@ -128,6 +130,7 @@ class MonitorApp(App):
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         handlers = {
+            "btn-connect":    self._handle_connect,
             "btn-register":   self._handle_register,
             "btn-unregister": self._handle_unregister,
             "btn-auth":       self._handle_auth,
@@ -136,22 +139,36 @@ class MonitorApp(App):
         if handler:
             handler()
 
-    def _handle_register(self) -> None:
-        if not self.__engine.connect_engine():
-            return
-        if not self.__engine.register():
-            return
+    @work(thread=True)
+    def _handle_connect(self) -> None:
+        if self.__engine.connect_engine():
+            self.call_from_thread(self._post_connect_ui)
 
+    def _post_connect_ui(self) -> None:
+        self.query_one("#btn-connect", Button).disabled = True
+        self.query_one("#btn-auth",    Button).disabled = False
+
+    @work(thread=True)
+    def _handle_register(self) -> None:
+        if self.__engine.register():
+            self.call_from_thread(self._post_register_ui)
+
+    def _post_register_ui(self) -> None:
         self.__registered = True
         self.query_one("#btn-register", Button).disabled = True
-        self.query_one("#btn-auth",     Button).disabled = False
 
+    @work(thread=True)
     def _handle_unregister(self) -> None:
         self.__engine.unregister()
+        self.call_from_thread(self._post_unregister_ui)
+
+    def _post_unregister_ui(self) -> None:
         self.__registered = False
+        self.query_one("#btn-connect",    Button).disabled = False
         self.query_one("#btn-register",   Button).disabled = False
         self.query_one("#btn-unregister", Button).disabled = True
         self.query_one("#btn-auth",       Button).disabled = True
 
+    @work(thread=True)
     def _handle_auth(self) -> None:
         self.__engine.authenticate()

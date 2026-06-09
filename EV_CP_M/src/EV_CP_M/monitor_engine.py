@@ -50,6 +50,9 @@ class MonitorEngine:
             except Exception as e:
                 self.__app.log_event(f"[red]✗ Error loading saved JWT: {e}[/]")
 
+    def is_registered(self) -> bool:
+        return self.__jwt is not None
+
     # ── API pública (llamada desde la UI) ───────────────────────────────────
 
     def connect_engine(self) -> bool:

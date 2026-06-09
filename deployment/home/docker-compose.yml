@@ -74,7 +74,7 @@ services:
     networks:
       - user_net
     depends_on:
-      - maraidb
+      - mariadb
   
   ev_central:
     build:
