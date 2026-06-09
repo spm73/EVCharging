@@ -20,9 +20,9 @@ def make_handler() -> MessageHandler:
         
         try:
             payload = decode(jwt_token, key, algorithms=["HS256"])
-            if payload["cp_id"] != cp_id:
+            if payload.get("sub") != cp_id and payload.get("cp_id") != cp_id:
                 return "AUTH#denied"
-        except InvalidTokenError:
+        except Exception:
             return "AUTH#denied"
         
         cps = CPCollection()
