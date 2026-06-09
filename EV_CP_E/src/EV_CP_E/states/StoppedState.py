@@ -13,7 +13,7 @@ class StoppedState(State):
     """
 
     def handle(self, event: 'Event', context: 'CPEngine') -> None:
-        if event.event_type == EventType.RESUME_ORDER:
+        if event.event_type == EventType.RESUME_ORDER or event.event_type == EventType.KEY_RECEIVED:
             context.transition_to(IdleState.IdleState())
             
         elif event.event_type == EventType.FAULT_SIMULATED:

@@ -40,6 +40,9 @@ class SupplyingState(State):
         elif event.event_type == EventType.STOP_ORDER:
             context.pending_stop = True
             
+        elif event.event_type == EventType.KEY_RECEIVED or event.event_type == EventType.RESUME_ORDER:
+            context.pending_stop = False
+            
         elif event.event_type == EventType.FAULT_SIMULATED:
             context.transition_to(BrokenState.BrokenState())
             

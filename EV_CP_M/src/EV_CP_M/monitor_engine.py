@@ -185,10 +185,9 @@ class MonitorEngine:
                 self.__central_connected = False
                 self.__app.log_event("[red]✗ Lost connection to Central.[/]")
 
-            # Si el engine está suministrando, ordenarle que pase a Stopped al acabar
-            if status == "Supplying":
-                self.__app.log_event("[yellow]→ Engine supplying — sending OUT_OF_SERVICE.[/]")
-                self.__engine.send_out_of_service()
+            # Ordenarle al engine que pase a Stopped (ahora o al acabar)
+            self.__app.log_event("[yellow]→ Central is down — sending OUT_OF_SERVICE.[/]")
+            self.__engine.send_out_of_service()
 
             self.__try_reconnect_central()
         else:
