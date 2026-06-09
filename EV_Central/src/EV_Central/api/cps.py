@@ -18,18 +18,26 @@ def get_cps(status: str | None = None):
         db_cps = session.scalars(select(CP)).all()
         result = []
         for cp in db_cps:
-            cp_info = cps.get_cp(cp.id)
-            cp_status = cp_info.get_status()
-            if status and cp_status != CPStatus(status):
+            try:
+                cp_info = cps.get_cp(cp.id)
+                cp_status = cp_info.get_status().value
+                temperature = cp_info.get_temp()
+                active_supply = cp_info.get_active_supply().__dict__ if cp_info.get_active_supply() else None
+            except KeyError:
+                cp_status = cp.status.value
+                temperature = float(cp.temperature)
+                active_supply = None
+
+            if status and cp_status != status:
                 continue
-            active_supply = cp_info.get_active_supply().__dict__
+
             result.append({
                 "id": cp.id,
                 "location": cp.location,
                 "price": float(cp.price),
-                "status": cp_status.value,
-                "temperature": cp_info.get_temp(),
-                "active_supply": active_supply if active_supply else None
+                "status": cp_status,
+                "temperature": temperature,
+                "active_supply": active_supply
             })
         return result
 
