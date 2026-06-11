@@ -16,6 +16,7 @@ class KafkaFactory:
         topic: str, 
         group_id: str, 
         message_class: Type[M],
-        filter_func: Callable[[M], bool] | None = None
+        filter_func: Callable[[M], bool] | None = None,
+        auto_offset_reset: str = 'latest'
         ) -> KafkaConsumer[M]:
-        return KafkaConsumer(self._broker_info, topic, group_id, message_class, filter_func)
+        return KafkaConsumer(self._broker_info, topic, group_id, message_class, filter_func, auto_offset_reset)

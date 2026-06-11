@@ -13,11 +13,13 @@ class KafkaConsumer(Generic[M]):
         topic: str, 
         group_id: str,
         message_class: Type[M],
-        filter_func: Callable[[M], bool] | None
+        filter_func: Callable[[M], bool] | None,
+        auto_offset_reset: str = 'latest'
     ) -> None:
         conf = {
             'bootstrap.servers': broker_info.get_broker_endpoint(),
-            'group.id': group_id
+            'group.id': group_id,
+            'auto.offset.reset': auto_offset_reset
         }
         self.__topic = topic
         self.__message_class = message_class
