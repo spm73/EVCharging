@@ -186,8 +186,8 @@ class MonitorApp(App):
 
     @work(thread=True)
     def _handle_unregister(self) -> None:
-        self.__engine.unregister()
-        self.call_from_thread(self._post_unregister_ui)
+        if self.__engine.unregister():
+            self.call_from_thread(self._post_unregister_ui)
 
     def _post_unregister_ui(self) -> None:
         self.__registered = False

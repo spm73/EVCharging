@@ -13,7 +13,7 @@ class Supply(Base):
     consumption: Mapped[int | None]
     is_done: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     
-    cp_id: Mapped[str] = mapped_column(ForeignKey("CP.id"), nullable=False)
+    cp_id: Mapped[str | None] = mapped_column(ForeignKey("CP.id", ondelete="SET NULL"), nullable=True)
     driver_id: Mapped[str] = mapped_column(ForeignKey("DRIVER.id"), nullable=False)
     cp: Mapped["CP"] = relationship(back_populates="supplies")
     driver: Mapped["Driver"] = relationship(back_populates="supplies")

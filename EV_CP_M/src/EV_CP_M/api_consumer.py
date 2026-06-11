@@ -37,8 +37,9 @@ def unregister(cp_id: str) -> None:
     registry_port = int(getenv('REGISTRY_PORT'))
     registry_url = f"https://{registry_host}:{registry_port}"
     
-    requests.delete(
+    response = requests.delete(
         f"{registry_url}/registry/cp/{cp_id}",
         verify=CA_CERT,
         cert=CLIENT_CERT,
     )
+    response.raise_for_status()

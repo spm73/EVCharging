@@ -111,7 +111,7 @@ class MonitorEngine:
 
         return True
 
-    def unregister(self) -> None:
+    def unregister(self) -> bool:
         """
         Unregister from EV_Registry. Only allowed when engine is Stopped.
         Stops polling and disconnects both clients.
@@ -132,10 +132,12 @@ class MonitorEngine:
                 remove(JWT_FILE_PATH)
             self.__jwt = None
             self.__app.log_event("[green]✓ Unregistration successful.[/]")
+            self.__app.call_from_thread(self.__app.set_engine_state, "disconnected")
+            return True
         except Exception as e:
             self.__app.log_event(f"[red]✗ Unregistration failed: {e}[/]")
-
-        self.__app.call_from_thread(self.__app.set_engine_state, "disconnected")
+            self.__start_polling()
+            return False
 
     # ── Polling ─────────────────────────────────────────────────────────────
 
