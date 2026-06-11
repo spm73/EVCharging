@@ -1,12 +1,9 @@
-import os
 import sys
-import queue
 import time
-from threading import Thread, Event
+import uuid
 
 
-from communications.kafka import KafkaBrokerInfo, KafkaConsumer, KafkaFactory, KafkaProducer
-from communications.kafka.KafkaNotifier import KafkaNotifier, M
+from communications.kafka import KafkaBrokerInfo, KafkaFactory
 from .system.TerminalHandler import TerminalHandler
 from .system.FileHandler import FileHandler
 from .kafka.messages import *
@@ -29,11 +26,12 @@ class Driver:
         supply_filter_function = lambda msg: self.supply_id == msg.supply_id
 
 #       ---- Consumers ----
-        self.cp_listing_consumer = kafkaFactory.create_consumer("cp.active.listing", f"{self.driver_id}-listing", ActiveCPListingMessage)
-        self.supply_request_notifications_consumer = kafkaFactory.create_consumer("supply.request.notifications", f"{self.driver_id}-notif", SupplyRequestNotificationMessage, driver_filter_function)
-        self.supply_response_consumer = kafkaFactory.create_consumer("supply.response", f"{self.driver_id}-resp", SupplyResponseMessage, driver_filter_function)
-        self.supply_telemetry_consumer = kafkaFactory.create_consumer("supply.telemetry.cp", f"{self.driver_id}-telem", SupplyTelemetryMessage, supply_filter_function)
-        self.supply_error_consumer = kafkaFactory.create_consumer("supply.errors", f"{self.driver_id}-err", SupplyErrorMessage, supply_filter_function)
+        run_id = str(uuid.uuid4())[:8]
+        self.cp_listing_consumer = kafkaFactory.create_consumer("cp.active.listing", f"{self.driver_id}-listing-{run_id}", ActiveCPListingMessage)
+        self.supply_request_notifications_consumer = kafkaFactory.create_consumer("supply.request.notifications", f"{self.driver_id}-notif-{run_id}", SupplyRequestNotificationMessage, driver_filter_function)
+        self.supply_response_consumer = kafkaFactory.create_consumer("supply.response", f"{self.driver_id}-resp-{run_id}", SupplyResponseMessage, driver_filter_function)
+        self.supply_telemetry_consumer = kafkaFactory.create_consumer("supply.telemetry.users", f"{self.driver_id}-telem-{run_id}", SupplyTelemetryMessage, None)
+        self.supply_error_consumer = kafkaFactory.create_consumer("supply.errors", f"{self.driver_id}-err-{run_id}", SupplyErrorMessage, supply_filter_function)
         self.__init_consumers()
 
 #       ---- Producers ----
@@ -121,6 +119,15 @@ class Driver:
     def central_connection_phase(self, driver_ip: str):
 
         method_result = False
+# ----- Iniciar loops de consumers
+        self.supply_response_consumer.start_polling()
+        self.supply_request_notifications_consumer.start_polling()
+        self.supply_telemetry_consumer.start_polling()
+
+        # Dale tiempo a Kafka para negociar la unión al grupo y fijar el offset
+        print("Wait a moment to sync connections...")
+        time.sleep(2)
+
 # ----- Producer del mensaje supply request
         if not self.cp_list:
             print("No CPs Available")
@@ -131,10 +138,6 @@ class Driver:
 
         self.supply_request_producer.send_message(SupplyRequestMessage(self.driver_id, self.cp_list[0], driver_ip))
         print("Message sent, wait a few seconds...")
-        
-# ----- Iniciar loops de consumers
-        self.supply_response_consumer.start_polling()
-        self.supply_request_notifications_consumer.start_polling()
 
         while True:
             event = wait_for_events(Intention.KAFKA_ERROR, Intention.ACCEPTED_RESPONSE, Intention.DENIED_RESPONSE, Intention.NOTIFICATIONS)
@@ -163,11 +166,14 @@ class Driver:
 # ----- Finalize
         self.supply_response_consumer.stop_polling()
         self.supply_request_notifications_consumer.stop_polling()
+        if not method_result:
+            # Solo paramos telemetría aquí si fue denegado (si fue aceptado, la para supplying_phase)
+            self.supply_telemetry_consumer.stop_polling()
         return method_result
                 
         
     def supplying_phase(self):
-        self.supply_telemetry_consumer.start_polling()
+        print("\n[+] Transitioning to TELEMETRY phase (Supply in progress)...")
 
         while True:
             event = wait_for_events(Intention.KAFKA_ERROR, Intention.TELEMETRY_INFO, Intention.TELEMETRY_TICKET)
@@ -179,13 +185,16 @@ class Driver:
                     continue
                 
                 case Intention.TELEMETRY_INFO:
-                    TerminalHandler.printSupplyingInfo(event.data.price, event.data.consumption)
+                    if event.data.supply_id == self.supply_id:
+                        TerminalHandler.printSupplyingInfo(event.data.price, event.data.consumption)
                     continue
 
                 case Intention.TELEMETRY_TICKET:
-                    TerminalHandler.printSupplyingTicket(event.data.price, event.data.consumption)
-                    self.supply_id = None
-                    break
+                    if event.data.supply_id == self.supply_id:
+                        TerminalHandler.printSupplyingTicket(event.data.price, event.data.consumption)
+                        self.supply_id = None
+                        break
+                    continue
         
 # ----- Finalize
         self.supply_telemetry_consumer.stop_polling()

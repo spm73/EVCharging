@@ -10,7 +10,7 @@ class Supply(Base):
     
     id: Mapped[int] = mapped_column(primary_key=True)
     
-    price: Mapped[Decimal | None] = mapped_column(Numeric(3, 2))
+    price: Mapped[Decimal | None] = mapped_column(Numeric(6, 2))
     consumption: Mapped[int | None]
     is_done: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     start_date: Mapped[datetime] = mapped_column(default=datetime.utcnow)

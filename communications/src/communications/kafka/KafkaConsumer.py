@@ -58,7 +58,11 @@ class KafkaConsumer(Generic[M]):
                 continue
 
             message = self.__message_class.from_payload(msg.value().decode('utf-8'))
+            # print(f"[DEBUG] Decoded message on {self.__topic}: {message.to_payload()}")
             if self.__should_notify(message):
+                # print(f"[DEBUG] Filter PASSED on {self.__topic}")
                 self.__notifier.notify(message)
+            # else:
+                # print(f"[DEBUG] Filter FAILED on {self.__topic}: {message.to_payload()}")
         
         

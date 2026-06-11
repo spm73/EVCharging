@@ -71,8 +71,12 @@ def main():
                     # Si devuelve True, el suministro fue aceptado. Rompemos el bucle de reintentos.
                     break 
                 else:
-                    # Si devuelve False, fue denegado. Damos un respiro antes de atacar al siguiente CP.
-                    time.sleep(0.5) 
+                    # Si devuelve False, fue denegado. Avisamos y volvemos al menú directamente.
+                    print("\n[!] CP denied the connection. Returning to menu to pick another...")
+                    time.sleep(1.5)
+                    # Recargamos la lista completa desde el fichero para que el menú vuelva a mostrar todos los CPs
+                    driver.cp_list = driver.fileHandler.readFileLines()
+                    break
                     
             # FASE 3: Transición al Suministro (Telemetría)
             if conexion_exitosa:
@@ -87,10 +91,8 @@ def main():
                 time.sleep(2)
                 
             else:
-                # Si llegamos aquí, es que agotamos toda la lista de CPs en la Fase 2 y ninguno funcionó
-                print("\n[!] All CPs have been exhausted and none accepted the supply request.")
-                print("[*] Returning to main menu to wait for central updates...")
-                time.sleep(2)
+                # Si llegamos aquí fue denegado; simplemente volvemos al menú (ya se recargó la lista arriba)
+                pass
 
         except KeyboardInterrupt:
             # Si el usuario pulsa Ctrl+C en cualquier momento para abortar bruscamente

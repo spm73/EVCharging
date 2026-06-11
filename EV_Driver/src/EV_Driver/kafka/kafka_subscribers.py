@@ -21,17 +21,13 @@ def response_handler (message: SupplyResponseMessage) -> None:
         return
 
 def telemetry_info_handler (message: SupplyTelemetryMessage) -> None:
-    telemetry_info = {
-        "price": message.price,
-        "consumption": message.consumption
-    }
     if message.type == "supplying":
-        event = SystemEvent(intention=Intention.TELEMETRY_INFO, data= telemetry_info)
+        event = SystemEvent(intention=Intention.TELEMETRY_INFO, data=message)
         EVENT_QUEUE.put(event)
         return
 
     else:
-        event = SystemEvent(intention=Intention.TELEMETRY_TICKET, data= telemetry_info)
+        event = SystemEvent(intention=Intention.TELEMETRY_TICKET, data=message)
         EVENT_QUEUE.put(event)
         return
 
