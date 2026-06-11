@@ -1,3 +1,4 @@
+
 const API_BASE_URL = window.ENV.API_URL;
 
 async function fetchData() {
@@ -12,8 +13,21 @@ async function fetchData() {
         const transactions = await transResponse.json();
         renderTransactions(transactions);
 
-        // 3. Obtener Eventos/Logs
-        const eventsResponse = await fetch(`${API_BASE_URL}/events/`);
+        // 4. Obtener Conductores (NUEVO)
+        const driversResponse = await fetch(`${API_BASE_URL}/drivers/`);
+        const drivers = await driversResponse.json();
+        renderDrivers(drivers);
+
+        // 5. Obtener Eventos/Logs con Filtros (NUEVO)
+        const ipFilter = document.getElementById('filter-ip').value.trim();
+        const actionFilter = document.getElementById('filter-action').value.trim();
+        
+        // Construimos la URL dinámicamente según lo que haya escrito el usuario
+        let eventsUrl = new URL(`${API_BASE_URL}/events/`);
+        if (ipFilter) eventsUrl.searchParams.append('ip', ipFilter);
+        if (actionFilter) eventsUrl.searchParams.append('action', actionFilter);
+
+        const eventsResponse = await fetch(eventsUrl);
         const events = await eventsResponse.json();
         renderEvents(events);
 
@@ -22,28 +36,37 @@ async function fetchData() {
     }
 }
 
+// --- FUNCIONES DE RENDERIZADO ---
+
 function renderCPs(cps) {
     const container = document.getElementById('cp-container');
-    container.innerHTML = ''; // Limpiamos antes de repintar
+    container.innerHTML = ''; 
 
     cps.forEach(cp => {
-        // Cambiamos el color de la tarjeta según el estado
         let badgeColor = 'bg-success';
         if (cp.status === 'out_of_service') badgeColor = 'bg-danger';
         if (cp.status === 'supplying') badgeColor = 'bg-primary';
 
-        // Alerta visual si la temperatura baja de 0 (Por si EV_W actuó)
         let tempWarning = cp.temperature < 0 ? '❄️ <span class="text-danger fw-bold">FRÍO EXTREMO</span>' : '🌡️ Normal';
 
+        // TAREA 2: Botones individuales añadidos a la tarjeta
         const card = `
             <div class="col-md-4 mb-3">
-                <div class="card shadow-sm">
+                <div class="card shadow-sm border-0 border-start border-4 ${cp.status === 'out_of_service' ? 'border-danger' : 'border-success'}">
                     <div class="card-body">
-                        <h5 class="card-title">${cp.id}</h5>
+                        <h5 class="card-title fw-bold">${cp.id}</h5>
                         <h6 class="card-subtitle mb-2 text-muted">📍 ${cp.location}</h6>
                         <span class="badge ${badgeColor} mb-2">${cp.status.toUpperCase()}</span>
                         <p class="card-text mb-1">Precio: ${cp.price} €/kWh</p>
-                        <p class="card-text mb-0">Temp: ${cp.temperature}ºC (${tempWarning})</p>
+                        <p class="card-text mb-3">Temp: ${cp.temperature}ºC (${tempWarning})</p>
+                        
+                        <div class="d-grid gap-2">
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button type="button" class="btn btn-outline-danger" onclick="stopCP('${cp.id}')">Parar</button>
+                                <button type="button" class="btn btn-outline-success" onclick="resumeCP('${cp.id}')">Reanudar</button>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-warning" onclick="deleteKeyCP('${cp.id}')">Borrar Clave</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -57,13 +80,40 @@ function renderTransactions(transactions) {
     tbody.innerHTML = '';
 
     transactions.forEach(t => {
+        // TAREA 3: Inyectar t.start_date (Con fallback a 'N/A' por si el backend aún no lo envía)
+        const startDate = t.start_date ? new Date(t.start_date).toLocaleString() : '<span class="text-muted">N/A</span>';
+        
         const row = `
             <tr>
-                <td>${t.id}</td>
+                <td class="fw-bold">${t.id}</td>
                 <td>${t.driver_id}</td>
-                <td>${t.cp_id}</td>
-                <td>${t.consumption}</td>
-                <td>${t.price} €</td>
+                <td><span class="badge bg-secondary">${t.cp_id}</span></td>
+                <td>${t.consumption !== null ? t.consumption : '-'}</td>
+                <td>${t.price !== null ? t.price : '-'} €</td>
+                <td>${startDate}</td>
+            </tr>
+        `;
+        tbody.innerHTML += row;
+    });
+}
+
+// TAREA 4: Función para renderizar los conductores
+function renderDrivers(drivers) {
+    const tbody = document.getElementById('drivers-body');
+    tbody.innerHTML = '';
+
+    drivers.forEach(d => {
+        let statusHtml = '<span class="badge bg-success">Libre</span>';
+        
+        // Si el backend devuelve un objeto active_supply, mostramos dónde está cargando
+        if (d.active_supply) {
+            statusHtml = `<span class="badge bg-primary">Cargando en ${d.active_supply.cp_id}</span>`;
+        }
+
+        const row = `
+            <tr>
+                <td class="fw-bold">${d.id}</td>
+                <td>${statusHtml}</td>
             </tr>
         `;
         tbody.innerHTML += row;
@@ -74,18 +124,57 @@ function renderEvents(events) {
     const container = document.getElementById('logs-container');
     container.innerHTML = '';
 
-    // Invertimos para ver los más nuevos arriba (dependiendo de cómo lo mande la BD)
     events.reverse().forEach(e => {
-        // Colorear dependiendo del tipo de evento (opcional)
         let logColor = "text-success";
-        if (e.action.includes('error') || e.action.includes('alert')) logColor = "text-danger";
-        if (e.action.includes('warning')) logColor = "text-warning";
+        // Convertimos a minúsculas para hacer la búsqueda más robusta
+        const actionLower = e.action.toLowerCase();
+        if (actionLower.includes('error') || actionLower.includes('alert')) logColor = "text-danger";
+        if (actionLower.includes('warning')) logColor = "text-warning";
 
-        const logLine = `[${e.timestamp}] - ${e.ip} - <span class="${logColor}">[${e.action}]</span> ${e.description}<br>`;
+        const logLine = `[${e.timestamp}] - ${e.ip} - <span class="${logColor} fw-bold">[${e.action}]</span> ${e.description}<br>`;
         container.innerHTML += logLine;
     });
 }
 
-// Iniciar el bucle: Refrescar todo cada 2 segundos
+// --- TAREA 1 Y 2: LLAMADAS A LA API PARA CONTROLES ---
+
+async function stopAllCPs() {
+    if(!confirm("¿Estás seguro de que quieres PARAR TODOS los puntos de recarga?")) return;
+    try {
+        await fetch(`${API_BASE_URL}/cps/stop-all`, { method: 'POST' });
+        fetchData(); // Refrescar pantalla inmediatamente
+    } catch (error) { console.error(error); }
+}
+
+async function resumeAllCPs() {
+    try {
+        await fetch(`${API_BASE_URL}/cps/resume-all`, { method: 'POST' });
+        fetchData();
+    } catch (error) { console.error(error); }
+}
+
+async function stopCP(id) {
+    try {
+        await fetch(`${API_BASE_URL}/cps/${id}/stop`, { method: 'POST' });
+        fetchData();
+    } catch (error) { console.error(error); }
+}
+
+async function resumeCP(id) {
+    try {
+        await fetch(`${API_BASE_URL}/cps/${id}/resume`, { method: 'POST' });
+        fetchData();
+    } catch (error) { console.error(error); }
+}
+
+async function deleteKeyCP(id) {
+    if(!confirm(`¿Simular pérdida de clave de cifrado en ${id}?`)) return;
+    try {
+        await fetch(`${API_BASE_URL}/cps/${id}/key`, { method: 'DELETE' });
+        fetchData();
+    } catch (error) { console.error(error); }
+}
+
+// Iniciar el bucle
 setInterval(fetchData, 2000);
-fetchData(); // Llamada inicial inmediata
+fetchData();

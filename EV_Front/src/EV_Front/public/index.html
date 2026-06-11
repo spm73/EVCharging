@@ -17,8 +17,14 @@
         <div class="row">
             <div class="col-md-8">
                 <h3>Puntos de Recarga (CPs)</h3>
+                
+                <div class="mb-3 d-flex gap-2">
+                    <button class="btn btn-danger fw-bold" onclick="stopAllCPs()">🛑 Parar Todos los CPs</button>
+                    <button class="btn btn-success fw-bold" onclick="resumeAllCPs()">▶️ Reanudar Todos los CPs</button>
+                </div>
+
                 <div id="cp-container" class="row mb-4">
-                    </div>
+                </div>
 
                 <h3>Suministros Activos</h3>
                 <table class="table table-striped bg-white shadow-sm">
@@ -29,16 +35,35 @@
                             <th>CP ID</th>
                             <th>Consumo (kWh)</th>
                             <th>Precio Total</th>
+                            <th>Fecha de inicio</th>
                         </tr>
                     </thead>
                     <tbody id="transactions-body">
-                        </tbody>
+                    </tbody>
+                </table>
+
+                <h3 class="mt-4">Conductores Registrados</h3>
+                <table class="table table-striped bg-white shadow-sm mb-4">
+                    <thead>
+                        <tr>
+                            <th>ID Conductor</th>
+                            <th>Estado / Suministro Activo</th>
+                        </tr>
+                    </thead>
+                    <tbody id="drivers-body">
+                    </tbody>
                 </table>
             </div>
 
             <div class="col-md-4">
                 <h3>System Logs & EV_Weather</h3>
-                <div class="bg-dark text-success p-3 rounded shadow-sm" style="height: 80vh; overflow-y: auto; font-family: monospace;" id="logs-container">
+                
+                <div class="d-flex gap-2 mb-2">
+                    <input type="text" id="filter-ip" class="form-control form-control-sm" placeholder="Filtrar IP (ej: 192.168.1.1)">
+                    <input type="text" id="filter-action" class="form-control form-control-sm" placeholder="Filtrar Acción (ej: auth, error)">
+                </div>
+
+                <div class="bg-dark text-success p-3 rounded shadow-sm" style="height: 75vh; overflow-y: auto; font-family: monospace;" id="logs-container">
                     > Sistema inicializado...<br>
                 </div>
             </div>
