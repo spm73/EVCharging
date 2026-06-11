@@ -49,6 +49,11 @@ def driver_request_handler(request: SupplyRequestMessage) -> None:
         )
         supply = None
         with Session(Database().get_engine()) as session:
+            driver = session.get(Driver, request.driver_id)
+            if not driver:
+                driver = Driver(id=request.driver_id)
+                session.add(driver)
+                session.commit()
             supply = Supply(
                 cp_id=request.cp_id,
                 driver_id=request.driver_id

@@ -29,15 +29,15 @@ class Driver:
         supply_filter_function = lambda msg: self.supply_id == msg.supply_id
 
 #       ---- Consumers ----
-        self.cp_listing_consumer = kafkaFactory.create_consumer("cp.active.listing", self.driver_id, ActiveCPListingMessage)
-        self.supply_request_notifications_consumer = kafkaFactory.create_consumer("supply.request.notifications", self.driver_id, SupplyRequestNotificationMessage, driver_filter_function)
-        self.supply_response_consumer = kafkaFactory.create_consumer("supply.response", self.driver_id, SupplyResponseMessage, driver_filter_function)
-        self.supply_telemetry_consumer = kafkaFactory.create_consumer("supply.telemetry.cp", self.driver_id, SupplyTelemetryMessage, supply_filter_function)
-        self.supply_error_consumer = kafkaFactory.create_consumer("supply.errors", self.driver_id, SupplyErrorMessage, supply_filter_function)
+        self.cp_listing_consumer = kafkaFactory.create_consumer("cp.active.listing", f"{self.driver_id}-listing", ActiveCPListingMessage)
+        self.supply_request_notifications_consumer = kafkaFactory.create_consumer("supply.request.notifications", f"{self.driver_id}-notif", SupplyRequestNotificationMessage, driver_filter_function)
+        self.supply_response_consumer = kafkaFactory.create_consumer("supply.response", f"{self.driver_id}-resp", SupplyResponseMessage, driver_filter_function)
+        self.supply_telemetry_consumer = kafkaFactory.create_consumer("supply.telemetry.cp", f"{self.driver_id}-telem", SupplyTelemetryMessage, supply_filter_function)
+        self.supply_error_consumer = kafkaFactory.create_consumer("supply.errors", f"{self.driver_id}-err", SupplyErrorMessage, supply_filter_function)
         self.__init_consumers()
 
 #       ---- Producers ----
-        self.supply_request_producer = kafkaFactory.create_producer("supply.request.user")
+        self.supply_request_producer = kafkaFactory.create_producer("supply.request.users")
 
         
     def __init_consumers(self):
