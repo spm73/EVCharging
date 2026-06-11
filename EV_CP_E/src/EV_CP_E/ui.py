@@ -80,6 +80,7 @@ class EngineApp(App):
     BINDINGS = [("q", "request_quit", "Salir")]
     
     current_view = reactive("None")
+    pending_quit = False
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
@@ -146,12 +147,23 @@ class EngineApp(App):
 
     def action_request_quit(self) -> None:
         engine = CPEngine()
-        engine.put_event(Event(EventType.SHUTDOWN))
-        self.exit()
+        state_name = type(engine.current_state).__name__
+        if state_name == "SupplyingState":
+            self.pending_quit = True
+            self.log_widget.write("[yellow]Quit requested — waiting for supply to finish...[/yellow]")
+        else:
+            engine.put_event(Event(EventType.SHUTDOWN))
+            self.exit()
 
     def update_engine_status(self) -> None:
         engine = CPEngine()
         state_name = type(engine.current_state).__name__
+        
+        # Si hay un cierre pendiente y ya no estamos suministrando, cerramos
+        if self.pending_quit and state_name != "SupplyingState":
+            engine.put_event(Event(EventType.SHUTDOWN))
+            self.exit()
+            return
         
         bg_color = "$surface"
         view_name = state_name
