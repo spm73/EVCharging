@@ -80,7 +80,7 @@ def main():
                     
             # FASE 3: Transición al Suministro (Telemetría)
             if conexion_exitosa:
-                print("\n[+] Transitioning to TELEMETRY phase (Supply in progress)...")
+                # print("\n[+] Transitioning to TELEMETRY phase (Supply in progress)...")
                 
                 # Lanzamos tu último método. Se quedará aquí hasta que llegue el TELEMETRY_TICKET
                 driver.supplying_phase()
