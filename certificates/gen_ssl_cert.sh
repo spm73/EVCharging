@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ==========================================================
-# Script Automático para Certificados SSL (Clásico - Sin SAN)
+# Script Automático para Certificados SSL (Con soporte SAN)
 # ==========================================================
 
 # 1. Comprobar si existe la Autoridad Certificadora (CA) y crearla si no existe
@@ -25,12 +25,19 @@ openssl genrsa -out server.key 2048
 echo "📝 Creando petición de firma..."
 openssl req -new -key server.key -out server.csr -subj "/C=ES/ST=Alicante/L=Alicante/O=sd-practice/OU=recovery/CN=$HOST_ADDR/emailAddress=spm119@alu.ua.es"
 
-# 5. Firmar el certificado usando la CA
-echo "✍️ Firmando certificado con la CA..."
-openssl x509 -req -in server.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out server.crt -days 365 -sha256
+# 4.5. Configurar el SAN (Subject Alternative Name)
+if [[ $HOST_ADDR =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    echo "subjectAltName=IP:$HOST_ADDR" > san.ext
+else
+    echo "subjectAltName=DNS:$HOST_ADDR" > san.ext
+fi
 
-# 6. Limpiar el archivo temporal
-rm server.csr
+# 5. Firmar el certificado usando la CA y el archivo de extensiones SAN
+echo "✍️ Firmando certificado con la CA..."
+openssl x509 -req -in server.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out server.crt -days 365 -sha256 -extfile san.ext
+
+# 6. Limpiar los archivos temporales
+rm server.csr san.ext
 
 echo "---------------------------------------------------"
 echo "🎉 ¡PROCESO COMPLETADO!"

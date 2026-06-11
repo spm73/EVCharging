@@ -7,10 +7,11 @@ from EV_Central.state.KafkaManager import KafkaManager
 from EV_Central.state.Database import Database
 from EV_Central.audit.audit import audit
 from EV_Central.kafka.messages import *
+from EV_Central.models.Driver import Driver
 
 def driver_request_handler(request: SupplyRequestMessage) -> None:
     factory = KafkaManager().get_factory()
-    notification_producer = factory.create_producer('driver.notifications')
+    notification_producer = factory.create_producer('supply.request.notifications')
     response_producer = factory.create_producer('supply.response')
     
     audit(request.ip, 'SUPPLY REQUEST', f"Driver {request.driver_id} requests supply in CP {request.cp_id}")
@@ -48,6 +49,11 @@ def driver_request_handler(request: SupplyRequestMessage) -> None:
         )
         supply = None
         with Session(Database().get_engine()) as session:
+            driver = session.get(Driver, request.driver_id)
+            if not driver:
+                driver = Driver(id=request.driver_id)
+                session.add(driver)
+                session.commit()
             supply = Supply(
                 cp_id=request.cp_id,
                 driver_id=request.driver_id
@@ -83,9 +89,14 @@ def cp_request_handler(request: SupplyRequestMessage) -> None:
     audit(request.ip, 'SUPPLY REQUEST', f"CP {request.cp_id} requests a supply")
     supply = None
     with Session(Database().get_engine()) as session:
+        driver = session.get(Driver, request.driver_id)
+        if not driver:
+            driver = Driver(id=request.driver_id)
+            session.add(driver)
+            session.commit()
         supply = Supply(
             cp_id=request.cp_id,
-            driver_id=None
+            driver_id=request.driver_id
         )
         session.add(supply)
         session.commit()

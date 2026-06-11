@@ -50,6 +50,9 @@ class MonitorEngine:
             except Exception as e:
                 self.__app.log_event(f"[red]✗ Error loading saved JWT: {e}[/]")
 
+    def is_registered(self) -> bool:
+        return self.__jwt is not None
+
     # ── API pública (llamada desde la UI) ───────────────────────────────────
 
     def connect_engine(self) -> bool:
@@ -108,7 +111,7 @@ class MonitorEngine:
 
         return True
 
-    def unregister(self) -> None:
+    def unregister(self) -> bool:
         """
         Unregister from EV_Registry. Only allowed when engine is Stopped.
         Stops polling and disconnects both clients.
@@ -129,10 +132,12 @@ class MonitorEngine:
                 remove(JWT_FILE_PATH)
             self.__jwt = None
             self.__app.log_event("[green]✓ Unregistration successful.[/]")
+            self.__app.call_from_thread(self.__app.set_engine_state, "disconnected")
+            return True
         except Exception as e:
             self.__app.log_event(f"[red]✗ Unregistration failed: {e}[/]")
-
-        self.__app.call_from_thread(self.__app.set_engine_state, "disconnected")
+            self.__start_polling()
+            return False
 
     # ── Polling ─────────────────────────────────────────────────────────────
 
@@ -182,10 +187,9 @@ class MonitorEngine:
                 self.__central_connected = False
                 self.__app.log_event("[red]✗ Lost connection to Central.[/]")
 
-            # Si el engine está suministrando, ordenarle que pase a Stopped al acabar
-            if status == "Supplying":
-                self.__app.log_event("[yellow]→ Engine supplying — sending OUT_OF_SERVICE.[/]")
-                self.__engine.send_out_of_service()
+            # Ordenarle al engine que pase a Stopped (ahora o al acabar)
+            self.__app.log_event("[yellow]→ Central is down — sending OUT_OF_SERVICE.[/]")
+            self.__engine.send_out_of_service()
 
             self.__try_reconnect_central()
         else:

@@ -42,9 +42,7 @@ class TerminalHandler:
 
     @staticmethod
     def printSupplyingInfo(price: Decimal, consumption: int):
-        TerminalHandler.clean()
-        print("Supplying Data:")
-        print(f"Current consumption: {consumption} kWh | Current cost: {price}€")
+        print(f"  >> Consumption: {consumption} kWh | Cost: {price}€")
 
     @staticmethod
     def printSupplyingTicket(price: Decimal, consumption: int):

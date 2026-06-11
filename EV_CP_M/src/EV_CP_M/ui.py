@@ -2,9 +2,18 @@ from textual.app import App, ComposeResult
 from textual.containers import Horizontal, Vertical
 from textual.widgets import Button, Footer, Header, Label, Log, Static
 from textual.reactive import reactive
+from textual import work
 
 from EV_CP_M.monitor_engine import MonitorEngine
 
+
+from textual.message import Message
+
+class LogMessage(Message):
+    """Custom message to log events securely from any thread."""
+    def __init__(self, msg: str) -> None:
+        self.msg = msg
+        super().__init__()
 
 ENGINE_STATES = {
     "disconnected": ("DISCONNECTED", "engine--disconnected"),
@@ -87,8 +96,8 @@ class MonitorApp(App):
 
     def __init__(self) -> None:
         super().__init__()
-        self.__engine = MonitorEngine(self)
         self.__registered = False
+        self.__engine = None
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
@@ -96,7 +105,8 @@ class MonitorApp(App):
         with Horizontal(id="main-layout"):
             with Vertical(id="left-panel"):
                 yield Label("REGISTRATION", classes="section-title")
-                yield Button("Connect & Register",  id="btn-register",   variant="primary")
+                yield Button("Connect Engine",      id="btn-connect",    variant="primary")
+                yield Button("Register CP",         id="btn-register",   variant="primary", disabled=True) # Will be updated in on_mount
                 yield Button("Unregister",          id="btn-unregister", variant="error",   disabled=True)
 
                 yield Label("CENTRAL", classes="section-title")
@@ -109,25 +119,42 @@ class MonitorApp(App):
 
         yield Footer()
 
+    def on_mount(self) -> None:
+        """Called when the DOM is ready."""
+        self.log_event("[blue]ℹ Monitor started.[/]")
+        self.__engine = MonitorEngine(self)
+        
+        self.__registered = self.__engine.is_registered()
+        self.query_one("#btn-register", Button).disabled = self.__registered
+        
+        panel = self.query_one("#engine-status", EngineStatusPanel)
+        can_unregister = self.__registered and panel.state in ("stopped", "disconnected")
+        self.query_one("#btn-unregister", Button).disabled = not can_unregister
+
     # ── Public methods called by MonitorEngine from polling thread ──────────
 
     def log_event(self, msg: str) -> None:
         """Thread-safe log. Can be called from any thread."""
-        self.call_from_thread(self.query_one("#event-log", Log).write_line, msg)
+        self.post_message(LogMessage(msg))
+
+    def on_log_message(self, event: LogMessage) -> None:
+        """Handles LogMessage events natively in the UI thread."""
+        self.query_one("#event-log", Log).write_line(event.msg)
 
     def set_engine_state(self, state: str) -> None:
         """Must be called via call_from_thread from outside the UI thread."""
         panel = self.query_one("#engine-status", EngineStatusPanel)
         panel.state = state
 
-        # Unregister only allowed when engine is stopped
-        can_unregister = self.__registered and state == "stopped"
+        # Unregister allowed when engine is stopped or disconnected
+        can_unregister = self.__registered and state in ("stopped", "disconnected")
         self.query_one("#btn-unregister", Button).disabled = not can_unregister
 
     # ── Button handlers ─────────────────────────────────────────────────────
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         handlers = {
+            "btn-connect":    self._handle_connect,
             "btn-register":   self._handle_register,
             "btn-unregister": self._handle_unregister,
             "btn-auth":       self._handle_auth,
@@ -136,22 +163,39 @@ class MonitorApp(App):
         if handler:
             handler()
 
-    def _handle_register(self) -> None:
-        if not self.__engine.connect_engine():
-            return
-        if not self.__engine.register():
-            return
+    @work(thread=True)
+    def _handle_connect(self) -> None:
+        if self.__engine.connect_engine():
+            self.call_from_thread(self._post_connect_ui)
 
+    def _post_connect_ui(self) -> None:
+        self.query_one("#btn-connect", Button).disabled = True
+        self.query_one("#btn-auth",    Button).disabled = False
+
+    @work(thread=True)
+    def _handle_register(self) -> None:
+        if self.__engine.register():
+            self.call_from_thread(self._post_register_ui)
+
+    def _post_register_ui(self) -> None:
         self.__registered = True
         self.query_one("#btn-register", Button).disabled = True
-        self.query_one("#btn-auth",     Button).disabled = False
+        panel = self.query_one("#engine-status", EngineStatusPanel)
+        can_unregister = panel.state in ("stopped", "disconnected")
+        self.query_one("#btn-unregister", Button).disabled = not can_unregister
 
+    @work(thread=True)
     def _handle_unregister(self) -> None:
-        self.__engine.unregister()
+        if self.__engine.unregister():
+            self.call_from_thread(self._post_unregister_ui)
+
+    def _post_unregister_ui(self) -> None:
         self.__registered = False
+        self.query_one("#btn-connect",    Button).disabled = False
         self.query_one("#btn-register",   Button).disabled = False
         self.query_one("#btn-unregister", Button).disabled = True
         self.query_one("#btn-auth",       Button).disabled = True
 
+    @work(thread=True)
     def _handle_auth(self) -> None:
         self.__engine.authenticate()

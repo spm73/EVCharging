@@ -14,8 +14,8 @@ def register(cp_id: str, location: str, price: Decimal) -> str:
     registry_port = int(getenv('REGISTRY_PORT'))
     registry_url = f"https://{registry_host}:{registry_port}"
     
-    with open("/certs/cp.crt") as f:
-        certificate_pem = b64encode(f.read())
+    with open("/certs/cp.crt", "rb") as f:
+        certificate_pem = b64encode(f.read()).decode("utf-8")
 
     response = requests.post(
         f"{registry_url}/registry/cp",
@@ -37,8 +37,9 @@ def unregister(cp_id: str) -> None:
     registry_port = int(getenv('REGISTRY_PORT'))
     registry_url = f"https://{registry_host}:{registry_port}"
     
-    requests.delete(
+    response = requests.delete(
         f"{registry_url}/registry/cp/{cp_id}",
         verify=CA_CERT,
         cert=CLIENT_CERT,
     )
+    response.raise_for_status()

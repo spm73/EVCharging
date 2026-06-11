@@ -82,10 +82,16 @@ def main():
                     break 
                 else:
                     time.sleep(0.5) 
+                    # Si devuelve False, fue denegado. Avisamos y volvemos al menú directamente.
+                    print("\n[!] CP denied the connection. Returning to menu to pick another...")
+                    time.sleep(1.5)
+                    # Recargamos la lista completa desde el fichero para que el menú vuelva a mostrar todos los CPs
+                    driver.cp_list = driver.cps_fileHandler.readFileLines()
+                    break
                     
             # FASE 3: Transición al Suministro normal
             if conexion_exitosa:
-                print("\n[+] Transitioning to TELEMETRY phase (Supply in progress)...")
+                # print("\n[+] Transitioning to TELEMETRY phase (Supply in progress)...")
                 
                 driver.supplying_phase()
                 
@@ -96,6 +102,8 @@ def main():
                 print("\n[!] All CPs have been exhausted and none accepted the supply request.")
                 print("[*] Returning to main menu to wait for central updates...")
                 time.sleep(4)
+                # Si llegamos aquí fue denegado; simplemente volvemos al menú (ya se recargó la lista arriba)
+                pass
 
         except KeyboardInterrupt:
             # Esta señal ahora es interceptada primero por tu clase Driver gracias al 'signal'

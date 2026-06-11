@@ -24,6 +24,7 @@ def get_transactions(cp_id: str | None = None):
                 "id": supply.id,
                 "cp_id": supply.cp_id,
                 "driver_id": supply.driver_id,
+                "start_date": supply.start_date.isoformat() if supply.start_date else None,
                 "consumption": active.consumption if active else None,
                 "price": float(active.price) if active else None,
             })

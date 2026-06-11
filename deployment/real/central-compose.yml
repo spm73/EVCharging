@@ -4,9 +4,14 @@ services:
     container_name: db
     restart: always
     ports:
-      - "13306:3306"
+      - "3306:3306"
     environment:
       MARIADB_ROOT_PASSWORD: "@pr0bar_SD"
+    healthcheck:
+      test: ["CMD-SHELL", "mariadb-admin ping -h localhost -u root -p@pr0bar_SD || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     volumes:
       - mariadb-data:/var/lib/mysql
       - ../../init.sql:/docker-entrypoint-initdb.d/init.sql:ro
@@ -20,7 +25,7 @@ services:
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://localhost:9093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://192.168.18.13:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://127.0.0.1:9092
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
@@ -59,13 +64,16 @@ services:
       dockerfile: EV_Central/Dockerfile
     container_name: ev_central_container
     ports:
-      - "8001:8000"
+      - "8000:8000"
       - "7000:7000"
     env_file:
       - ../../EV_Central/.env
     secrets:
       - source: jwt_key
         target: jwt_secret.key
+    depends_on:
+      mariadb:
+        condition: service_healthy
 
   ev_front:
     build:

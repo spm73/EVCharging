@@ -7,6 +7,11 @@ services:
       - "13306:3306"
     environment:
       MARIADB_ROOT_PASSWORD: "@pr0bar_SD"
+    healthcheck:
+      test: ["CMD-SHELL", "mariadb-admin ping -h localhost -u root -p@pr0bar_SD || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     volumes:
       - mariadb-data:/var/lib/mysql
       - ../../init.sql:/docker-entrypoint-initdb.d/init.sql:ro
@@ -73,6 +78,11 @@ services:
         target: jwt_secret.key
     networks:
       - user_net
+    depends_on:
+      mariadb:
+        condition: service_healthy
+      ev_central:
+        condition: service_started
   
   ev_central:
     build:
@@ -89,6 +99,9 @@ services:
         target: jwt_secret.key
     networks:
       - central_net
+    depends_on:
+      mariadb:
+        condition: service_healthy
 
   ev_engine:
     build:
@@ -132,12 +145,7 @@ services:
       - TERM=xterm-256color
     restart: on-failure
     command: >
-      sh -c "uv run --package ev-driver python -m EV_Driver.main 
-      --ip $$IP 
-      --broker-ip $$BROKER_IP 
-      --broker-port $$BROKER_PORT 
-      --id $$ID 
-      --file $$FILE"
+      sh -c "uv run --package ev-driver python -m EV_Driver.main"
     networks:
       - user_net
 
