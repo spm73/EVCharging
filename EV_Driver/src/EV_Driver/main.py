@@ -1,4 +1,5 @@
 import sys
+import os
 import time
 import argparse
 
@@ -13,36 +14,39 @@ def main():
     # ==========================================
     # CONFIGURACIÓN DE ARGUMENTOS DE CONSOLA
     # ==========================================
-    parser = argparse.ArgumentParser(description="Smart Charging - Driver Client Application")
+    ip = os.getenv("IP")
+    broker_ip = os.getenv("BROKER_IP")
+    driver_id = os.getenv("ID") 
+    file_path = os.getenv("FILE")
     
-    # Argumentos de Red Local
-    parser.add_argument('--ip', type=str, required=True, help="IP de la máquina local (Conductor)")
+    # 2. Leemos el puerto y lo convertimos a entero de forma segura
+    broker_port_str = os.getenv("BROKER_PORT")
     
-    # Argumentos del Servidor Kafka
-    parser.add_argument('--broker-ip', type=str, required=True, help="IP del servidor central Kafka")
-    parser.add_argument('--broker-port', type=int, required=True, help="Puerto del servidor Kafka (ej. 9092)")
-    
-    # Argumentos de Lógica de Negocio
-    parser.add_argument('--id', type=str, required=True, help="ID único de este conductor (ej. DRV-01)")
-    parser.add_argument('--file', type=str, required=True, help="Nombre del archivo .txt inicial de CPs")
+    # Validación básica: comprobamos que ninguna variable vital esté vacía (None)
+    if not all([ip, broker_ip, broker_port_str, driver_id, file_path]):
+        print("ERROR: Missing vital environment variables in the container.")
+        sys.exit(1) # Salimos con error para que Docker sepa que el arranque falló
 
-    # Parseamos lo que el usuario haya escrito en la terminal
-    args = parser.parse_args()
-
+    # Intentamos convertir el puerto a número entero
+    try:
+        broker_port = int(broker_port_str)
+    except ValueError:
+        print(f"❌ ERROR: The port provided in BROKER_PORT ({broker_port_str}) is not a valid number.")
+        sys.exit(1)
     # ==========================================
     # INICIALIZACIÓN DEL SISTEMA
     # ==========================================
-    print(f"[*] Starting system for driver: {args.id}")
-    print(f"[*] Local IP: {args.ip}")
-    print(f"[*] Connecting to Kafka at: {args.broker_ip}:{args.broker_port}")
+    print(f"[*] Starting system for driver: {driver_id}")
+    print(f"[*] Local IP: {ip}")
+    print(f"[*] Connecting to Kafka at: {broker_ip}:{broker_port}")
     
     # Creamos el objeto de información del Broker
     # (Asumiendo que el constructor recibe IP y Puerto)
-    broker_info = KafkaBrokerInfo(args.broker_ip, args.broker_port)
+    broker_info = KafkaBrokerInfo(broker_ip, broker_port)
     
     try:
         # Instanciamos tu super-clase Driver
-        driver = Driver(broker_info, args.file, args.id)
+        driver = Driver(broker_info, file_path, driver_id)
     except Exception as e:
         print(f"[!] Critical error initializing Driver or connecting to Kafka: {e}")
         sys.exit(1)
@@ -61,7 +65,7 @@ def main():
             
             # Mientras la lista del driver tenga CPs, intentamos conectar
             while driver.cp_list: 
-                conexion_exitosa = driver.central_connection_phase(args.ip)
+                conexion_exitosa = driver.central_connection_phase(ip)
                 
                 if conexion_exitosa:
                     # Si devuelve True, el suministro fue aceptado. Rompemos el bucle de reintentos.

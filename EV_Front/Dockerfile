@@ -1,30 +1,20 @@
-# Usamos una versión oficial y ligera de Node.js
+# 1. Usamos la versión de Node.js
 FROM node:20-alpine
 
-# Creamos la carpeta de trabajo dentro del contenedor
+# 2. Creamos la carpeta de trabajo
 WORKDIR /app
 
-# Copiamos el package.json y descargamos las dependencias
+# 3. PRIMERO copiamos la lista de la compra de JS
+COPY package.json ./
+
+# 4. LUEGO instalamos las dependencias (ahora sí encontrará el package.json)
 RUN npm install
 
-# Copiamos el resto del código (tu carpeta src y sus archivos)
-
-# Exponemos el puerto estandarizado
-EXPOSE 3000
-
-# Comando de arranque (Node leerá las variables inyectadas automáticamente)
-CMD ["node", "src/EV_Front/server.js"]
-
-COPY pyproject.toml uv.lock ./
-COPY EV_Central/pyproject.toml ./EV_Central/
-COPY EV_Registry/pyproject.toml ./EV_Registry/
-COPY EV_CP_M/pyproject.toml ./EV_CP_M/
-COPY EV_CP_E/pyproject.toml ./EV_CP_E/
-COPY EV_Driver/pyproject.toml ./EV_Driver/
-COPY EV_W/pyproject.toml ./EV_W/
-COPY EV_Front/pyproject.toml ./EV_Front/
-COPY communications/pyproject.toml ./communications/
-
-COPY package.json ./
+# 5. DESPUÉS copiamos todo tu código fuente del frontend
 COPY . .
 
+# 6. Abrimos el puerto de la web
+EXPOSE 3000
+
+# 7. Arrancamos el servidor
+CMD ["node", "src/EV_Front/server.js"]
