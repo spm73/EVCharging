@@ -42,6 +42,9 @@ class CPCollection:
     
     def get_active_cps_ids(self) -> list[str]:
         return [id for id, cp in self.__cps.items() if cp.get_status() == CPStatus.ACTIVE]
+    
+    def get_stopped_cps_ids(self) -> list[str]:
+        return [id for id, cp in self.__cps.items() if cp.get_status() == CPStatus.STOPPED]
         
     def add_cp(self, cp_id: str) -> CPInfo:
         with self.__lock:

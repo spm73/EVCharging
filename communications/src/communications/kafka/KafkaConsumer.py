@@ -59,12 +59,12 @@ class KafkaConsumer(Generic[M]):
                     print(f"{self.__class__}:{self.__topic} Error: {msg.error()}")
                 continue
 
-            message = self.__message_class.from_payload(msg.value().decode('utf-8'))
-            # print(f"[DEBUG] Decoded message on {self.__topic}: {message.to_payload()}")
+            try:
+                message = self.__message_class.from_payload(msg.value().decode('utf-8'))
+            except Exception as e:
+                print(f"[KafkaConsumer:{self.__topic}] Error parsing message, skipping: {e}")
+                continue
             if self.__should_notify(message):
-                # print(f"[DEBUG] Filter PASSED on {self.__topic}")
                 self.__notifier.notify(message)
-            # else:
-                # print(f"[DEBUG] Filter FAILED on {self.__topic}: {message.to_payload()}")
         
         
