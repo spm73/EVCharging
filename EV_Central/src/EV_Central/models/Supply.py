@@ -1,4 +1,5 @@
 from sqlalchemy import ForeignKey, Numeric, Boolean
+from datetime import datetime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from decimal import Decimal
 
@@ -12,6 +13,7 @@ class Supply(Base):
     price: Mapped[Decimal | None] = mapped_column(Numeric(3, 2))
     consumption: Mapped[int | None]
     is_done: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    start_date: Mapped[datetime] = mapped_column(default=datetime.utcnow)
     
     cp_id: Mapped[str | None] = mapped_column(ForeignKey("CP.id", ondelete="SET NULL"), nullable=True)
     driver_id: Mapped[str] = mapped_column(ForeignKey("DRIVER.id"), nullable=False)
