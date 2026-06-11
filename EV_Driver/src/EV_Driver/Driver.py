@@ -3,6 +3,7 @@ import sys
 import queue
 import time
 from threading import Thread, Event
+import signal
 
 
 from communications.kafka import KafkaBrokerInfo, KafkaConsumer, KafkaFactory, KafkaProducer
@@ -14,13 +15,15 @@ from .kafka.kafka_subscribers import *
 from .system.event_bus import *
 
 class Driver:
-    def __init__(self, broker_info: KafkaBrokerInfo, filename: str, driver_id: str):
+    def __init__(self, broker_info: KafkaBrokerInfo, cps_filename: str, saved_filename: str, driver_id: str):
+
+        self.cps_fileHandler = FileHandler(cps_filename)
+        self.saved_fileHandler = FileHandler(saved_filename)
 
         self.driver_id = driver_id
-        self.supply_id = None
+        self.supply_id = self.check_recovery()
 
-        self.fileHandler = FileHandler(filename)
-        self.cp_list = self.fileHandler.readFileLines()
+        self.cp_list = self.cps_fileHandler.readFileLines()
         self.terminalHandler = TerminalHandler(EVENT_QUEUE)
 
         kafkaFactory = KafkaFactory(broker_info)
@@ -39,6 +42,9 @@ class Driver:
 #       ---- Producers ----
         self.supply_request_producer = kafkaFactory.create_producer("supply.request.user")
 
+        signal.signal(signal.SIGINT, self.handle_exit)
+        signal.signal(signal.SIGTERM, self.handle_exit)
+
         
     def __init_consumers(self):
         self.cp_listing_consumer.get_notifier().add_subscriber(cp_listing_handler)
@@ -46,6 +52,27 @@ class Driver:
         self.supply_response_consumer.get_notifier().add_subscriber(response_handler)
         self.supply_telemetry_consumer.get_notifier().add_subscriber(telemetry_info_handler)
         self.supply_error_consumer.get_notifier().add_subscriber(kafka_error_handler)
+
+    def handle_exit(self, signum=None, frame=None):
+        """Catches the shutdown signal and saves the state using FileHandler."""
+        print(f"\nShutdown signal detected in {self.driver_id}. Preparing safe exit...")
+        
+        if self.supply_id:
+            self.saved_fileHandler.write(self.supply_id)
+            print(f" STATE SAVED: Supply ID {self.supply_id} has been frozen.")
+        else:
+            self.saved_fileHandler.delete()
+            print("Clean shutdown. No pending supplies.")
+        
+        sys.exit(0)
+
+    def check_recovery(self):
+        """Checks if there is a pending supply from a previous crash."""
+        lines = self.saved_fileHandler.readFileLines()
+        if lines and lines[0].strip():
+            return lines[0].strip()
+        return None
+
 
     def __next_cp(self):
         self.cp_list.append(self.cp_list.pop(0))
@@ -104,7 +131,7 @@ class Driver:
                 case Intention.UPDATE_CPS:
                     print("Actualizando los puntos de recarga...")
                     self.cp_list = event.data
-                    self.fileHandler.writeList(self.cp_list)
+                    self.cps_fileHandler.writeList(self.cp_list)
                     continue
                     
                 case Intention.KAFKA_ERROR:
@@ -185,6 +212,7 @@ class Driver:
                 case Intention.TELEMETRY_TICKET:
                     TerminalHandler.printSupplyingTicket(event.data.price, event.data.consumption)
                     self.supply_id = None
+                    self.saved_fileHandler.delete()
                     break
         
 # ----- Finalize

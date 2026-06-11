@@ -1,3 +1,4 @@
+import os
 
 class FileHandler:
     def __init__(self, filename: str):
@@ -5,8 +6,10 @@ class FileHandler:
 
 
     def readFileLines(self) -> list:
+        if not self.exists():
+            return []
+        
         with open(self.filename, 'r', encoding='utf-8') as file:
-            # Usamos una list comprehension para limpiar el '\n' de cada línea
             return [linea.rstrip('\n') for linea in file]
         
     def write(self, content: str) -> None:
@@ -16,3 +19,10 @@ class FileHandler:
     def writeList(self, lines: list) -> None:
         content = '\n'.join(lines)
         self.write(content)
+
+    def exists(self) -> bool:
+        return os.path.exists(self.filename)
+
+    def delete(self) -> None:
+        if self.exists():
+            os.remove(self.filename)
