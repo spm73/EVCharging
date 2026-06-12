@@ -79,9 +79,16 @@ function renderTransactions(transactions) {
     const tbody = document.getElementById('transactions-body');
     tbody.innerHTML = '';
 
-    transactions.forEach(t => {
+    const activeOnly = document.getElementById('toggle-active-only').checked;
+
+    transactions
+        .filter(t => activeOnly ? !t.is_done : true)
+        .forEach(t => {
         // TAREA 3: Inyectar t.start_date (Con fallback a 'N/A' por si el backend aún no lo envía)
         const startDate = t.start_date ? new Date(t.start_date).toLocaleString() : '<span class="text-muted">N/A</span>';
+        const statusBadge = t.is_done 
+            ? '<span class="badge bg-secondary">Completado</span>' 
+            : '<span class="badge bg-success">En curso</span>';
         
         const row = `
             <tr>
@@ -91,6 +98,7 @@ function renderTransactions(transactions) {
                 <td>${t.consumption !== null ? t.consumption : '-'}</td>
                 <td>${t.price !== null ? t.price : '-'} €</td>
                 <td>${startDate}</td>
+                <td>${statusBadge}</td>
             </tr>
         `;
         tbody.innerHTML += row;

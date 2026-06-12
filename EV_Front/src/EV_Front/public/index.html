@@ -26,7 +26,13 @@
                 <div id="cp-container" class="row mb-4">
                 </div>
 
-                <h3>Suministros Activos</h3>
+                <div class="d-flex align-items-center gap-3 mb-2">
+                    <h3 class="mb-0">Suministros</h3>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="toggle-active-only" checked>
+                        <label class="form-check-label" for="toggle-active-only">Solo activos</label>
+                    </div>
+                </div>
                 <table class="table table-striped bg-white shadow-sm">
                     <thead>
                         <tr>
@@ -36,6 +42,7 @@
                             <th>Consumo (kWh)</th>
                             <th>Precio Total</th>
                             <th>Fecha de inicio</th>
+                            <th>Estado</th>
                         </tr>
                     </thead>
                     <tbody id="transactions-body">

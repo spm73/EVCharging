@@ -4,6 +4,7 @@ import sys
 import threading
 import uvicorn
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from EV_Central.models.Base import Base
 from EV_Central.state.Database import Database
@@ -23,6 +24,12 @@ from communications.sockets import SocketServer
 from EV_Central.sockets.handle_monitor import handle_monitor
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 app.include_router(cp_router)
 app.include_router(event_router)
 app.include_router(driver_router)
