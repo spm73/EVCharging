@@ -243,7 +243,7 @@ class Driver:
                     if event.data.supply_id == self.supply_id:
                         TerminalHandler.printSupplyingTicket(event.data.price, event.data.consumption)
                         self.supply_id = None
-                        # 🔥 SOLUCIÓN AL BUCLE DE RECUPERACIÓN: Borrar el archivo
+                        # SOLUCIÓN AL BUCLE DE RECUPERACIÓN: Borrar el archivo
                         self.saved_fileHandler.delete() 
                         break
                     continue
