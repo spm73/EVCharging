@@ -32,7 +32,7 @@ async function fetchData() {
         renderEvents(events);
 
     } catch (error) {
-        console.error("Error conectando con API_Central:", error);
+        console.error("Error connecting with API_Central:", error);
     }
 }
 
@@ -43,29 +43,32 @@ function renderCPs(cps) {
     container.innerHTML = ''; 
 
     cps.forEach(cp => {
-        let badgeColor = 'bg-success';
-        if (cp.status === 'out_of_service') badgeColor = 'bg-danger';
-        if (cp.status === 'supplying') badgeColor = 'bg-primary';
+        const statusLower = cp.status.toLowerCase();
+        let badgeColor = 'bg-success'; // Active / Supplying = green
+        let borderColor = 'border-success';
+        if (statusLower === 'stopped') { badgeColor = 'bg-warning text-dark'; borderColor = 'border-warning'; }
+        if (statusLower === 'broken down') { badgeColor = 'bg-danger'; borderColor = 'border-danger'; }
+        if (statusLower === 'disconnected') { badgeColor = 'bg-secondary'; borderColor = 'border-secondary'; }
 
-        let tempWarning = cp.temperature < 0 ? '❄️ <span class="text-danger fw-bold">FRÍO EXTREMO</span>' : '🌡️ Normal';
+        let tempWarning = cp.temperature < 0 ? '❄️ <span class="text-danger fw-bold">EXTREME COLD</span>' : '🌡️ Normal';
 
         // TAREA 2: Botones individuales añadidos a la tarjeta
         const card = `
             <div class="col-md-4 mb-3">
-                <div class="card shadow-sm border-0 border-start border-4 ${cp.status === 'out_of_service' ? 'border-danger' : 'border-success'}">
+                <div class="card shadow-sm border-0 border-start border-4 ${borderColor}">
                     <div class="card-body">
                         <h5 class="card-title fw-bold">${cp.id}</h5>
                         <h6 class="card-subtitle mb-2 text-muted">📍 ${cp.location}</h6>
                         <span class="badge ${badgeColor} mb-2">${cp.status.toUpperCase()}</span>
-                        <p class="card-text mb-1">Precio: ${cp.price} €/kWh</p>
+                        <p class="card-text mb-1">Price: ${cp.price} €/kWh</p>
                         <p class="card-text mb-3">Temp: ${cp.temperature}ºC (${tempWarning})</p>
                         
                         <div class="d-grid gap-2">
                             <div class="btn-group btn-group-sm" role="group">
-                                <button type="button" class="btn btn-outline-danger" onclick="stopCP('${cp.id}')">Parar</button>
-                                <button type="button" class="btn btn-outline-success" onclick="resumeCP('${cp.id}')">Reanudar</button>
+                                <button type="button" class="btn btn-outline-danger" onclick="stopCP('${cp.id}')">Stop</button>
+                                <button type="button" class="btn btn-outline-success" onclick="resumeCP('${cp.id}')">Resume</button>
                             </div>
-                            <button type="button" class="btn btn-sm btn-outline-warning" onclick="deleteKeyCP('${cp.id}')">Borrar Clave</button>
+                            <button type="button" class="btn btn-sm btn-outline-warning" onclick="deleteKeyCP('${cp.id}')">Delete Key</button>
                         </div>
                     </div>
                 </div>
@@ -87,8 +90,8 @@ function renderTransactions(transactions) {
         // TAREA 3: Inyectar t.start_date (Con fallback a 'N/A' por si el backend aún no lo envía)
         const startDate = t.start_date ? new Date(t.start_date).toLocaleString() : '<span class="text-muted">N/A</span>';
         const statusBadge = t.is_done 
-            ? '<span class="badge bg-secondary">Completado</span>' 
-            : '<span class="badge bg-success">En curso</span>';
+            ? '<span class="badge bg-secondary">Completed</span>' 
+            : '<span class="badge bg-success">In progress</span>';
         
         const row = `
             <tr>
@@ -111,11 +114,11 @@ function renderDrivers(drivers) {
     tbody.innerHTML = '';
 
     drivers.forEach(d => {
-        let statusHtml = '<span class="badge bg-success">Libre</span>';
+        let statusHtml = '<span class="badge bg-success">Available</span>';
         
         // Si el backend devuelve un objeto active_supply, mostramos dónde está cargando
         if (d.active_supply) {
-            statusHtml = `<span class="badge bg-primary">Cargando en ${d.active_supply.cp_id}</span>`;
+            statusHtml = `<span class="badge bg-primary">Charging at ${d.active_supply.cp_id}</span>`;
         }
 
         const row = `
@@ -147,7 +150,7 @@ function renderEvents(events) {
 // --- TAREA 1 Y 2: LLAMADAS A LA API PARA CONTROLES ---
 
 async function stopAllCPs() {
-    if(!confirm("¿Estás seguro de que quieres PARAR TODOS los puntos de recarga?")) return;
+    if(!confirm("Are you sure you want to STOP ALL charging points?")) return;
     try {
         await fetch(`${API_BASE_URL}/cps/stop-all`, { method: 'POST' });
         fetchData(); // Refrescar pantalla inmediatamente
@@ -176,7 +179,7 @@ async function resumeCP(id) {
 }
 
 async function deleteKeyCP(id) {
-    if(!confirm(`¿Simular pérdida de clave de cifrado en ${id}?`)) return;
+    if(!confirm(`Simulate encryption key loss on ${id}?`)) return;
     try {
         await fetch(`${API_BASE_URL}/cps/${id}/key`, { method: 'DELETE' });
         fetchData();

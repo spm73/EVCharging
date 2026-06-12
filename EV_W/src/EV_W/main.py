@@ -33,14 +33,14 @@ def get_temperature(city: str, api_key: str) -> float | None:
         print(f"\n[!] Invalid response format for {city}. Is the city name correct?")
         return None
 
-def notify_central(cp_id: str, is_frozen: bool, base_url: str) -> bool:
-    """Dispara las alertas a la API de la Central de tu compañero."""
+def notify_central(cp_id: str, is_frozen: bool, temperature: float, base_url: str) -> bool:
+    """Sends weather alerts to EV_Central's API."""
     url = f"{base_url}/api/cps/{cp_id}/weather-alert"
     try:
         if is_frozen:
-            response = requests.post(url, timeout=5)
+            response = requests.post(url, json={"temperature": temperature}, timeout=5)
         else:
-            response = requests.delete(url, timeout=5)
+            response = requests.delete(url, json={"temperature": temperature}, timeout=5)
             
         response.raise_for_status()
         return True
@@ -70,14 +70,14 @@ def weather_daemon(api_key: str, central_url: str):
             # 1. Transición de Normal a Congelado
             if is_currently_frozen and not info["is_frozen"]:
                 print(f"\n[*] ALERT: {info['city']} dropped to {temp}ºC. Notifying Central to STOP {cp_id}...")
-                if notify_central(cp_id, True, central_url):
+                if notify_central(cp_id, True, temp, central_url):
                     with state_lock:
                         cp_locations[cp_id]["is_frozen"] = True
 
             # 2. Transición de Congelado a Normal
             elif not is_currently_frozen and info["is_frozen"]:
                 print(f"\n[*] INFO: {info['city']} recovered to {temp}ºC. Notifying Central to RESUME {cp_id}...")
-                if notify_central(cp_id, False, central_url):
+                if notify_central(cp_id, False, temp, central_url):
                     with state_lock:
                         cp_locations[cp_id]["is_frozen"] = False
                         

@@ -1,4 +1,5 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 
@@ -7,6 +8,10 @@ from EV_Central.state.KafkaManager import KafkaManager
 from EV_Central.state.Database import Database
 from EV_Central.models.CP import CP
 from EV_Central.kafka.messages import CentralCommandMessage, EncryptedMessage
+from EV_Central.audit.audit import audit
+
+class TemperaturePayload(BaseModel):
+    temperature: float | None = None
 
 router = APIRouter(prefix="/api/cps")
 
@@ -41,23 +46,37 @@ def get_cps(status: str | None = None):
         return result
 
 @router.post("/{cp_id}/weather-alert")
-def weather_alert(cp_id: str):
+def weather_alert(cp_id: str, request: Request, payload: TemperaturePayload = TemperaturePayload()):
     try:
-        _ = CPCollection().get_cp(cp_id)
+        cp_info = CPCollection().get_cp(cp_id)
     except KeyError:
         raise HTTPException(status_code=404, detail=f"CP {cp_id} not found")
+    if payload.temperature is not None:
+        cp_info.set_temperature(payload.temperature)
     producer = KafkaManager().get_factory().create_producer('cp.commands')
     producer.send_message(EncryptedMessage(cp_id, CentralCommandMessage(cp_id, 'stop')))
+    
+    ip = request.client.host if request.client else "unknown"
+    temp_info = f" (Temp: {payload.temperature}ºC)" if payload.temperature is not None else ""
+    audit(ip, 'WEATHER ALERT', f"Received freeze alert for CP {cp_id}{temp_info}. Stopping CP.")
+    
     return {"detail": f"Weather alert sent to CP {cp_id}"}
 
 @router.delete("/{cp_id}/weather-alert")
-def cancel_weather_alert(cp_id: str):
+def cancel_weather_alert(cp_id: str, request: Request, payload: TemperaturePayload = TemperaturePayload()):
     try:
-        _ = CPCollection().get_cp(cp_id)
+        cp_info = CPCollection().get_cp(cp_id)
     except KeyError:
         raise HTTPException(status_code=404, detail=f"CP {cp_id} not found")
+    if payload.temperature is not None:
+        cp_info.set_temperature(payload.temperature)
     producer = KafkaManager().get_factory().create_producer('cp.commands')
     producer.send_message(EncryptedMessage(cp_id, CentralCommandMessage(cp_id, 'resume')))
+    
+    ip = request.client.host if request.client else "unknown"
+    temp_info = f" (Temp: {payload.temperature}ºC)" if payload.temperature is not None else ""
+    audit(ip, 'WEATHER RECOVERY', f"Weather recovered for CP {cp_id}{temp_info}. Resuming CP.")
+    
     return {"detail": f"Weather alert cancelled for CP {cp_id}"}
 
 @router.post("/{cp_id}/stop")
