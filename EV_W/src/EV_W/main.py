@@ -64,6 +64,12 @@ def weather_daemon(api_key: str, central_url: str):
             if temp is None:
                 continue
 
+            # Actualizar temperatura en la Central en cada ciclo (independientemente de las alertas)
+            try:
+                requests.patch(f"{central_url}/api/cps/{cp_id}/temperature", json={"temperature": temp}, timeout=2)
+            except requests.RequestException:
+                pass
+
             # Determinamos si hace bajo cero
             is_currently_frozen = temp < 0.0
 

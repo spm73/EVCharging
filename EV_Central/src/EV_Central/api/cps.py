@@ -89,6 +89,18 @@ def stop_cp(cp_id: str):
     producer.send_message(EncryptedMessage(cp_id, CentralCommandMessage(cp_id, 'stop')))
     return {"detail": f"Stop command sent to CP {cp_id}"}
 
+@router.patch("/{cp_id}/temperature")
+def update_temperature(cp_id: str, payload: TemperaturePayload):
+    try:
+        cp_info = CPCollection().get_cp(cp_id)
+    except KeyError:
+        raise HTTPException(status_code=404, detail=f"CP {cp_id} not found")
+    
+    if payload.temperature is not None:
+        cp_info.set_temperature(payload.temperature)
+        return {"detail": f"Temperature updated for CP {cp_id}"}
+    raise HTTPException(status_code=400, detail="Missing temperature field")
+
 @router.post("/{cp_id}/resume")
 def resume_cp(cp_id: str):
     try:
