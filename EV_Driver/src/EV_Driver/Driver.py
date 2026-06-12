@@ -31,7 +31,7 @@ class Driver:
 #       ---- Consumers que se crean una sola vez ----
         run_id = str(uuid.uuid4())[:8]
         self.cp_listing_consumer = self._kafka_factory.create_consumer("cp.active.listing", f"{self.driver_id}-listing-{run_id}", ActiveCPListingMessage)
-        self.supply_error_consumer = self._kafka_factory.create_consumer("supply.errors", f"{self.driver_id}-err-{run_id}", SupplyErrorMessage)
+        self.supply_error_consumer = self._kafka_factory.create_consumer("supply.errors", f"{self.driver_id}-err-{run_id}", SupplyErrorMessage, driver_filter_function)
         self.cp_listing_consumer.get_notifier().add_subscriber(cp_listing_handler)
         self.supply_error_consumer.get_notifier().add_subscriber(kafka_error_handler)
 
@@ -52,6 +52,7 @@ class Driver:
         """Crea instancias frescas de los consumers de supply. Necesario porque
         KafkaConsumer.stop_polling() mata el hilo interno y no puede reutilizarse."""
         driver_filter_function = lambda msg: self.driver_id == msg.driver_id
+        supply_filter_function = lambda msg: self.supply_id == msg.supply_id
         run_id = str(uuid.uuid4())[:8]
 
         self.supply_request_notifications_consumer = self._kafka_factory.create_consumer(
@@ -70,7 +71,7 @@ class Driver:
             "supply.telemetry.users",
             f"{self.driver_id}-telem-{run_id}",
             SupplyTelemetryMessage,
-            None
+            supply_filter_function
         )
         
         self.supply_request_notifications_consumer.get_notifier().add_subscriber(request_notification_handler)
@@ -140,12 +141,15 @@ class Driver:
                             
                     # 3. SI HA ESCRITO EL ID LITERAL (Por si acaso)
                     elif command in [cp.lower() for cp in self.cp_list]:
-                        # Rotamos la lista usando el nombre literal
-                        while self.cp_list[0].lower() != command:
+                        # Encontramos el índice exacto convirtiendo a minúsculas temporalmente
+                        lower_list = [cp.lower() for cp in self.cp_list]
+                        index = lower_list.index(command)
+                        
+                        # Rotamos exactamente 'index' veces. Cero riesgo de bucle infinito.
+                        for _ in range(index):
                             self.__next_cp()
                         
-                        break # ¡Rompemos el bucle para ir a suministrar!
-                        
+                        break
                     # 4. SI HA DADO AL ENTER SIN MÁS (Automático)
                     else:
                         print(f"\n[!] Input ignorado. Conectando al siguiente CP en automático...")
@@ -229,8 +233,13 @@ class Driver:
         return method_result
                 
         
-    def supplying_phase(self):
+def supplying_phase(self):
         print("\n[+] Transitioning to TELEMETRY phase (Supply in progress)...")
+
+        if self.supply_telemetry_consumer is None:
+            print("[*] Recreando consumers de Kafka para el modo recuperación...")
+            self._recreate_supply_consumers()
+            self.supply_telemetry_consumer.start_polling()
 
         while True:
             event = wait_for_events(Intention.KAFKA_ERROR, Intention.TELEMETRY_INFO, Intention.TELEMETRY_TICKET)
@@ -250,8 +259,16 @@ class Driver:
                     if event.data.supply_id == self.supply_id:
                         TerminalHandler.printSupplyingTicket(event.data.price, event.data.consumption)
                         self.supply_id = None
+                        # 🔥 SOLUCIÓN AL BUCLE DE RECUPERACIÓN: Borrar el archivo
+                        self.saved_fileHandler.delete() 
                         break
                     continue
         
-# ----- Finalize
+        # ----- Finalize
         self.supply_telemetry_consumer.stop_polling()
+        
+        # Limpieza higiénica: volvemos a ponerlos en None para que la próxima 
+        # vez que pasemos por el menú el sistema empiece totalmente limpio.
+        self.supply_telemetry_consumer = None
+        self.supply_response_consumer = None
+        self.supply_request_notifications_consumer = None

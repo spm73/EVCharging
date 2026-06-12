@@ -72,38 +72,23 @@ def main():
             # FASE 1: Menú interactivo y selección de Punto de Recarga
             driver.start_cp_Listing_phase()
             
-            # FASE 2: Motor de conexión con reintentos (Round-Robin)
-            conexion_exitosa = False
-            
-            while driver.cp_list: 
-                conexion_exitosa = driver.central_connection_phase(ip)
-                
-                if conexion_exitosa:
-                    break 
-                else:
-                    time.sleep(0.5) 
-                    # Si devuelve False, fue denegado. Avisamos y volvemos al menú directamente.
-                    print("\n[!] CP denied the connection. Returning to menu to pick another...")
-                    time.sleep(1.5)
-                    # Recargamos la lista completa desde el fichero para que el menú vuelva a mostrar todos los CPs
-                    driver.cp_list = driver.cps_fileHandler.readFileLines()
-                    break
+            # FASE 2: Intento ÚNICO de conexión 
+            conexion_exitosa = driver.central_connection_phase(ip)
                     
-            # FASE 3: Transición al Suministro normal
+            # FASE 3: Transición o Retorno
             if conexion_exitosa:
-                # print("\n[+] Transitioning to TELEMETRY phase (Supply in progress)...")
-                
                 driver.supplying_phase()
                 
                 print("\n[+] Charging session finished. Returning to main menu...")
                 time.sleep(4)
                 
             else:
-                print("\n[!] All CPs have been exhausted and none accepted the supply request.")
-                print("[*] Returning to main menu to wait for central updates...")
-                time.sleep(4)
-                # Si llegamos aquí fue denegado; simplemente volvemos al menú (ya se recargó la lista arriba)
-                pass
+                print("\n[!] CP denied the connection. Returning to menu to pick another...")
+                time.sleep(1.5)
+                # Recargamos la lista completa desde el fichero para que el menú vuelva a mostrarlos todos en el orden original
+                driver.cp_list = driver.cps_fileHandler.readFileLines()
+                
+                # Al terminar aquí, el 'while True' principal volverá a arrancar la Fase 1 automáticamente
 
         except KeyboardInterrupt:
             # Esta señal ahora es interceptada primero por tu clase Driver gracias al 'signal'
