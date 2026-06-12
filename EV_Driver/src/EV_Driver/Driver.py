@@ -43,9 +43,6 @@ class Driver:
 #       ---- Producers ----
         self.supply_request_producer = self._kafka_factory.create_producer("supply.request.users")
 
-
-        signal.signal(signal.SIGINT, self.handle_exit)
-        signal.signal(signal.SIGTERM, self.handle_exit)
         
         
     def _recreate_supply_consumers(self):
@@ -78,24 +75,12 @@ class Driver:
         self.supply_response_consumer.get_notifier().add_subscriber(response_handler)
         self.supply_telemetry_consumer.get_notifier().add_subscriber(telemetry_info_handler)
 
-    def handle_exit(self, signum=None, frame=None):
-        """Catches the shutdown signal and saves the state using FileHandler."""
-        print(f"\nShutdown signal detected in {self.driver_id}. Preparing safe exit...")
-        
-        if self.supply_id:
-            self.saved_fileHandler.write(self.supply_id)
-            print(f" STATE SAVED: Supply ID {self.supply_id} has been frozen.")
-        else:
-            self.saved_fileHandler.delete()
-            print("Clean shutdown. No pending supplies.")
-        
-        sys.exit(0)
 
     def check_recovery(self):
         """Checks if there is a pending supply from a previous crash."""
         lines = self.saved_fileHandler.readFileLines()
         if lines and lines[0].strip():
-            return lines[0].strip()
+            return int(lines[0].strip())
         return None
 
 
@@ -212,6 +197,10 @@ class Driver:
                 case Intention.ACCEPTED_RESPONSE:
                     print(f"Driver successfully connected (supply Id = {event.data})")
                     self.supply_id = event.data
+
+                    self.saved_fileHandler.write(str(self.supply_id))
+                    print(f"[*] STATE SAVED: Supply ID {self.supply_id} stored safely in disk.")
+
                     method_result = True
                     break
 
@@ -233,13 +222,8 @@ class Driver:
         return method_result
                 
         
-def supplying_phase(self):
+    def supplying_phase(self):
         print("\n[+] Transitioning to TELEMETRY phase (Supply in progress)...")
-
-        if self.supply_telemetry_consumer is None:
-            print("[*] Recreando consumers de Kafka para el modo recuperación...")
-            self._recreate_supply_consumers()
-            self.supply_telemetry_consumer.start_polling()
 
         while True:
             event = wait_for_events(Intention.KAFKA_ERROR, Intention.TELEMETRY_INFO, Intention.TELEMETRY_TICKET)

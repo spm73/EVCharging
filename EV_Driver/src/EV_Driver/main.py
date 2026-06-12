@@ -62,12 +62,21 @@ def main():
                 print(f"RECOVERY ACTIVATED! Bypassing menu. Resuming interrupted supply: {driver.supply_id}")
                 print("\n[+] Transitioning directly to TELEMETRY phase...")
                 
+                # --- NUEVO: Iniciar consumers para el modo recuperación ---
+                # 1. Iniciamos el de errores (que normalmente se inicia en Fase 1)
+                driver.supply_error_consumer.start_polling()
+                
+                # 2. Recreamos los de supply y arrancamos el de telemetría (Fase 2)
+                driver._recreate_supply_consumers()
+                driver.supply_telemetry_consumer.start_polling()
+                # -----------------------------------------------------------
+                
                 # Vamos directos a leer los mensajes que nos perdimos
                 driver.supplying_phase()
                 
                 print("\n[+] Recovered session finished. Returning to main menu...")
                 time.sleep(4)
-                continue # Volvemos al inicio del while para entrar por la Fase 1 normal
+                continue # Volvemos al inicio del while para entrar por la Fase 1 normal# Volvemos al inicio del while para entrar por la Fase 1 normal
 
             # FASE 1: Menú interactivo y selección de Punto de Recarga
             driver.start_cp_Listing_phase()
@@ -91,8 +100,9 @@ def main():
                 # Al terminar aquí, el 'while True' principal volverá a arrancar la Fase 1 automáticamente
 
         except KeyboardInterrupt:
-            # Esta señal ahora es interceptada primero por tu clase Driver gracias al 'signal'
-            pass
+            # Capturamos el Ctrl+C para hacer una salida limpia sin ensuciar la terminal
+            print("\n[!] Program interrupted by user. Exiting cleanly...")
+            sys.exit(0)
 
 if __name__ == "__main__":
     main()
