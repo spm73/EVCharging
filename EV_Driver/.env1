@@ -1,6 +1,0 @@
-IP=172.20.243.107
-BROKER_IP=172.20.243.105
-BROKER_PORT=9092
-ID=DRV-1
-CPS_FILE=/app/EV_Driver/src/EV_Driver/system/cps.txt
-SAVED_FILE=/system/saved.txt
