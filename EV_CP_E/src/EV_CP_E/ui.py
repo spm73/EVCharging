@@ -77,7 +77,7 @@ class EngineApp(App):
     }
     """
 
-    BINDINGS = [("q", "request_quit", "Salir")]
+    BINDINGS = [("q", "request_quit", "Quit")]
     
     current_view = reactive("None")
     pending_quit = False
@@ -121,7 +121,7 @@ class EngineApp(App):
 
         # IdleState
         view = self.query_one("#view-IdleState")
-        view.mount(Label("ACTIVO / DISPONIBLE", classes="title-label"))
+        view.mount(Label("ACTIVE / AVAILABLE", classes="title-label"))
         view.mount(Button("Request Supply", id="btn-request-supply", variant="primary"))
         view.mount(Button("Simulate Fault", id="btn-fault", variant="error"))
 
@@ -131,7 +131,7 @@ class EngineApp(App):
 
         # SupplyingState
         view = self.query_one("#view-SupplyingState")
-        view.mount(Label("SUMINISTRANDO", classes="title-label"))
+        view.mount(Label("SUPPLYING", classes="title-label"))
         view.mount(Label("kWh: 0", id="lbl-consumption", classes="data-label"))
         view.mount(Label("€: 0.00", id="lbl-price", classes="data-label"))
         view.mount(Button("Stop Supply", id="btn-stop-supply", variant="warning"))

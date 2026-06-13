@@ -24,9 +24,9 @@ def main():
     kafka_port = int(os.getenv("KAFKA_BROKER_PORT", "9092"))
     
     print("=========================================")
-    print(f" Iniciando EV_CP_E (Engine)")
-    print(f" Puerto Socket : {engine_port}")
-    print(f" Kafka Broker  : {kafka_ip}:{kafka_port}")
+    print(f" Starting EV_CP_E (Engine)")
+    print(f" Socket Port : {engine_port}")
+    print(f" Kafka Broker: {kafka_ip}:{kafka_port}")
     print("=========================================\n")
 
     # 1. Instanciar el Singleton del Engine
@@ -44,14 +44,14 @@ def main():
         handler=socket_handler
     )
     server.start()
-    print(f"[Main] SocketServer escuchando en {engine_ip}:{engine_port}")
+    print(f"[Main] SocketServer listening on {engine_ip}:{engine_port}")
 
     # (Los consumidores de Kafka se inician dinámicamente cuando el Engine 
     # recibe el CONFIG con el cp_id desde el monitor).
 
     # 4. Manejo de señales para apagado controlado
     def signal_handler(sig, frame):
-        print("\n[Main] Recibida señal de terminación (SIGINT/SIGTERM). Iniciando apagado...")
+        print("\n[Main] Received termination signal (SIGINT/SIGTERM). Initiating shutdown...")
         engine.put_event(Event(EventType.SHUTDOWN))
 
     signal.signal(signal.SIGINT, signal_handler)
@@ -59,21 +59,21 @@ def main():
 
     # 5. Bucle de eventos principal (en un hilo)
     def run_engine_loop():
-        print("[Main] Entrando en el bucle de eventos principal...")
+        print("[Main] Entering main event loop...")
         while engine.handle_next_event():
             pass
 
         # --- FASE DE APAGADO (Graceful Shutdown) ---
-        print("[Main] Cerrando SocketServer...")
+        print("[Main] Closing SocketServer...")
         server.stop()
 
-        print("[Main] Cerrando consumidores de Kafka...")
+        print("[Main] Closing Kafka consumers...")
         engine.stop_kafka_consumers()
 
-        print("[Main] Guardando estado (Checkpoint)...")
+        print("[Main] Saving state (Checkpoint)...")
         CheckpointManager().save(engine.get_checkpoint_data())
         
-        print("[Main] Apagado completado.")
+        print("[Main] Shutdown completed.")
 
     engine_thread = threading.Thread(target=run_engine_loop)
     engine_thread.start()
@@ -82,10 +82,10 @@ def main():
     try:
         EngineApp().run()
     except Exception as e:
-        print(f"[Main] Error en UI: {e}")
+        print(f"[Main] UI error: {e}")
 
     # Cuando la UI termina (por la tecla 'q' o Ctrl+C)
-    print("\n[Main] UI cerrada. Iniciando apagado...")
+    print("\n[Main] UI closed. Initiating shutdown...")
     engine.put_event(Event(EventType.SHUTDOWN))
     engine_thread.join()
     sys.exit(0)

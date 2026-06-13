@@ -29,7 +29,7 @@ class IdleState(State):
 
     def handle(self, event: 'Event', context: 'CPEngine') -> None:
         if event.event_type == EventType.SUPPLY_STARTED:
-            print("[IdleState] Simulación física de lectura de tarjeta. Solicitando suministro a Central...")
+            print("[IdleState] Physical simulation of card reading. Requesting supply from Central...")
             context.request_supply()
             
         elif event.event_type == EventType.SERVICE_AUTHORIZED:
@@ -45,7 +45,7 @@ class IdleState(State):
                 
         elif event.event_type == EventType.AUTHORIZATION_TIMEOUT:
             if context.authorization_pending:
-                print("[IdleState] Timeout: El usuario no enchufó el vehículo a tiempo.")
+                print("[IdleState] Timeout: User did not plug in the vehicle in time.")
                 context.authorization_pending = False
                 context.current_supply = None
             

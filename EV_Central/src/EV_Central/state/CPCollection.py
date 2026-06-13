@@ -86,7 +86,9 @@ class CPCollection:
             cps = session.scalars(select(CP)).all()
             for cp in cps:
                 self.add_cp(cp.id)
-                self.__cps[cp.id].change_status(cp.status)        
+                self.__cps[cp.id].change_status(cp.status)
+                if cp.cipher_key:
+                    self.__cps[cp.id].set_key(cp.cipher_key)
         
     def __store_in_db(self):
         cps = None
@@ -100,7 +102,23 @@ class CPCollection:
                     self.__remove_cp(cp.get_id())
                     continue
                 cp_model.status = cp.get_status()
+                cp_model.cipher_key = cp.get_key()
             session.commit()
         
         self.__timer = Timer(CPCollection.INTERVAL, self.__store_in_db)
         self.__timer.start()
+
+    def sync_cp_to_db(self, cp_id: str) -> None:
+        """Forces immediate DB save for a specific CP (useful after key generation)."""
+        cp = None
+        with self.__lock:
+            cp = self.__cps.get(cp_id)
+        
+        if not cp: return
+        
+        with Session(self.__engine) as session:
+            cp_model = session.get(CP, cp.get_id())
+            if cp_model:
+                cp_model.status = cp.get_status()
+                cp_model.cipher_key = cp.get_key()
+                session.commit()

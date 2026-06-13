@@ -19,7 +19,7 @@ class WaitingForConfigState(State):
 
     def handle(self, event: 'Event', context: 'CPEngine') -> None:
         if event.event_type == EventType.KEY_RECEIVED:
-            print("[WaitingForConfigState] Clave, precio e ID recibidos del Monitor.")
+            print("[WaitingForConfigState] Key, price and ID received from Monitor.")
             context.start_kafka_consumers()
             context.transition_to(IdleState.IdleState())
         elif event.event_type == EventType.MONITOR_DISCONNECTED:

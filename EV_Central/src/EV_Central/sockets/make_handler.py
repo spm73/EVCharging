@@ -34,7 +34,10 @@ def make_handler() -> tuple[MessageHandler, callable]:
         except KeyError:
             cp = cps.add_cp(cp_id)
             
-        cp.assign_key()
+        if cp.get_key() is None:
+            cp.assign_key()
+            cps.sync_cp_to_db(cp_id)
+            
         cp_key = cp.get_key().decode()
         return f"AUTH#accepted#{cp_key}"
     

@@ -30,6 +30,9 @@ class CPInfo:
     def assign_key(self) -> None:
         self.__key = Fernet.generate_key()
     
+    def set_key(self, key: bytes | None) -> None:
+        self.__key = key
+    
     def get_key(self) -> bytes | None:
         return self.__key
         

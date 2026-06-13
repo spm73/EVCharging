@@ -210,7 +210,7 @@ class CPEngine:
             self.__request_producer = self.kafka_factory.create_producer('supply.request.cps')
             
         self.__request_producer.send_message(enc_msg)
-        print(f"[CPEngine] Petición de suministro enviada a Central (Driver: {self.cp_id}, IP: {engine_ip})")
+        print(f"[CPEngine] Supply request sent to Central (Driver: {self.cp_id}, IP: {engine_ip})")
 
     def send_telemetry(self) -> None:
         """Envía los datos de telemetría del suministro en curso por Kafka (cifrado)."""

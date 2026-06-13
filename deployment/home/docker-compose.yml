@@ -36,6 +36,7 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
       KAFKA_NUM_PARTITIONS: 3
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
     volumes:
       - kafka-data:/var/lib/kafka/data
     networks:
@@ -147,7 +148,7 @@ services:
     command: >
       sh -c "uv run --package ev-driver python -m EV_Driver.main"
     volumes:
-      - driver_data:/data
+      - driver_data:/system
     networks:
       - user_net
 
