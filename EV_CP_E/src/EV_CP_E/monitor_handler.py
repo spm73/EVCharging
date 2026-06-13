@@ -62,6 +62,5 @@ def socket_handler(connection: SocketConnection):
     except Exception as e:
         print(f"[MonitorSocket] Error/Disconnect: {e}")
     finally:
-        CPEngine().clear_cipher_key()
         CPEngine().put_event(Event(EventType.MONITOR_DISCONNECTED))
 
