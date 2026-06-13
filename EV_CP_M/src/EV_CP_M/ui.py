@@ -169,7 +169,6 @@ class MonitorApp(App):
             self.call_from_thread(self._post_connect_ui)
 
     def _post_connect_ui(self) -> None:
-        self.query_one("#btn-connect", Button).disabled = True
         self.query_one("#btn-auth",    Button).disabled = False
 
     @work(thread=True)
