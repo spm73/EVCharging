@@ -9,8 +9,11 @@ from EV_Central.models.CPStatus import CPStatus
 from EV_Central.state.KafkaManager import KafkaManager
 from EV_Central.kafka.messages import SupplyErrorMessage, ActiveCPListingMessage
 
-def make_handler() -> MessageHandler:
+def make_handler() -> tuple[MessageHandler, callable]:
     cp: CPInfo | None = None
+    
+    def get_cp() -> CPInfo | None:
+        return cp
     
     def handle_auth(message: str) -> str:
         nonlocal cp
@@ -75,5 +78,4 @@ def make_handler() -> MessageHandler:
     handler.register("AUTH", handle_auth)
     handler.register("STATUS", handle_status)
     handler.register("BYE", handle_bye)
-    return handler
-        
+    return handler, get_cp
