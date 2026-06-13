@@ -94,6 +94,12 @@ class MonitorApp(App):
 
     BINDINGS = [("q", "quit", "Quit")]
 
+    def action_quit(self) -> None:
+        """Override quit to perform clean socket disconnection before exiting."""
+        if hasattr(self, "_MonitorApp__engine") and self.__engine is not None:
+            self.__engine.shutdown()
+        self.exit()
+
     def __init__(self) -> None:
         super().__init__()
         self.__registered = False
@@ -169,7 +175,6 @@ class MonitorApp(App):
             self.call_from_thread(self._post_connect_ui)
 
     def _post_connect_ui(self) -> None:
-        self.query_one("#btn-connect", Button).disabled = True
         self.query_one("#btn-auth",    Button).disabled = False
 
     @work(thread=True)

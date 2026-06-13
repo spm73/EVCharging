@@ -47,4 +47,7 @@ class SupplyingState(State):
             context.transition_to(BrokenState.BrokenState())
             
         elif event.event_type == EventType.MONITOR_DISCONNECTED:
+            context.send_final_ticket()
+            context.current_supply = None
+            CheckpointManager().clear()
             context.transition_to(WaitingForConfigState.WaitingForConfigState())

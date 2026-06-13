@@ -30,6 +30,7 @@ class MonitorEngine:
         self.__location = cp_loc
         self.__price    = price
         self.__jwt: str | None = None
+        self.__cp_key: str | None = None
 
         self.__engine  = EngineClient(eng_host, eng_port)
         self.__central = CentralClient(cen_host, cen_port)
@@ -60,6 +61,9 @@ class MonitorEngine:
         if self.__engine.connect():
             self.__engine_connected = True
             self.__app.log_event("[green]✓ Connected to engine.[/]")
+            if self.__cp_key is not None:
+                if self.__engine.send_config(self.__cp_id, self.__cp_key, self.__price):
+                    self.__app.log_event("[green]✓ Resent config to engine after reconnection.[/]")
             return True
         self.__app.log_event("[red]✗ Could not connect to engine.[/]")
         return False
@@ -98,6 +102,7 @@ class MonitorEngine:
             self.__central_connected = False
             return False
 
+        self.__cp_key = cp_key
         self.__app.log_event("[green]✓ Authentication successful. Sending config to engine…[/]")
 
         if not self.__engine.send_config(self.__cp_id, cp_key, self.__price):
@@ -140,6 +145,14 @@ class MonitorEngine:
             return False
 
     # ── Polling ─────────────────────────────────────────────────────────────
+
+    def shutdown(self) -> None:
+        """Called when the application is shutting down to close sockets cleanly."""
+        self.__stop_polling()
+        if self.__central_connected:
+            self.__central.disconnect()
+        if self.__engine_connected:
+            self.__engine.disconnect()
 
     def __start_polling(self) -> None:
         self.__running = True
@@ -202,6 +215,9 @@ class MonitorEngine:
         if self.__engine.connect():
             self.__engine_connected = True
             self.__app.log_event("[green]✓ Reconnected to engine.[/]")
+            if self.__cp_key is not None:
+                if self.__engine.send_config(self.__cp_id, self.__cp_key, self.__price):
+                    self.__app.log_event("[green]✓ Resent config to engine after reconnection.[/]")
 
     def __try_reconnect_central(self) -> None:
         self.__app.log_event("[yellow]→ Trying to reconnect to Central…[/]")
