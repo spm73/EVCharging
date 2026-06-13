@@ -27,7 +27,7 @@ def handle_monitor(connection: SocketConnection) -> None:
         response = handler.handle(message)
         connection.send(response)
         if response.startswith("BYE"):
-            break
+            return
 
     # Cuando el bucle termina, el monitor se ha desconectado
     cp = get_cp()

@@ -146,6 +146,14 @@ class MonitorEngine:
 
     # ── Polling ─────────────────────────────────────────────────────────────
 
+    def shutdown(self) -> None:
+        """Called when the application is shutting down to close sockets cleanly."""
+        self.__stop_polling()
+        if self.__central_connected:
+            self.__central.disconnect()
+        if self.__engine_connected:
+            self.__engine.disconnect()
+
     def __start_polling(self) -> None:
         self.__running = True
         self.__polling_thread = threading.Thread(

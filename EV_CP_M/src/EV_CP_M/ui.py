@@ -94,6 +94,12 @@ class MonitorApp(App):
 
     BINDINGS = [("q", "quit", "Quit")]
 
+    def action_quit(self) -> None:
+        """Override quit to perform clean socket disconnection before exiting."""
+        if hasattr(self, "_MonitorApp__engine") and self.__engine is not None:
+            self.__engine.shutdown()
+        self.exit()
+
     def __init__(self) -> None:
         super().__init__()
         self.__registered = False
