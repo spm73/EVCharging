@@ -47,7 +47,7 @@ class TerminalHandler:
     @staticmethod
     def printSupplyingTicket(price: Decimal, consumption: int):
         TerminalHandler.clean()
-        print(f"================================\n\t\t\tCHARGING SUMMARY\n================================\n\tEnergy Consumed : {consumption} kWh\n\tTotal Price     : {price}€\n================================\nThank you for using our CP!")
+        print(f"======================================================\n\t\tCHARGING SUMMARY\n======================================================\n\tEnergy Consumed : {consumption} kWh\n\tTotal Price     : {price}€\n======================================================\nThank you for using our CP!")
 
     @staticmethod
     def printCP(cp_list: list) -> None:
