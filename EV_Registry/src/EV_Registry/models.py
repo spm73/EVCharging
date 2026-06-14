@@ -1,4 +1,4 @@
-from sqlalchemy import String, Numeric, Enum as SQLEnum, Float
+from sqlalchemy import String, Numeric, Enum as SQLEnum, Float, LargeBinary
 from sqlalchemy.orm import Mapped, mapped_column, relationship, DeclarativeBase
 from decimal import Decimal
 from enum import Enum
@@ -21,3 +21,4 @@ class CP(Base):
     price: Mapped[Decimal] = mapped_column(Numeric(3, 2), nullable=False)
     status: Mapped[CPStatus] = mapped_column(SQLEnum(CPStatus), nullable=False)
     temperature: Mapped[float] = mapped_column(Float, nullable=False)
+    cipher_key: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)
