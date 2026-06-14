@@ -183,11 +183,22 @@ class MonitorEngine:
                 self.__engine_connected = False
                 self.__app.log_event("[red]✗ Lost connection to engine.[/]")
                 self.__app.call_from_thread(self.__app.set_engine_state, "broken")
-                self.__try_report_broken()
+            
+            self.__try_report_broken()
             self.__try_reconnect_engine()
             return
 
         self.__engine_connected = True
+        
+        # Si el engine ha reiniciado, estará en WaitingForConfig (Disconnected).
+        # Si ya tenemos la clave, se la re-enviamos automáticamente para que pase a Active.
+        if status == "Disconnected" and self.__cp_key is not None:
+            self.__app.log_event("[yellow]→ Engine is waiting for config. Resending config automatically...[/]")
+            if self.__engine.send_config(self.__cp_id, self.__cp_key, self.__price):
+                self.__app.log_event("[green]✓ Resent config to engine.[/]")
+                new_status = self.__engine.get_status()
+                if new_status is not None:
+                    status = new_status
         self.__engine_status = status
         self.__app.call_from_thread(self.__app.set_engine_state, self.__status_to_ui(status))
 
